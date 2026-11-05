@@ -12,6 +12,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -34,6 +36,7 @@ fun SampleNavScaffold(
     destination: SampleDestination,
     widthClass: WidthClass,
     topBar: SampleTopBarState,
+    snackbarHostState: SnackbarHostState,
     onSelectDestination: (SampleDestination) -> Unit,
     onOpenSettings: () -> Unit,
     onBack: () -> Unit,
@@ -65,6 +68,7 @@ fun SampleNavScaffold(
                     onBack = onBack,
                 )
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             bottomBar = {
                 if (!useRail) {
                     NavigationBar {

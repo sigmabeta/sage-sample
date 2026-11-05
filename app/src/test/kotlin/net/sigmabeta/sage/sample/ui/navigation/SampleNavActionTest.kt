@@ -25,6 +25,10 @@ class SampleNavActionTest {
             SampleNavAction.Push(SampleDestination.SETTINGS),
             navActionFor(SageEvent.NavigateTo(destination = "settings", source = "test")),
         )
+        assertEquals(
+            SampleNavAction.Push(SampleDestination.LIST_ITEMS),
+            navActionFor(SageEvent.NavigateTo(destination = "list-items", source = "test")),
+        )
     }
 
     @Test

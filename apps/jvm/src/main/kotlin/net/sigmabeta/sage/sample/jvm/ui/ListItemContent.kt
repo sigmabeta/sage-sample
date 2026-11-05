@@ -31,6 +31,7 @@ import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.SingleTextListModel
 import net.sigmabeta.sage.ui.Icon
@@ -78,6 +79,32 @@ fun ListItemContent(
                 .padding(padding)
                 .padding(vertical = 8.dp),
         )
+
+        is NameCaptionListModel -> Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(enabled = model.clickAction !is SageAction.Noop) {
+                    sink.sendAction(model.clickAction)
+                }
+                .padding(padding)
+                .padding(vertical = 8.dp),
+        ) {
+            Text(
+                text = model.name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (model.active) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+                fontWeight = if (model.active) FontWeight.Medium else FontWeight.Normal,
+            )
+            Text(
+                text = model.caption,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         // Collapsed, a dropdown reads like a label/value row with a trailing caret. Expanding it
         // renders each option through this same dispatcher, so an option can be any ListModel.

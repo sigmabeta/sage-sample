@@ -12,7 +12,9 @@
     <string name="nav_home">Home</string>
     <string name="nav_browse">Browse</string>
     <string name="nav_search">Search</string>
+    <string name="nav_list_items">List Items</string>
     <string name="nav_settings">Settings</string>
+    <string name="list_items_item_clicked">Clicked %1$s</string>
     <string name="cd_open_settings">Open settings</string>
     <string name="cd_navigate_back">Back</string>
 

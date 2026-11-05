@@ -27,7 +27,7 @@ data class BrowseState(
         )
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> =
-        when (val loaded = content) {
+        listOf(openListItemsRow(stringProvider)) + when (val loaded = content) {
             // SAGE's withStandardErrorAndLoading Error branch calls stdlib error(...) and throws
             // (ListState.kt), so route errors through the class's own ErrorStateListModel helper.
             is LCE.Error -> error(BROWSE_OPERATION_NAME, loaded.error)
@@ -53,4 +53,22 @@ data class BrowseState(
                 }
             }
         }
+
+    /**
+     * The app-side List Items destination, reached through [BrowseAction.OpenListItems].
+     *
+     * It sits outside the LCE branch so the destination stays reachable while content is still
+     * loading (or empty).
+     */
+    private fun openListItemsRow(stringProvider: StringProvider): ListModel =
+        SingleTextListModel(
+            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_LIST_ITEMS),
+            clickAction = BrowseAction.OpenListItems,
+            dataId = OPEN_LIST_ITEMS_DATA_ID,
+        )
+
+    companion object {
+        /** Stable model id for the List Items row; it is part of the screen's contract. */
+        const val OPEN_LIST_ITEMS_DATA_ID = 100L
+    }
 }

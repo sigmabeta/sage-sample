@@ -42,6 +42,7 @@ include(
     ":core:settings",
     ":core:viewmodel",
     ":features:browse",
+    ":features:listitems",
     ":features:search",
     ":features:settings",
     ":features:welcome",

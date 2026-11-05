@@ -11,6 +11,7 @@ import net.sigmabeta.sage.ui.SageStringId
 enum class BrowseStringId : SageStringId {
     BROWSE_TITLE,
     BROWSE_EMPTY,
+    BROWSE_OPEN_LIST_ITEMS,
     BROWSE_DEMO_ITEM_LISTS,
     BROWSE_DEMO_ITEM_METRO,
     BROWSE_DEMO_ITEM_VOYAGER,

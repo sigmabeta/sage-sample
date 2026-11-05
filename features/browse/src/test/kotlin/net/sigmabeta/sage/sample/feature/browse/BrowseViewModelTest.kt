@@ -43,7 +43,7 @@ class BrowseViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiStateActual.value.listItems.first() is LoadingItemListModel)
+        assertTrue(viewModel.uiStateActual.value.listItems.any { it is LoadingItemListModel })
 
         repository.emit(
             LCE.Content(
@@ -57,6 +57,7 @@ class BrowseViewModelTest {
 
         val contentRows = viewModel.uiStateActual.value.listItems
             .filterIsInstance<SingleTextListModel>()
+            .filter { it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID }
 
         assertEquals(listOf(1L, 2L), contentRows.map { it.dataId })
         assertEquals(listOf("Alpha", "Beta"), contentRows.map { it.name })
@@ -71,7 +72,7 @@ class BrowseViewModelTest {
         repository.emit(LCE.Content(emptyList()))
         advanceUntilIdle()
 
-        assertTrue(state.value.listItems.first() is EmptyStateListModel)
+        assertTrue(state.value.listItems.any { it is EmptyStateListModel })
     }
 
     @Test
@@ -83,7 +84,7 @@ class BrowseViewModelTest {
         repository.emit(LCE.Error("browse", IllegalStateException("boom")))
         advanceUntilIdle()
 
-        val errorState = state.value.listItems.first() as ErrorStateListModel
+        val errorState = state.value.listItems.filterIsInstance<ErrorStateListModel>().single()
         assertEquals("browse", errorState.failedOperationName)
         assertEquals("boom", errorState.error.message)
     }

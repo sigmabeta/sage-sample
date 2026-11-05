@@ -13,11 +13,25 @@ class BrowseStateTest {
     private val strings = FakeStringProvider()
 
     @Test
+    fun `the list items row is always present and opens the destination`() {
+        val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
+
+        val openRow = items.first() as SingleTextListModel
+        assertEquals("str-BROWSE_OPEN_LIST_ITEMS", openRow.name)
+        assertTrue(openRow.clickAction is BrowseAction.OpenListItems)
+        assertEquals(BrowseState.OPEN_LIST_ITEMS_DATA_ID, openRow.dataId)
+    }
+
+    @Test
     fun `loading content maps to loading rows`() {
         val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
 
-        assertTrue(items.first() is LoadingItemListModel)
-        assertTrue(items.none { it is SingleTextListModel })
+        assertTrue(items.any { it is LoadingItemListModel })
+        assertTrue(
+            items.none {
+                it is SingleTextListModel && it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID
+            },
+        )
     }
 
     @Test
@@ -31,17 +45,19 @@ class BrowseStateTest {
             ),
         )
 
-        val contentRows = state.toListItems(strings).filterIsInstance<SingleTextListModel>()
+        val rows = state.toListItems(strings)
+            .filterIsInstance<SingleTextListModel>()
+            .filter { it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID }
 
-        assertEquals(listOf(11L, 22L), contentRows.map { it.dataId })
-        assertEquals(listOf("Alpha", "Beta"), contentRows.map { it.name })
+        assertEquals(listOf(11L, 22L), rows.map { it.dataId })
+        assertEquals(listOf("Alpha", "Beta"), rows.map { it.name })
     }
 
     @Test
     fun `empty content maps to an empty state`() {
         val items = BrowseState(LCE.Content(emptyList())).toListItems(strings)
 
-        val emptyState = items.first() as EmptyStateListModel
+        val emptyState = items.filterIsInstance<EmptyStateListModel>().single()
         assertEquals("str-BROWSE_EMPTY", emptyState.explanation)
     }
 
@@ -51,7 +67,7 @@ class BrowseStateTest {
             LCE.Error("browse", IllegalStateException("boom")),
         ).toListItems(strings)
 
-        val errorState = items.first() as ErrorStateListModel
+        val errorState = items.filterIsInstance<ErrorStateListModel>().single()
         assertEquals("browse", errorState.failedOperationName)
         assertEquals("boom", errorState.error.message)
     }

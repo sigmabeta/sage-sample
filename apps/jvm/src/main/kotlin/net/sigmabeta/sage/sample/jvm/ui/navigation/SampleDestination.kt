@@ -25,6 +25,7 @@ enum class SampleDestination(
     HOME("home", SampleStrings.NAV_HOME, Icon.Home, isTopLevel = true),
     BROWSE("browse", SampleStrings.NAV_BROWSE, Icon.Browse, isTopLevel = true),
     SEARCH("search", SampleStrings.NAV_SEARCH, Icon.Search, isTopLevel = true),
+    LIST_ITEMS("list-items", SampleStrings.NAV_LIST_ITEMS, Icon.Browse, isTopLevel = false),
     SETTINGS("settings", SampleStrings.NAV_SETTINGS, Icon.Person, isTopLevel = false),
     ;
 

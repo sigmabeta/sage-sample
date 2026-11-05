@@ -68,6 +68,7 @@ dependencies {
     implementation(projects.core.settings)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
+    implementation(projects.features.listitems)
     implementation(projects.features.search)
     implementation(projects.features.settings)
     implementation(projects.features.welcome)

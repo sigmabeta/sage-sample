@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.jvm
 
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
@@ -20,6 +21,7 @@ class SampleStringProviderTest {
     fun `every feature string id has a desktop mapping`() {
         val ids: List<SageStringId> = WelcomeStringId.entries +
             BrowseStringId.entries +
+            ListItemsStringId.entries +
             SearchStringId.entries +
             SettingsStringId.entries
 

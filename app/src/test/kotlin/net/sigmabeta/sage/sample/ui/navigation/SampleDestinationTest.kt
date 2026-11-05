@@ -15,6 +15,11 @@ class SampleDestinationTest {
     }
 
     @Test
+    fun `fromRoute maps the list items route to the list items destination`() {
+        assertEquals(SampleDestination.LIST_ITEMS, SampleDestination.fromRoute("list-items"))
+    }
+
+    @Test
     fun `fromRoute returns null for an unknown route`() {
         assertNull(SampleDestination.fromRoute("no-such-destination"))
     }

@@ -1,9 +1,9 @@
 # SAGE Sample
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
-Android app module (`:app`), one Compose Desktop app module (`:apps:jvm`), four pure-JVM feature
-modules over shared `:core` modules (Welcome, Browse, Search, and a Settings screen with
-persisted preferences), and SAGE itself as a Git submodule consumed through a Gradle composite
+Android app module (`:app`), one Compose Desktop app module (`:apps:jvm`), five pure-JVM feature
+modules over shared `:core` modules (Welcome, Browse, List Items, Search, and a Settings screen
+with persisted preferences), and SAGE itself as a Git submodule consumed through a Gradle composite
 build.
 
 ## Requirements
@@ -138,6 +138,7 @@ features/welcome/           pure-JVM feature module (no Android dependencies)
   WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
   WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
 features/browse/            same shape; asynchronous LCE content
+features/listitems/         same shape; 25 generated NameCaption rows via SampleItemRepository
 features/search/            same shape; placeholder content (TODO)
 features/settings/          theme + simulate-delay dropdowns, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene

@@ -4,12 +4,13 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import net.sigmabeta.sage.appcomm.SageEvent
 
 /**
- * The app's one-shot navigation handler.
+ * The app's one-shot effect handler.
  *
  * Features stay platform-neutral: they emit SAGE [SageEvent]s (for example
- * `SageEvent.NavigateTo`) and never touch Voyager. Screens forward their view model's
+ * `SageEvent.NavigateTo` or `SageEvent.ShowSnackbar`) and never touch Voyager or Compose.
+ * Screens forward their view model's
  * [net.sigmabeta.sage.sample.viewmodel.SampleListViewModel.uiEvents] here, and
- * [SampleNavHost] decides what each event means for the back stack.
+ * [SampleNavHost] decides what each event means for the back stack or the snackbar host.
  */
 fun interface SampleNavEffects {
     fun onEvent(event: SageEvent)

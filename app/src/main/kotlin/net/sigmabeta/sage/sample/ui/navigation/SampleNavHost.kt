@@ -2,11 +2,14 @@ package net.sigmabeta.sage.sample.ui.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -14,6 +17,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.SlideTransition
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.WidthClass
@@ -27,17 +32,22 @@ import kotlin.math.roundToInt
  *
  * This is also where feature navigation intents land: [LocalSampleNavEffects] translates a
  * one-shot [SageEvent] through [navActionFor] into the same back-stack operations the scaffold's
- * own controls use — a top-level route resets the stack, any other route is pushed. The
- * chrome is hoisted here too: [LocalSampleTitleBarSink] collects the active screen's SAGE title
- * state into [topBarState], with the destination label and top-level flag as the pre-report
- * fallback, and [LocalSampleWidthClass] is computed once from the window width.
+ * own controls use — a top-level route resets the stack, any other route is pushed. `ShowSnackbar`
+ * is rendered by the scaffold's host instead. The chrome is hoisted here too: [LocalSampleTitleBarSink]
+ * collects the active screen's SAGE title state into [topBarState], with the destination label and
+ * top-level flag as the pre-report fallback, and [LocalSampleWidthClass] is computed once from the
+ * window width.
  */
 @Composable
 fun SampleNavHost() {
     Navigator(screen = HomeScreen) { navigator ->
         val current = navigator.lastItem as SampleScreen
-        val navEffects = remember(navigator) {
-            SampleNavEffects { event -> navigator.handleEvent(event) }
+        val snackbarHostState = remember { SnackbarHostState() }
+        val coroutineScope = rememberCoroutineScope()
+        val navEffects = remember(navigator, snackbarHostState, coroutineScope) {
+            SampleNavEffects { event ->
+                handleEffect(event, navigator, snackbarHostState, coroutineScope)
+            }
         }
 
         // A new destination starts without a reported title: `remember(current)` drops the previous
@@ -63,6 +73,7 @@ fun SampleNavHost() {
                 destination = current.destination,
                 widthClass = widthClass,
                 topBar = topBar,
+                snackbarHostState = snackbarHostState,
                 onSelectDestination = { destination -> navigator.showTopLevel(destination) },
                 onOpenSettings = { navigator.pushDestination(SampleDestination.SETTINGS) },
                 onBack = { navigator.pop() },
@@ -85,6 +96,35 @@ private fun currentWidthClass(): WidthClass {
     val density = LocalDensity.current
     val widthDp = with(density) { windowWidth.toDp().value }.roundToInt()
     return widthClassFromDp(widthDp)
+}
+
+/**
+ * Applies a feature's one-shot effect: a snackbar is rendered by the scaffold's host, and
+ * everything else goes through [navActionFor] to the back stack.
+ */
+private fun handleEffect(
+    event: SageEvent,
+    navigator: Navigator,
+    snackbarHostState: SnackbarHostState,
+    scope: CoroutineScope,
+) {
+    if (event !is SageEvent.ShowSnackbar) {
+        navigator.handleEvent(event)
+        return
+    }
+
+    scope.launch {
+        val result = snackbarHostState.showSnackbar(
+            message = event.message,
+            actionLabel = event.actionDetails?.clickActionLabel,
+            withDismissAction = event.withDismissAction,
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            event.actionDetails?.let { details ->
+                details.actionSink.sendAction(details.clickAction)
+            }
+        }
+    }
 }
 
 /**
@@ -135,6 +175,7 @@ private fun Navigator.pushDestination(destination: SampleDestination) {
 private fun screenFor(destination: SampleDestination): SampleScreen = when (destination) {
     SampleDestination.HOME -> HomeScreen
     SampleDestination.BROWSE -> BrowseScreen
+    SampleDestination.LIST_ITEMS -> ListItemsScreen
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
 }

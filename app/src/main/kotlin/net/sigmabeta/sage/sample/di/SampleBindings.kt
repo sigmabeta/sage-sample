@@ -16,6 +16,7 @@ import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.BuildConfig
 import net.sigmabeta.sage.sample.R
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
@@ -48,6 +49,7 @@ object SampleBindings {
             when (id) {
                 is WelcomeStringId -> welcomeResource(id)
                 is BrowseStringId -> browseResource(id)
+                is ListItemsStringId -> listItemsResource(id)
                 is SearchStringId -> searchResource(id)
                 is SettingsStringId -> settingsResource(id)
                 else -> error("No R.string mapping for $id")
@@ -66,9 +68,15 @@ object SampleBindings {
     private fun browseResource(id: BrowseStringId): Int = when (id) {
         BrowseStringId.BROWSE_TITLE -> R.string.nav_browse
         BrowseStringId.BROWSE_EMPTY -> R.string.browse_empty
+        BrowseStringId.BROWSE_OPEN_LIST_ITEMS -> R.string.nav_list_items
         BrowseStringId.BROWSE_DEMO_ITEM_LISTS -> R.string.browse_demo_item_lists
         BrowseStringId.BROWSE_DEMO_ITEM_METRO -> R.string.browse_demo_item_metro
         BrowseStringId.BROWSE_DEMO_ITEM_VOYAGER -> R.string.browse_demo_item_voyager
+    }
+
+    private fun listItemsResource(id: ListItemsStringId): Int = when (id) {
+        ListItemsStringId.LIST_ITEMS_TITLE -> R.string.nav_list_items
+        ListItemsStringId.LIST_ITEMS_ITEM_CLICKED -> R.string.list_items_item_clicked
     }
 
     private fun searchResource(id: SearchStringId): Int = when (id) {

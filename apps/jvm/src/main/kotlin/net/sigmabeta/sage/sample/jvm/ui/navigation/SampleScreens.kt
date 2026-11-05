@@ -15,6 +15,7 @@ import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
+import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeViewModel
@@ -57,6 +58,15 @@ data object SearchScreen : SampleScreen {
     @Composable
     override fun Content() {
         SampleListScreen(metroViewModel<SearchViewModel>())
+    }
+}
+
+data object ListItemsScreen : SampleScreen {
+    override val destination = SampleDestination.LIST_ITEMS
+
+    @Composable
+    override fun Content() {
+        SampleListScreen(metroViewModel<ListItemsViewModel>())
     }
 }
 

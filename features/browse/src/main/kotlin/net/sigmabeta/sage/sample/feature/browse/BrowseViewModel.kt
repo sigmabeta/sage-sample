@@ -10,6 +10,7 @@ import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
@@ -44,6 +45,17 @@ class BrowseViewModel(
     override fun handleAction(action: SageAction) {
         when (action) {
             is SageAction.InitNoArgs -> load()
+
+            is BrowseAction.OpenListItems -> emitEvent(
+                SageEvent.NavigateTo(
+                    // Route contract with the app: this must stay in sync with
+                    // SampleDestination.LIST_ITEMS.destName. SampleDestinationTest guards the
+                    // mapping, so changing either side alone fails a test.
+                    destination = "list-items",
+                    source = "BrowseViewModel",
+                ),
+            )
+
             else -> Unit
         }
     }

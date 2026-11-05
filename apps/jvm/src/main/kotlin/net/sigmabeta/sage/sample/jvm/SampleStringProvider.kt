@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.jvm
 
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
@@ -27,9 +28,12 @@ object SampleStringProvider : StringProvider {
         WelcomeStringId.WELCOME_OPEN_BROWSE to SampleStrings.WELCOME_OPEN_BROWSE,
         BrowseStringId.BROWSE_TITLE to SampleStrings.NAV_BROWSE,
         BrowseStringId.BROWSE_EMPTY to SampleStrings.BROWSE_EMPTY,
+        BrowseStringId.BROWSE_OPEN_LIST_ITEMS to SampleStrings.NAV_LIST_ITEMS,
         BrowseStringId.BROWSE_DEMO_ITEM_LISTS to SampleStrings.BROWSE_DEMO_ITEM_LISTS,
         BrowseStringId.BROWSE_DEMO_ITEM_METRO to SampleStrings.BROWSE_DEMO_ITEM_METRO,
         BrowseStringId.BROWSE_DEMO_ITEM_VOYAGER to SampleStrings.BROWSE_DEMO_ITEM_VOYAGER,
+        ListItemsStringId.LIST_ITEMS_TITLE to SampleStrings.NAV_LIST_ITEMS,
+        ListItemsStringId.LIST_ITEMS_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
         SearchStringId.SEARCH_TITLE to SampleStrings.NAV_SEARCH,
         SearchStringId.SEARCH_TODO to SampleStrings.SEARCH_TODO,
         SettingsStringId.SETTINGS_TITLE to SampleStrings.NAV_SETTINGS,
