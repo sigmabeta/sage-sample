@@ -2,17 +2,21 @@ package net.sigmabeta.sage.sample.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.appcomm.ActionSink
@@ -23,6 +27,7 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.SingleTextListModel
+import net.sigmabeta.sage.ui.vector
 
 /**
  * The app's renderer for SAGE [ListModel]s.
@@ -73,15 +78,27 @@ fun ListItemContent(
                 ),
         )
 
-        is EmptyStateListModel -> Text(
-            text = model.explanation,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        // SAGE's empty state carries an icon, so render it beside the explanation instead of
+        // dropping to text-only presentation.
+        is EmptyStateListModel -> Row(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(padding)
                 .padding(vertical = 16.dp),
-        )
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = model.icon.vector(),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = model.explanation,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
         is ErrorStateListModel -> Column(
             modifier = modifier

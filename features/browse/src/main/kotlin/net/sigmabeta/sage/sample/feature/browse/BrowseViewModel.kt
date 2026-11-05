@@ -49,7 +49,7 @@ class BrowseViewModel(
 
     override fun handleAction(action: SageAction) {
         when (action) {
-            is SageAction.InitNoArgs, is BrowseAction.LoadContent -> load(BrowseOutcome.SUCCESS)
+            is SageAction.InitNoArgs, is BrowseAction.LoadContent -> load(BrowseOutcome.CONTENT)
             is BrowseAction.LoadEmpty -> load(BrowseOutcome.EMPTY)
             is BrowseAction.LoadError -> load(BrowseOutcome.ERROR)
             else -> Unit

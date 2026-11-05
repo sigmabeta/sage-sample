@@ -81,7 +81,7 @@ data object SettingsScreen : SampleScreen {
  *   [LocalSampleTitleBarSink], so a dynamic title updates the shared top bar.
  * - **Layout:** [screenLayoutFor] picks SAGE's `ListScreen` or `GridScreen` (staggered when the
  *   state asks for it) from the state's [net.sigmabeta.sage.list.ColumnType] and the window's
- *   [WidthClass]. A one-column state keeps the existing list presentation.
+ *   [WidthClass]. A state that fits at most one column keeps the existing list presentation.
  * - **Lifecycle:** exactly one foreground pair is sent here — [SageAction.Resume] on entering
  *   composition and [SageAction.Pause] on leaving. SAGE's own title-change `Resume` is coalesced
  *   in [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
@@ -118,13 +118,16 @@ private fun SampleListScreen(viewModel: SampleListViewModel<*>) {
         ListItemContent(model, sink, itemModifier, padding)
     }
 
+    val sideMargin = SCREEN_SIDE_MARGIN_DP.dp
+    val screenModifier = Modifier.fillMaxSize()
+
     when (val layout = screenLayoutFor(state.columnType, widthClass)) {
         SampleScreenLayout.List -> ListScreen(
             state = state,
             actionSink = viewModel,
             showDebug = false,
-            sideMargin = SCREEN_SIDE_MARGIN_DP.dp,
-            modifier = Modifier.fillMaxSize(),
+            sideMargin = sideMargin,
+            modifier = screenModifier,
             itemContent = itemContent,
         )
 
@@ -135,8 +138,8 @@ private fun SampleListScreen(viewModel: SampleListViewModel<*>) {
             numberOfColumns = layout.columns,
             staggered = layout.staggered,
             allowHorizScroller = layout.allowHorizScroller,
-            sideMargin = SCREEN_SIDE_MARGIN_DP.dp,
-            modifier = Modifier.fillMaxSize(),
+            sideMargin = sideMargin,
+            modifier = screenModifier,
             itemContent = itemContent,
         )
     }

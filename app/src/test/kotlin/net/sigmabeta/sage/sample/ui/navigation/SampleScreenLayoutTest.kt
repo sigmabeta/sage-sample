@@ -54,6 +54,27 @@ class SampleScreenLayoutTest {
     }
 
     @Test
+    fun `a column type that fits at most one column stays a list`() {
+        ColumnType.Regular(500).let { columnType ->
+            WidthClass.entries.forEach { widthClass ->
+                assertEquals(
+                    "Regular(500) fits at most one column at $widthClass, so it must stay List",
+                    SampleScreenLayout.List,
+                    screenLayoutFor(columnType, widthClass),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `two columns fit at medium width`() {
+        assertEquals(
+            SampleScreenLayout.Grid(columns = 2, staggered = false, allowHorizScroller = false),
+            screenLayoutFor(ColumnType.Regular(300), WidthClass.MEDIUM),
+        )
+    }
+
+    @Test
     fun `a staggered column type keeps its staggered and horizontal-scroller flags`() {
         assertEquals(
             SampleScreenLayout.Grid(columns = 3, staggered = true, allowHorizScroller = true),

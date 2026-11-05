@@ -122,26 +122,19 @@ abstract class SampleListViewModel<StateType : ListState> :
      *
      * A repeated `Resume` (or `Pause`) returns `false`; every other action is always accepted.
      */
-    private fun acceptsForegroundTransition(action: SageAction): Boolean = when (action) {
-        SageAction.Resume -> {
-            if (resumed) {
-                false
-            } else {
-                resumed = true
-                true
-            }
+    private fun acceptsForegroundTransition(action: SageAction): Boolean {
+        val target = when (action) {
+            SageAction.Resume -> true
+            SageAction.Pause -> false
+            else -> return true
         }
 
-        SageAction.Pause -> {
-            if (resumed) {
-                resumed = false
-                true
-            } else {
-                false
-            }
+        if (resumed == target) {
+            return false
         }
 
-        else -> true
+        resumed = target
+        return true
     }
 
     protected abstract fun handleAction(action: SageAction)
@@ -152,13 +145,10 @@ abstract class SampleListViewModel<StateType : ListState> :
         }
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // Background work (ticket 04: asynchronous Browse).
+    // --- Background work --------------------------------------------------------------------
     //
-    // Kept in its own section so other additions to this shared base (e.g. uiEvents) merge cleanly.
-    // Mirrors the VGLS base: collect a feature flow off the main thread, inside the view model's
-    // own scope, so it is cancelled when the screen's ViewModel is cleared.
-    // ---------------------------------------------------------------------------------------------
+    // Collect a feature flow off the main thread, inside the view model's own scope, so it is
+    // cancelled when the screen's ViewModel is cleared.
 
     /**
      * Collects this flow on [dispatcher] within [SageScheduler.coroutineScope] (the
@@ -189,11 +179,14 @@ abstract class SampleListViewModel<StateType : ListState> :
     /** Transient effects for the screen to render/forward; see [emitEvent]. */
     val uiEvents: SharedFlow<SageEvent> = internalUiEvents
 
-    /** Emits a one-shot effect on the view model's scope, on the main dispatcher. */
+    /**
+     * Emits a one-shot effect.
+     *
+     * `MutableSharedFlow.tryEmit` is thread-safe and never suspends, and callers already run on
+     * the main dispatcher, so no extra dispatch would add anything.
+     */
     protected fun emitEvent(event: SageEvent) {
-        viewModelScope.launch(scheduler.dispatchers.main) {
-            internalUiEvents.tryEmit(event)
-        }
+        internalUiEvents.tryEmit(event)
     }
 }
 

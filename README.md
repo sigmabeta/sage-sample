@@ -89,6 +89,8 @@ app/                        Android application
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
     SampleScreens.kt        one Voyager Screen per destination
     SampleNavHost.kt        the back stack and top-level switch semantics
+    SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
+    SampleNavAction.kt      pure SageEvent -> ShowTopLevel / Push / Pop policy
     SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
     SampleTopBar.kt         title/back from the active screen's SAGE title state
     SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
@@ -191,6 +193,12 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
   `NavigationRail` at 600 dp and wider. Selecting one resets the stack to `[home, target]`, so
   back from Browse or Search returns Home.
 - **Settings** is pushed from the hamburger.
+- **Feature navigation is translated, not re-implemented.** Features emit SAGE
+  `SageEvent`s (`NavigateTo`, `NavigateSingleTopLevel`, `NavigateBack`) through
+  `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known route to `ShowTopLevel`
+  when it is a top-level destination and to `Push` when it is not (Settings included), so a
+  feature can reach Settings the same way the hamburger does. `NavigateBack` pops, and
+  unknown routes or event types are ignored.
 - **The top bar comes from the active screen.** The screen reports its SAGE
   `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState` uses the reported
   `title` and `shouldShowBack` (falling back to the destination label and `isTopLevel` until
@@ -200,8 +208,10 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
 - **Width classes** are SAGE's: 600 dp (compact → medium) and 840 dp (medium → expanded).
   `SampleNavHost` computes the window's class once and provides it via `LocalSampleWidthClass`,
   so the nav suite (bottom bar vs rail) and list/grid layout agree. A screen's
-  `ColumnType.One` always renders as `ListScreen`; more columns use `GridScreen` with
-  `staggered` / `allowHorizScroller` from the column type.
+  `ColumnType.One` always renders as `ListScreen`; so does any column type that fits at most
+  one column (including a wide `Regular`/`Staggered` on a narrow window, where integer
+  division yields 0). More columns use `GridScreen` with `staggered` / `allowHorizScroller`
+  from the column type.
 - **Each screen resolves its own view model** with `metroViewModel<...>()`. Voyager gives every
   screen its own `ViewModelStoreOwner`, so a view model is retained while its screen stays in the
   back stack (even while another screen covers it) and is cleared when the screen is popped or

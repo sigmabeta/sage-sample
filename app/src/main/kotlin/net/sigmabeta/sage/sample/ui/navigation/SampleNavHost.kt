@@ -26,7 +26,8 @@ import kotlin.math.roundToInt
  * finish); the top bar's back arrow calls [Navigator.pop] directly.
  *
  * This is also where feature navigation intents land: [LocalSampleNavEffects] translates a
- * one-shot [SageEvent] into the same back-stack operations the scaffold's own controls use. The
+ * one-shot [SageEvent] through [navActionFor] into the same back-stack operations the scaffold's
+ * own controls use — a top-level route resets the stack, any other route is pushed. The
  * chrome is hoisted here too: [LocalSampleTitleBarSink] collects the active screen's SAGE title
  * state into [topBarState], with the destination label and top-level flag as the pre-report
  * fallback, and [LocalSampleWidthClass] is computed once from the window width.
@@ -63,7 +64,7 @@ fun SampleNavHost() {
                 widthClass = widthClass,
                 topBar = topBar,
                 onSelectDestination = { destination -> navigator.showTopLevel(destination) },
-                onOpenSettings = { navigator.openSettings() },
+                onOpenSettings = { navigator.pushDestination(SampleDestination.SETTINGS) },
                 onBack = { navigator.pop() },
             ) { innerPadding ->
                 SlideTransition(
@@ -89,21 +90,17 @@ private fun currentWidthClass(): WidthClass {
 /**
  * Turning a feature event into navigation is app policy; the feature only names a route.
  *
- * Routes resolve through [SampleDestination.fromRoute], which matches `RouteDescriptor.destName`.
- * Unknown routes and event types are ignored rather than crashing a screen.
+ * [navActionFor] does the translation — a top-level route resets the stack, any other route is
+ * pushed — and this applies the result to Voyager. Unknown routes and event types are ignored
+ * rather than crashing a screen.
  */
 private fun Navigator.handleEvent(event: SageEvent) {
-    when (event) {
-        is SageEvent.NavigateTo -> navigateToRoute(event.destination)
-        is SageEvent.NavigateSingleTopLevel -> navigateToRoute(event.destination)
-        is SageEvent.NavigateBack -> pop()
-        else -> Unit
+    when (val action = navActionFor(event)) {
+        is SampleNavAction.ShowTopLevel -> showTopLevel(action.destination)
+        is SampleNavAction.Push -> pushDestination(action.destination)
+        SampleNavAction.Pop -> pop()
+        null -> Unit
     }
-}
-
-private fun Navigator.navigateToRoute(route: String) {
-    val destination = SampleDestination.fromRoute(route) ?: return
-    showTopLevel(destination)
 }
 
 /**
@@ -124,9 +121,14 @@ private fun Navigator.showTopLevel(destination: SampleDestination) {
     replaceAll(screens)
 }
 
-private fun Navigator.openSettings() {
-    if (lastItem != SettingsScreen) {
-        push(SettingsScreen)
+/**
+ * Pushes a non-top-level destination once. Features reach Settings the same way the hamburger
+ * does, without replacing the screen they came from.
+ */
+private fun Navigator.pushDestination(destination: SampleDestination) {
+    val target = screenFor(destination)
+    if (lastItem != target) {
+        push(target)
     }
 }
 
