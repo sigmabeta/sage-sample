@@ -59,6 +59,21 @@ scripts/ci/verify.sh --list          # task names
 The release APK is unsigned: the sample has no release signing config, so `assembleRelease`
 produces an unsigned artifact that must be signed before installing.
 
+Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules and
+`:core:viewmodel`, Android unit tests in `:app` for app-owned logic such as route mapping,
+chrome derivation, and layout selection. No emulator is needed; there is no Paparazzi, device,
+native, or desktop/JS target.
+
+Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
+`scripts/dev/`:
+
+```bash
+scripts/dev/worktree-add.sh <name> [base-ref]   # branch + local.properties + reference-cloned SAGE
+scripts/dev/worktree-rm.sh <dir>                # submodule-aware removal
+scripts/dev/check-worktree-hygiene.sh [dir]     # clean tree, no stash, submodule pin on a remote
+scripts/dev/check-ticket-gates.sh --feature <slug>  # resolved boxes/comments + verify + JUnit
+```
+
 ## Updating SAGE
 
 SAGE is pinned by the submodule commit, so updates are explicit:
@@ -100,9 +115,11 @@ features/welcome/           pure-JVM feature module (no Android dependencies)
   WelcomeState.kt           ListState: what the screen contains
   WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
   WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
-features/browse/            same shape; placeholder content (TODO)
+features/browse/            same shape; asynchronous LCE content with demo outcomes
 features/search/            same shape; placeholder content (TODO)
 features/settings/          same shape; placeholder content (TODO)
+scripts/dev/                agent worktrees, ticket gates, worktree hygiene
+CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
 detekt-config.yml           ruleset read by the SAGE base plugins
 sage/                       SAGE submodule (composite build)
 ```
