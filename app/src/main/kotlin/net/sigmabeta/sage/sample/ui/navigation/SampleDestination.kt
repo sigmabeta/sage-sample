@@ -9,9 +9,10 @@ import net.sigmabeta.sage.ui.Icon
 /**
  * The app's destinations, described with SAGE's navigation vocabulary.
  *
- * [isTopLevel] drives the top bar: top-level destinations show the hamburger, everything else
- * shows a back arrow. Only top-level destinations appear in the bottom bar / rail — Settings is
- * reached from the hamburger.
+ * [isTopLevel] marks the destinations rendered as bottom-bar / rail items — Settings is reached
+ * from the hamburger instead. It also supplies the top bar's pre-report fallback: once a screen
+ * reports its SAGE `ListStateActual.title`, the reported `shouldShowBack` decides between the
+ * hamburger and the back arrow.
  */
 enum class SampleDestination(
     override val destName: String,
