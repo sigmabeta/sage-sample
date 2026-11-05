@@ -19,9 +19,11 @@ import net.sigmabeta.sage.ui.StringProvider
  * The Welcome screen's view model. It owns state, actions and analytics; the app only observes
  * [uiStateActual] and forwards user actions.
  *
- * `@ContributesIntoMap` + `@ViewModelKey` put it in Metro's ViewModel map, so the screen resolves
- * it with `metroViewModel<WelcomeViewModel>()` without a graph accessor or factory. Android owns
- * its lifetime, which is why there is no `@SingleIn` here.
+ * `@ContributesIntoMap` + `@ViewModelKey` contribute its factory to Metro's ViewModel map, so the
+ * screen resolves it with `metroViewModel<WelcomeViewModel>()` without a graph accessor. The
+ * instance lives in the Voyager screen's `ViewModelStore`: it is retained while the screen stays
+ * in the back stack and cleared when the screen is popped or removed. That UI lifetime is why
+ * there is no `@SingleIn` here.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
