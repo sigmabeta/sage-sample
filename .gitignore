@@ -74,3 +74,6 @@ ktlint.html
 
 # Kotlin 2.0
 .kotlin/
+
+# Local markdown issue tracker (docs/agents/issue-tracker.md)
+.scratch/
