@@ -27,12 +27,15 @@ import net.sigmabeta.sage.ui.StringProvider
  * from the Dagger era, where a `ViewModel` shell wired the brain to a screen. Metro lets each screen
  * resolve its own `ViewModel`, so the brain *is* the ViewModel:
  *
- * - it is contributed into Metro's ViewModel map by the feature module (see
- *   `@ContributesIntoMap` + `@ViewModelKey` on each view model), so `metroViewModel<...>()` can
- *   build it;
- * - `viewModelScope` replaces the app-wide scheduler scope, so work is cancelled when the screen
- *   goes away (Android owns the lifetime);
- * - there is no `BrainProvider`/factory indirection and no graph accessor per screen.
+ * - the feature module contributes its factory into Metro's ViewModel map (see
+ *   `@ContributesIntoMap` + `@ViewModelKey` on each view model), and `metroViewModel<...>()` uses
+ *   it to build an instance;
+ * - that instance lives in the Voyager screen's own `ViewModelStore`: it is retained while the
+ *   screen stays in the back stack and cleared when the screen is popped or removed, at which
+ *   point `viewModelScope` — which replaces the app-wide scheduler scope — is cancelled. The
+ *   app-scope contribution never makes the instance app-scoped, and popping + re-pushing builds a
+ *   fresh one;
+ * - there is no `BrainProvider` shell and no graph accessor per screen.
  *
  * The class stays feature-agnostic: everything screen-specific is [initialState] and
  * [handleAction].
