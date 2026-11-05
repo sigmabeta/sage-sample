@@ -1,9 +1,9 @@
 # SAGE Sample
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
-Android app module, four pure-JVM feature modules (Welcome, plus Browse/Search/Settings
-placeholders over a shared `:core:viewmodel` base), and SAGE itself as a Git submodule consumed
-through a Gradle composite build.
+Android app module (`:app`), one Compose Desktop app module (`:apps:jvm`), four pure-JVM feature
+modules (Welcome, plus Browse/Search/Settings placeholders over a shared `:core:viewmodel` base),
+and SAGE itself as a Git submodule consumed through a Gradle composite build.
 
 ## Requirements
 
@@ -25,6 +25,7 @@ cd sage-sample
 ./gradlew build             # compile, detekt, ktlint, lint, debug + release APK
 ./gradlew :app:assembleDebug
 ./gradlew :app:installDebug
+./gradlew :apps:jvm:run     # run the Compose Desktop app
 ```
 
 A plain clone needs the submodule initialised first:
@@ -35,16 +36,17 @@ git submodule update --init --recursive
 
 ## Verification
 
-CI is `.github/workflows/ci.yml`. Three jobs run on every push, pull request, and manual dispatch:
+CI is `.github/workflows/ci.yml`. Four jobs run on every push, pull request, and manual dispatch:
 
 | Job | Command |
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
 | `unit-test` | `./gradlew test --continue` |
 | `android` | `./gradlew :app:lintRelease :app:assembleDebug :app:assembleRelease` |
+| `jvm-app` | `./gradlew :apps:jvm:assemble` |
 
-The two compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
-Reports, JUnit XML, and the APKs are uploaded as workflow artifacts.
+The compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
+Reports, JUnit XML, the desktop JVM jar, and the APKs are uploaded as workflow artifacts.
 
 Locally, `scripts/ci/verify.sh` runs the same tasks sequentially, keeps going after a failure so
 one run shows everything, and writes a summary with all reports to `build/verification/`:
@@ -59,10 +61,10 @@ scripts/ci/verify.sh --list          # task names
 The release APK is unsigned: the sample has no release signing config, so `assembleRelease`
 produces an unsigned artifact that must be signed before installing.
 
-Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules and
-`:core:viewmodel`, Android unit tests in `:app` for app-owned logic such as route mapping,
-chrome derivation, and layout selection. No emulator is needed; there is no Paparazzi, device,
-native, or desktop/JS target.
+Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
+`:core:viewmodel`, and the desktop app; Android unit tests in `:app` for app-owned logic such as
+route mapping, chrome derivation, and layout selection. No emulator is needed; there is no
+Paparazzi, device, or native target.
 
 Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
 `scripts/dev/`:
@@ -109,6 +111,17 @@ app/                        Android application
     SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
     SampleTopBar.kt         title/back from the active screen's SAGE title state
     SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
+apps/jvm/                   Compose Desktop application (shares the feature modules)
+  Main.kt                   builds the desktop Metro graph and opens the window
+  SampleStrings.kt          desktop text, mirroring app/src/main/res/values/strings.xml
+  SampleStringProvider.kt   feature SageStringId -> desktop text
+  di/JvmSampleAppGraph.kt   desktop @DependencyGraph(AppScope::class) : ViewModelGraph
+  di/JvmSampleBindings.kt   JVM implementations of SAGE seams (strings, logging, dispatchers)
+  di/JvmMetroViewModelFactory.kt  the factory behind metroViewModel() on desktop
+  ui/SampleApp.kt           theme + navigation host
+  ui/ListItemContent.kt     renders each SAGE ListModel
+  ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
+  ui/navigation/            same destinations, chrome and back stack as :app
 core/viewmodel/             pure-JVM ViewModel base shared by every feature
   SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, scheduler
 features/welcome/           pure-JVM feature module (no Android dependencies)
@@ -235,6 +248,27 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
   removed; popping and re-pushing a screen builds a fresh one. Metro contributes only the factory
   (`@ContributesIntoMap` + `@ViewModelKey`); the instance lives in the Voyager store, which is why
   screen view models are not `@SingleIn`.
+
+## Desktop app
+
+`apps/jvm` renders the same UI with Compose Multiplatform desktop. It reuses the feature modules,
+SAGE's `common` UI modules and Voyager directly; the app-owned port lives in `apps/jvm` because
+`:app` is Android-only. Four platform seams differ:
+
+- **Text:** there are no Android resources. `SampleStrings` holds the same values as
+  `app/src/main/res/values/strings.xml`, and `SampleStringProvider` maps feature `SageStringId`s
+  to them — the desktop twin of `SampleBindings`.
+- **Theme:** `sage.android.ui.themes` is Android-only, so `SampleApp` wraps `MaterialTheme` with
+  `lightColorScheme` / `darkColorScheme`, following the system theme.
+- **View model stores:** Voyager supplies per-screen `ViewModelStoreOwner`s only on Android.
+  `WithPerScreenViewModelStore` hangs a store off a Voyager `ScreenModel`, so a screen keeps its
+  view model while it stays in the back stack and clears it when popped.
+- **Dispatchers:** `JvmSampleBindings` provides `SageDispatchers` with `Dispatchers.Main` backed
+  by `kotlinx-coroutines-swing` (the AWT event queue), plus the JVM `Hatchet`, analytics and
+  delay-policy bindings.
+
+The Metro graph is `JvmSampleAppGraph`; `Main.kt` builds it once and installs its
+`metroViewModelFactory` above the window, exactly as `MainActivity` does on Android.
 
 ## Adding a feature
 

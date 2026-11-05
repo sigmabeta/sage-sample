@@ -1,0 +1,38 @@
+package net.sigmabeta.sage.sample.jvm
+
+/**
+ * The desktop app's user-visible text.
+ *
+ * The Android app owns the same strings in `app/src/main/res/values/strings.xml`; the desktop
+ * target has no Android resources, so it keeps its own copy and maps feature `SageStringId`s to
+ * these values in [SampleStringProvider].
+ */
+object SampleStrings {
+    const val APP_NAME = "SAGE Sample"
+    const val WELCOME_TITLE = "SAGE Sample"
+    const val WELCOME_ABOUT_HEADER = "About"
+    const val WELCOME_ABOUT_BODY_COMPOSITE_BUILD =
+        "SAGE is consumed as a Gradle composite build from the sage/ submodule."
+    const val WELCOME_ABOUT_BODY_LIST_STATE =
+        "Each feature is a pure JVM module that produces a ListState rendered by SAGE's ListScreen."
+    const val WELCOME_OPEN_BROWSE = "Open Browse"
+
+    const val NAV_HOME = "Home"
+    const val NAV_BROWSE = "Browse"
+    const val NAV_SEARCH = "Search"
+    const val NAV_SETTINGS = "Settings"
+    const val CD_OPEN_SETTINGS = "Open settings"
+    const val CD_NAVIGATE_BACK = "Back"
+
+    const val BROWSE_EMPTY = "Nothing to browse yet."
+    const val BROWSE_DEMO_HEADER = "Demo outcomes"
+    const val BROWSE_DEMO_CONTENT = "Load content"
+    const val BROWSE_DEMO_EMPTY = "Load empty state"
+    const val BROWSE_DEMO_ERROR = "Load error state"
+    const val BROWSE_DEMO_ITEM_LISTS = "SAGE lists"
+    const val BROWSE_DEMO_ITEM_METRO = "Metro view models"
+    const val BROWSE_DEMO_ITEM_VOYAGER = "Voyager navigation"
+
+    const val SEARCH_TODO = "TODO: search content"
+    const val SETTINGS_TODO = "TODO: settings content"
+}
