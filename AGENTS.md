@@ -1,118 +1,76 @@
 # AGENTS.md — SAGE Sample orientation
 
-Orientation for coding agents. Keep this file lean; update it when a load-bearing
-fact below stops being true.
+Orientation for coding agents. **Architecture lives in [`README.md`](README.md)** — its
+"How the wiring works", "Screens", "Navigation" and "Layout" sections. This file is the
+agent-only guardrails and pointers; prefer a pointer over repeating the README.
 
 ## What this repo is
 
-The canonical reference for building an app on [SAGE](sage/): one Android app
-module (`:app`), four pure-JVM feature modules (`:features:welcome` plus
-browse/search/settings placeholders) over a shared ViewModel base (`:core:viewmodel`),
-and SAGE itself as a Git submodule consumed through a Gradle composite build. It is
-deliberately small — patterns added here are meant to be copied by real SAGE apps, so
-prefer the conventional SAGE way over a local shortcut.
+The canonical reference for building an app on [SAGE](sage/): one Android app (`:app`), four
+pure-JVM feature modules over `:core:viewmodel`, and SAGE itself as a Git submodule consumed
+through a Gradle composite build. Patterns added here are copied by real SAGE apps, so prefer
+the conventional SAGE way over a local shortcut.
 
 ## Before doing any work
 
 - Refresh SAGE to its current `main` line:
   `git -C sage fetch origin main && git -C sage checkout origin/main`.
-  If that won't check out cleanly, stop and ask rather than merging or resetting.
-  The submodule is a detached HEAD at a pinned commit — that is expected; this repo
-  is what pins it.
-- On a fresh clone, initialise the submodule first:
-  `git submodule update --init --recursive`.
-- `sage/README.md` documents SAGE's module inventory and build conventions. Every
-  SAGE module has its own `README.md`; read the one you're about to depend on.
-- `local.properties` (gitignored) must point at an Android SDK with platform 36.
-  `settings.gradle.kts` copies it into `sage/local.properties` for the included build.
-- JDK 17 or newer is required (CI uses Temurin 21).
+  If that won't check out cleanly, stop and ask rather than merging or resetting. The
+  submodule is a detached HEAD at a pinned commit — this repo is what pins it.
+- On a fresh clone, initialise the submodule: `git submodule update --init --recursive`.
+- Read the `README.md` of every SAGE module you depend on (`sage/<module>/README.md`).
+- `local.properties` (gitignored) must point at an Android SDK with platform 36;
+  `settings.gradle.kts` copies it into `sage/local.properties`. JDK 17+ (CI uses Temurin 21).
 
-## Load-bearing facts (verified 2026-11-05)
+## Read before changing behaviour
 
-- **DI is Metro** (`dev.zacsweers.metro`), not Hilt/Dagger/KSP. The app graph is
-  `SampleAppGraph` (`@DependencyGraph(AppScope::class)`), created once in
-  `SampleApplication` via `createGraphFactory<SampleAppGraph.Factory>().create(this)`.
-  App-side bindings live in `SampleBindings`
-  (`@BindingContainer` + `@ContributesTo(AppScope::class)`).
-- **Screens are ViewModels, not graph-resolved brains.** Each feature's
-  `<Name>ViewModel` is an `androidx.lifecycle.ViewModel` contributed into Metro's
-  ViewModel map (`@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())`
-  + `@ViewModelKey`) and resolved by its screen with `metroViewModel<...>()`.
-  `SampleAppGraph : ViewModelGraph` carries the map, and a contributed
-  `SampleMetroViewModelFactory` supplies `metroViewModelFactory`, which `MainActivity`
-  installs via `LocalMetroViewModelFactory`. Do not add per-screen graph accessors and
-  do not go back to SAGE's `ListViewModelBrain`: that plain-class shell is the
-  Dagger-era path this structure replaces.
-- **Navigation is Voyager** (`cafe.adriel.voyager`), owned by `SampleNavHost`'s single
-  `Navigator`. Home/Browse/Search are top-level; Settings is pushed from the hamburger.
-  Selecting a top-level destination resets the stack to `[Home, target]`, so back from
-  Browse/Search returns Home. Features emit SAGE `SageEvent`s through
-  `SampleNavEffects`; `navActionFor` translates a route into `ShowTopLevel` for a
-  top-level destination or `Push` for anything else, so a feature navigating to
-  `settings` pushes it (once, like the hamburger) instead of replacing the stack.
-  The nav suite is a `NavigationBar` on a
-  `WidthClass.COMPACT` window and a `NavigationRail` on anything wider — hand-rolled
-  because the `material3-adaptive-navigation-suite` artifact pins material3 older than
-  the BOM. `SampleNavHost` computes the width class once (600/840 dp breakpoints, via
-  `widthClassFromDp`) and provides it through `LocalSampleWidthClass`.
-- **The top bar is screen-driven, with a destination fallback.** The active screen reports
-  its SAGE `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState`
-  derives the title (`title` falling back to the destination label) and the leading
-  affordance (`shouldShowBack` → back arrow, otherwise hamburger), so `MENU` opens
-  Settings and `BACK` pops. `remember(current)` resets the report on destination change.
-  `SampleDestination` tab labels/icons and `isTopLevel` remain app-owned; `isTopLevel`
-  only marks nav items and supplies the pre-report fallback.
-- **List versus grid is derived, not chosen per screen.** `SampleScreens` reads
-  `LocalSampleWidthClass` and calls `screenLayoutFor(state.columnType, widthClass)`:
-  one or zero columns keep SAGE's `ListScreen`; more columns use `GridScreen` with the
-  column count and, for `ColumnType.Staggered`, the staggered/horizontal-scroller flags.
-  Every sample screen stays `ColumnType.One`, so the grid path is covered by tests.
-- **One foreground Resume/Pause path.** The app's shared screen owns
-  `DisposableEffect { Resume; onDispose { Pause } }`. SAGE's `ListScreen`/`GridScreen`
-  also emit `Resume` on title change; `SampleListViewModel.sendAction` coalesces the
-  pair so only false→true `Resume` and true→false `Pause` reach `handleAction` and
-  analytics.
-- **A screen ViewModel lives and dies with its Voyager screen.** Voyager gives every
-  `Screen` its own `ViewModelStoreOwner` (the screen's content resolves against it), so a
-  ViewModel is retained while the screen stays in the back stack — including while covered
-  by a pushed screen — and is cleared when the screen is popped or removed; `viewModelScope`
-  is cancelled then, and popping + re-pushing builds a fresh ViewModel. Metro's
-  `@ContributesIntoMap(AppScope::class, ...)` + `@ViewModelKey` contributes only a *factory*
-  to the app graph: the instance lives in the Voyager store, so no screen ViewModel is
-  `@SingleIn`. `SampleMetroViewModelFactory` / `LocalMetroViewModelFactory` supply that
-  factory without changing the store owner or the lifetime. `viewModelScope` replaces the
-  app-wide coroutine scope (each VM builds its own `SageScheduler` in `:core:viewmodel`).
-- **Screen split:** a feature owns the state machine and the app owns rendering.
-  `WelcomeState : ListState` declares the content; `WelcomeViewModel :
-  SampleListViewModel<WelcomeState>` owns actions and analytics; `SampleScreens`
-  resolves it with `metroViewModel`, observes `uiStateActual`, reports its title through
-  `LocalSampleTitleBarSink` and passes it to SAGE's `ListScreen` or, for multi-column
-  states, `GridScreen`; `ListItemContent` renders each `ListModel`. Unknown model types
-  fall through to a spacer.
-- **Text never touches `R.string` in a feature.** Features expose a
-  `SageStringId` enum (`WelcomeStringId`) and read text through `StringProvider`.
-  `SampleBindings` is the only place that maps ids to resources — adding a string
-  means adding the enum constant **and** its `R.string` mapping. Navigation labels
-  are app-owned, so `SampleDestination` holds `@StringRes` ids directly.
-- **Module conventions:** `:features:*` and `:core:viewmodel` apply `sage.jvm` (features
-  also apply `sage.di`). `:app` applies `android.application`, Compose, `metro`, `detekt`,
-  and `ktlint` directly, because SAGE's convention plugins target library modules, not
-  applications. That is why the app pins the ktlint engine from the catalog itself.
-- **Build wiring:** `settings.gradle.kts` includes `sage/sage-build-logic` and
-  `sage` as composite builds and reuses SAGE's version catalog as `libs`. There are
-  no `dependencySubstitution` rules — SAGE project coordinates
-  (`net.sigmabeta.sage:*`) resolve automatically. Add modules with
-  `projects.features.<name>`; add dependencies through `libs.sage.*` aliases, never
-  with a local version.
-- **Lint config is required:** `detekt-config.yml` at the repo root is read by
-  SAGE's convention plugins. `.editorconfig` mirrors SAGE's ktlint ruleset,
-  including the `@Composable` PascalCase exemption — don't delete either.
-- **Unit tests live beside their module.** `./gradlew test` and CI's `unit-test` job run
-  them. The feature modules and `:core:viewmodel` are pure JVM (plain JUnit); `:app` uses
-  Android unit tests for app-owned logic such as route mapping, chrome derivation and
-  layout selection. No test needs an emulator.
-- There is no Paparazzi/screenshot setup, no device test suite, no native code, and
-  no desktop/JS target. Don't boot an emulator to verify changes.
+- [`README.md § How the wiring works`](README.md#how-the-wiring-works) — Metro DI, screens as
+  ViewModels, Voyager navigation, the composite build, the version catalog.
+- [`README.md § Screens`](README.md#screens) — feature-owns-state / app-owns-rendering, text
+  ids, list-versus-grid selection.
+- [`CODING_STANDARDS.md`](CODING_STANDARDS.md) — the review-time rules for closed-set tests,
+  intent mapping, and text ownership.
+
+## Guardrails
+
+- **DI is Metro** (`dev.zacsweers.metro`), not Hilt/Dagger. A screen contributes
+  `@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())` + `@ViewModelKey` and
+  resolves with `metroViewModel<...>()`. Do not add per-screen graph accessors and do not go
+  back to SAGE's `ListViewModelBrain`/`BrainProvider`.
+- **A screen ViewModel lives in its Voyager screen's store**, not the app graph: no `@SingleIn`
+  on a screen VM. Popping and re-pushing builds a fresh one.
+- **Features emit `SageEvent`s; the app owns navigation.** `SampleNavEffects` →
+  `navActionFor` decides `ShowTopLevel` (reset to `[Home, target]`), `Push` (Settings), or
+  `Pop`. Don't navigate from a feature module.
+- **Chrome comes from the active screen's `ListStateActual.title`** (`title` +
+  `shouldShowBack`), with the destination as the pre-report fallback. Navigation-tab labels and
+  icons stay app-owned.
+- **Layout is derived:** `screenLayoutFor(columnType, widthClass)` keeps `ListScreen` at one or
+  zero columns and uses `GridScreen` (staggered when the column type asks) above that.
+- **One foreground pair:** the shared screen sends `Resume`/`Pause`; SAGE's list screens also
+  send `Resume` on title change, coalesced in `SampleListViewModel.sendAction`.
+- **Text never touches `R.string` in a feature.** Use a `SageStringId` enum + `StringProvider`;
+  `SampleBindings` is the only id → resource mapping. Demo/repository content included.
+- **Module plugins:** `:features:*` and `:core:viewmodel` apply `sage.jvm` (features also
+  `sage.di`); `:app` applies `android.application`, Compose, `metro`, `detekt`, and `ktlint`
+  directly. Add SAGE dependencies through `libs.sage.*`, never a local version.
+- **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
+  convention plugins — don't delete either.
+- **Tests live beside their module:** feature/core are pure JVM (JUnit); `:app` uses Android
+  unit tests for app-owned logic. No emulator, device suite, Paparazzi, native code, or
+  desktop/JS target.
+- **Search:** use `git grep`/`rg`; when using `find`/`grep`, prune `build/` and `.gradle/`.
+  Generated Android lint/dependency XML is enormous.
+
+## Worktrees and specs
+
+- Create a build-ready worktree with `scripts/dev/worktree-add.sh <name> [base-ref]` (copies
+  `local.properties`, reference-clones SAGE); remove it with
+  `scripts/dev/worktree-rm.sh <dir>`.
+- Never `git stash` in a multi-worktree run: the stash is shared across linked worktrees.
+- Specs and tickets live under `.scratch/<feature>/` (gitignored). Gate closure with
+  `scripts/dev/check-ticket-gates.sh --feature <slug>`; check a worktree before hand-off with
+  `scripts/dev/check-worktree-hygiene.sh [dir]`.
 
 ## Build / verify
 
@@ -124,29 +82,23 @@ prefer the conventional SAGE way over a local shortcut.
 scripts/ci/verify.sh                      # full CI-mirroring suite
 ```
 
-- **Always run `scripts/ci/verify.sh` before any `git push`**, and only push when it
-  reports `OVERALL: PASS`. It runs the same Gradle tasks as
-  `.github/workflows/ci.yml` sequentially, keeps going after a failure so one run
-  shows everything, and collates logs, reports, JUnit XML, and APKs into
-  `build/verification/` with a `summary.txt`.
-  `scripts/ci/verify.sh --list` / `--skip-apps` / `--rerun` / `<task-name>…` scope it.
-- Heed its `WARNING:` lines too: uncommitted changes or a SAGE commit that isn't on
-  a remote branch mean CI may not see what you tested.
-- **CI mirrors the script; change them together.** `.github/workflows/ci.yml` has
-  three jobs: `static-analysis` (ktlint + detekt, the gate), then `unit-test` and
-  `android` (lint + debug/release APK). It runs on every push, PR, and manual
-  dispatch with Temurin 21 and SDK platform 36. Reports and APKs are uploaded as
-  artifacts.
-- The release build type has no signing config, so `assembleRelease` produces an
-  unsigned APK.
+- **Always run `scripts/ci/verify.sh` before any `git push`**, and only push when it reports
+  `OVERALL: PASS`. It mirrors `.github/workflows/ci.yml`, keeps going after a failure, and
+  collates logs/reports/JUnit/APKs into `build/verification/` with a `summary.txt`.
+  Scope it with `--list`, `--skip-apps`, `--rerun`, or task names.
+- Heed its `WARNING:` lines: uncommitted changes or a SAGE commit that is not on a remote
+  branch mean CI may not see what you tested.
+- **CI mirrors the script; change them together.** CI has `static-analysis`, `unit-test`, and
+  `android` (lint + debug/release APK) jobs, on Temurin 21 and SDK platform 36.
 - Gradle prints thousands of task lines: redirect a long run to a file and grep it
   (`./gradlew … > /tmp/build.log 2>&1`) rather than pulling them into context.
-- Don't boot an AVD. Stop after build + lint and hand device testing to the user.
+- The release APK is unsigned. Don't boot an AVD; stop after build + lint and hand device
+  testing to the user.
 
 ## SAGE changes
 
-`sage/` is a separate repository (`git@github.com:sigmabeta/sage.git`). Treat
-changes there as needing explicit sign-off, and keep the two commits in order:
+`sage/` is a separate repository (`git@github.com:sigmabeta/sage.git`). Treat changes there as
+needing explicit sign-off, and keep the two commits in order:
 
 1. Land the SAGE change on `sage`'s `main` line through its normal PR flow.
 2. Bump the gitlink here, then run `scripts/ci/verify.sh`.
@@ -162,8 +114,8 @@ git add sage
 git commit -m "Bump SAGE"
 ```
 
-If a SAGE module is renamed, update the `libs.sage.*` alias used by the module that
-depends on it (the catalog is SAGE's own `gradle/libs.versions.toml`).
+If a SAGE module is renamed, update the `libs.sage.*` alias used by the module that depends on
+it (the catalog is SAGE's own `gradle/libs.versions.toml`).
 
 ## Push gate
 
@@ -179,50 +131,24 @@ Don't `git commit` or `git push` unless explicitly asked.
 
 ## Layout
 
-```
-app/                        Android application
-  SampleApplication.kt      owns the Metro AppScope graph
-  di/SampleAppGraph.kt      @DependencyGraph(AppScope::class) : ViewModelGraph
-  di/SampleBindings.kt      app-side implementations of SAGE seams
-  di/SampleMetroViewModelFactory.kt  the factory behind metroViewModel()
-  MainActivity.kt           installs LocalMetroViewModelFactory, hosts the Compose UI
-  ui/SampleApp.kt           theme + navigation host
-  ui/ListItemContent.kt     renders each SAGE ListModel
-  ui/navigation/
-    SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
-    SampleScreens.kt        one Voyager Screen per destination
-    SampleNavHost.kt        the back stack and top-level switch semantics
-    SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
-    SampleNavAction.kt      pure SageEvent -> ShowTopLevel / Push / Pop policy
-    SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
-    SampleTopBar.kt         title/back from the active screen's SAGE title state
-    SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
-core/viewmodel/             pure-JVM ViewModel base shared by every feature
-  SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, viewModelScope scheduler
-features/welcome/           pure-JVM feature module (no Android dependencies)
-  WelcomeState.kt           ListState: what the screen contains
-  WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
-  WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
-features/browse/            same shape; placeholder content (TODO)
-features/search/            same shape; placeholder content (TODO)
-features/settings/          same shape; placeholder content (TODO)
-.github/workflows/ci.yml    CI: static analysis, unit tests, Android build
-scripts/ci/verify.sh        local mirror of CI + artifact collation
-detekt-config.yml           ruleset read by the SAGE base plugins
-.editorconfig               ktlint ruleset, mirrors SAGE
-sage/                       SAGE submodule (composite build)
-```
+See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `app/`
+(Android application), `core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI
+mirror), `scripts/dev/` (agent tooling), `docs/agents/` (tracker/domain docs), `sage/`
+(submodule).
 
 ## Agent skills
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature-slug>/`; triage state is a `Status:` line. See `docs/agents/issue-tracker.md`.
+Issues and specs live as markdown files under `.scratch/<feature-slug>/`; triage state is a
+`Status:` line. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-The five canonical roles, default strings: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+The five canonical roles, default strings: `needs-triage`, `needs-info`, `ready-for-agent`,
+`ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See
+`docs/agents/domain.md`.
