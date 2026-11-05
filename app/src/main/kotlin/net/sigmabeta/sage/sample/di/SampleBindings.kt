@@ -59,7 +59,11 @@ object SampleBindings {
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {
         BrowseStringId.BROWSE_TITLE -> R.string.nav_browse
-        BrowseStringId.BROWSE_TODO -> R.string.browse_todo
+        BrowseStringId.BROWSE_EMPTY -> R.string.browse_empty
+        BrowseStringId.BROWSE_DEMO_HEADER -> R.string.browse_demo_header
+        BrowseStringId.BROWSE_DEMO_CONTENT -> R.string.browse_demo_content
+        BrowseStringId.BROWSE_DEMO_EMPTY -> R.string.browse_demo_empty
+        BrowseStringId.BROWSE_DEMO_ERROR -> R.string.browse_demo_error
     }
 
     private fun searchResource(id: SearchStringId): Int = when (id) {

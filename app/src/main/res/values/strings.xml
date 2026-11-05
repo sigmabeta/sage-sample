@@ -17,7 +17,11 @@
     <string name="cd_navigate_back">Back</string>
 
     <!-- Placeholder bodies for the feature modules whose content is still TODO. -->
-    <string name="browse_todo">TODO: browse content</string>
+    <string name="browse_empty">Nothing to browse yet.</string>
+    <string name="browse_demo_header">Demo outcomes</string>
+    <string name="browse_demo_content">Load content</string>
+    <string name="browse_demo_empty">Load empty state</string>
+    <string name="browse_demo_error">Load error state</string>
     <string name="search_todo">TODO: search content</string>
     <string name="settings_todo">TODO: settings content</string>
 </resources>

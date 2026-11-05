@@ -18,4 +18,7 @@ dependencies {
     api(libs.sage.common.logging)
     api(libs.sage.common.ui.components)
     api(libs.sage.common.ui.strings)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

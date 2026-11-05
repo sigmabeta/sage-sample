@@ -10,5 +10,9 @@ import net.sigmabeta.sage.ui.SageStringId
  */
 enum class BrowseStringId : SageStringId {
     BROWSE_TITLE,
-    BROWSE_TODO,
+    BROWSE_EMPTY,
+    BROWSE_DEMO_HEADER,
+    BROWSE_DEMO_CONTENT,
+    BROWSE_DEMO_EMPTY,
+    BROWSE_DEMO_ERROR,
 }
