@@ -2,10 +2,17 @@ package net.sigmabeta.sage.sample.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.sigmabeta.sage.analytics.Analytics
@@ -90,4 +97,28 @@ abstract class SampleListViewModel<StateType : ListState> :
             internalUiState.value = updater(internalUiState.value)
         }
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Background work (ticket 04: asynchronous Browse).
+    //
+    // Kept in its own section so other additions to this shared base (e.g. uiEvents) merge cleanly.
+    // Mirrors the VGLS base: collect a feature flow off the main thread, inside the view model's
+    // own scope, so it is cancelled when the screen's ViewModel is cleared.
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Collects this flow on [dispatcher] within [SageScheduler.coroutineScope] (the
+     * `viewModelScope`), and honours SAGE's debug delay-seam when [shouldDelay] is on.
+     */
+    protected fun <EmissionType> Flow<EmissionType>.runInBackground(
+        dispatcher: CoroutineDispatcher = scheduler.dispatchers.disk,
+        shouldDelay: Boolean = scheduler.delayManager.shouldDelay(),
+    ): Job {
+        val possiblyDelayedFlow = if (shouldDelay) this.onStart { delay(DEBUG_DELAY_MILLIS) } else this
+        return possiblyDelayedFlow
+            .flowOn(dispatcher)
+            .launchIn(scheduler.coroutineScope)
+    }
 }
+
+private const val DEBUG_DELAY_MILLIS = 5_000L
