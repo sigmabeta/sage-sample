@@ -102,4 +102,7 @@ dependencies {
     implementation(libs.voyager.transitions)
 
     implementation(libs.kotlinx.collections.immutable)
+
+    // Unit tests for app-owned logic that needs no Android runtime (e.g. route mapping).
+    testImplementation(libs.junit4)
 }

@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.ui.navigation
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -69,6 +70,13 @@ data object SettingsScreen : SampleScreen {
 @Composable
 private fun SampleListScreen(viewModel: SampleListViewModel<*>) {
     val state by viewModel.uiStateActual.collectAsStateWithLifecycle()
+    val navEffects = LocalSampleNavEffects.current
+
+    // One-shot effects are forwarded, never stored: the flow has replay = 0, so recomposition or
+    // popping and re-pushing this screen cannot replay an old navigation.
+    LaunchedEffect(viewModel) {
+        viewModel.uiEvents.collect { event -> navEffects.onEvent(event) }
+    }
 
     ListScreen(
         state = state,
