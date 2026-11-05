@@ -3,7 +3,8 @@ package net.sigmabeta.sage.sample
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import net.sigmabeta.sage.appcomm.SageAction
+import androidx.compose.runtime.CompositionLocalProvider
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import net.sigmabeta.sage.sample.ui.SampleApp
 
 class MainActivity : ComponentActivity() {
@@ -11,13 +12,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // No @AndroidEntryPoint member injection: entry points read the graph off the
-        // application and pull the bindings they need.
-        val brain = (application as SampleApplication).appGraph.welcomeBrain
+        // application. Here that is only the ViewModel factory — screens resolve their own
+        // view models from it with metroViewModel().
+        val graph = (application as SampleApplication).appGraph
 
-        if (savedInstanceState == null) {
-            brain.sendAction(SageAction.InitNoArgs)
+        setContent {
+            CompositionLocalProvider(
+                LocalMetroViewModelFactory provides graph.metroViewModelFactory,
+            ) {
+                SampleApp()
+            }
         }
-
-        setContent { SampleApp(brain) }
     }
 }

@@ -59,10 +59,23 @@ ktlint {
 }
 
 dependencies {
+    implementation(projects.core.viewmodel)
+    implementation(projects.features.browse)
+    implementation(projects.features.search)
+    implementation(projects.features.settings)
     implementation(projects.features.welcome)
 
     // The AppScope marker (net.sigmabeta.sage.di.AppScope) used by the app graph.
     implementation(libs.sage.common.di)
+
+    // Metro's ViewModel map (`ViewModelGraph`) and the Compose resolver (`metroViewModel()`).
+    implementation(libs.metrox.viewmodel)
+    implementation(libs.metrox.viewmodel.compose)
+
+    // SAGE's navigation vocabulary (`RouteDescriptor`, `ArgType`) for the app's destinations.
+    implementation(libs.sage.common.nav)
+    // SAGE's icon set; `Icon.vector()` turns it into a Compose ImageVector.
+    implementation(libs.sage.common.ui.iconsReal)
 
     implementation(libs.sage.common.list)
     implementation(libs.sage.common.appcomm)
@@ -83,6 +96,10 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
+
+    // Voyager owns the navigation back stack; SAGE's catalog pins the version.
+    implementation(libs.voyager.navigator)
+    implementation(libs.voyager.transitions)
 
     implementation(libs.kotlinx.collections.immutable)
 }

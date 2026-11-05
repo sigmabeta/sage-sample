@@ -38,5 +38,9 @@ rootProject.name = "sage-sample"
 
 include(
     ":app",
+    ":core:viewmodel",
+    ":features:browse",
+    ":features:search",
+    ":features:settings",
     ":features:welcome",
 )

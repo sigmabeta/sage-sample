@@ -9,9 +9,12 @@ import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.NoopAnalytics
 import net.sigmabeta.sage.android.logging.AndroidHatchet
 import net.sigmabeta.sage.di.AppScope
-import net.sigmabeta.sage.list.SageScheduler
+import net.sigmabeta.sage.list.DelayManager
 import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.R
+import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.search.SearchStringId
+import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
@@ -29,21 +32,44 @@ import net.sigmabeta.sage.ui.strings.AndroidStringProvider
 object SampleBindings {
     /**
      * SAGE features read user-facing text through [StringProvider] and a module-owned
-     * [SageStringId] enum, so the feature module stays platform-agnostic. The app is the only
-     * place that knows about `R.string`.
+     * [SageStringId] enum, so the feature modules stay platform-agnostic. The app is the only
+     * place that knows about `R.string`, and it owns one mapping per feature.
      */
     @Provides
     @SingleIn(AppScope::class)
     fun provideStringProvider(context: Context): StringProvider =
         AndroidStringProvider(context.resources) { id ->
-            when (id as WelcomeStringId) {
-                WelcomeStringId.APP_NAME -> R.string.app_name
-                WelcomeStringId.WELCOME_TITLE -> R.string.welcome_title
-                WelcomeStringId.WELCOME_ABOUT_HEADER -> R.string.welcome_about_header
-                WelcomeStringId.WELCOME_ABOUT_BODY_COMPOSITE_BUILD -> R.string.welcome_about_body_composite_build
-                WelcomeStringId.WELCOME_ABOUT_BODY_LIST_STATE -> R.string.welcome_about_body_list_state
+            when (id) {
+                is WelcomeStringId -> welcomeResource(id)
+                is BrowseStringId -> browseResource(id)
+                is SearchStringId -> searchResource(id)
+                is SettingsStringId -> settingsResource(id)
+                else -> error("No R.string mapping for $id")
             }
         }
+
+    private fun welcomeResource(id: WelcomeStringId): Int = when (id) {
+        WelcomeStringId.APP_NAME -> R.string.app_name
+        WelcomeStringId.WELCOME_TITLE -> R.string.welcome_title
+        WelcomeStringId.WELCOME_ABOUT_HEADER -> R.string.welcome_about_header
+        WelcomeStringId.WELCOME_ABOUT_BODY_COMPOSITE_BUILD -> R.string.welcome_about_body_composite_build
+        WelcomeStringId.WELCOME_ABOUT_BODY_LIST_STATE -> R.string.welcome_about_body_list_state
+    }
+
+    private fun browseResource(id: BrowseStringId): Int = when (id) {
+        BrowseStringId.BROWSE_TITLE -> R.string.nav_browse
+        BrowseStringId.BROWSE_TODO -> R.string.browse_todo
+    }
+
+    private fun searchResource(id: SearchStringId): Int = when (id) {
+        SearchStringId.SEARCH_TITLE -> R.string.nav_search
+        SearchStringId.SEARCH_TODO -> R.string.search_todo
+    }
+
+    private fun settingsResource(id: SettingsStringId): Int = when (id) {
+        SettingsStringId.SETTINGS_TITLE -> R.string.nav_settings
+        SettingsStringId.SETTINGS_TODO -> R.string.settings_todo
+    }
 
     @Provides
     @SingleIn(AppScope::class)
@@ -53,7 +79,13 @@ object SampleBindings {
     @SingleIn(AppScope::class)
     fun provideAnalytics(hatchet: Hatchet): Analytics = NoopAnalytics(hatchet)
 
+    /**
+     * SAGE's debug-delay seam. Each view model builds its own `SageScheduler` around
+     * `viewModelScope`; this is the delay policy it consults.
+     */
     @Provides
     @SingleIn(AppScope::class)
-    fun provideScheduler(impl: SchedulerImpl): SageScheduler = impl
+    fun provideDelayManager(): DelayManager = object : DelayManager {
+        override fun shouldDelay() = false
+    }
 }

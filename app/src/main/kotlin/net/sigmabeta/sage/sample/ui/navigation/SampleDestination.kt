@@ -1,0 +1,34 @@
+package net.sigmabeta.sage.sample.ui.navigation
+
+import androidx.annotation.StringRes
+import net.sigmabeta.sage.nav.ArgType
+import net.sigmabeta.sage.nav.RouteDescriptor
+import net.sigmabeta.sage.sample.R
+import net.sigmabeta.sage.ui.Icon
+
+/**
+ * The app's destinations, described with SAGE's navigation vocabulary.
+ *
+ * [isTopLevel] drives the top bar: top-level destinations show the hamburger, everything else
+ * shows a back arrow. Only top-level destinations appear in the bottom bar / rail — Settings is
+ * reached from the hamburger.
+ */
+enum class SampleDestination(
+    override val destName: String,
+    @get:StringRes val labelRes: Int,
+    val icon: Icon,
+    val isTopLevel: Boolean,
+) : RouteDescriptor {
+    HOME("home", R.string.nav_home, Icon.Home, isTopLevel = true),
+    BROWSE("browse", R.string.nav_browse, Icon.Browse, isTopLevel = true),
+    SEARCH("search", R.string.nav_search, Icon.Search, isTopLevel = true),
+    SETTINGS("settings", R.string.nav_settings, Icon.Person, isTopLevel = false),
+    ;
+
+    override val argType: ArgType = ArgType.NONE
+
+    companion object {
+        /** Destinations rendered as bottom-bar / rail items, in display order. */
+        val topLevel: List<SampleDestination> = entries.filter { it.isTopLevel }
+    }
+}
