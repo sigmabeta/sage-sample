@@ -15,7 +15,7 @@ import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.SingleTextListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
-import net.sigmabeta.sage.list.DelayManager
+import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -141,8 +141,8 @@ class BrowseViewModelTest {
             network = dispatcher,
             main = dispatcher,
         ),
-        delayManager = object : DelayManager {
-            override fun shouldDelay() = false
+        delayManager = object : SampleDelayManager {
+            override fun delayMillis() = 0L
         },
         repository = repository,
     )

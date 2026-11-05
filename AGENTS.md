@@ -53,9 +53,10 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `SampleBindings` (Android) and `SampleStringProvider` (desktop) are the only id → text mappings.
   Demo/repository content included.
 - **Module plugins:** `:features:*` and `:core:viewmodel` apply `sage.jvm` (features also
-  `sage.di`); `:apps:jvm` applies `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler
-  and JetBrains Compose plugins); `:app` applies `android.application`, Compose, `metro`, `detekt`,
-  and `ktlint` directly. Add SAGE dependencies through `libs.sage.*`, never a local version.
+  `sage.di`; `:core:settings` applies both); `:apps:jvm` applies `sage.jvm` + `sage.di` + Compose
+  Desktop (the Compose compiler and JetBrains Compose plugins); `:app` applies
+  `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly. Add SAGE dependencies
+  through `libs.sage.*`, never a local version.
 - **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
   convention plugins — don't delete either.
 - **Tests live beside their module:** feature/core and `:apps:jvm` are pure JVM (JUnit); `:app`
@@ -136,9 +137,9 @@ Don't `git commit` or `git push` unless explicitly asked.
 ## Layout
 
 See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `app/`
-(Android application), `apps/jvm/` (Compose Desktop application), `core/viewmodel/`,
-`features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/` (agent tooling),
-`docs/agents/` (tracker/domain docs), `sage/` (submodule).
+(Android application), `apps/jvm/` (Compose Desktop application), `core/settings/` and
+`core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`
+(agent tooling), `docs/agents/` (tracker/domain docs), `sage/` (submodule).
 
 ## Agent skills
 

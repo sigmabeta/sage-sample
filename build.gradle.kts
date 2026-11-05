@@ -11,3 +11,6 @@ plugins {
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.ktlint) apply false
 }
+
+// One version for both apps: Android's versionName and the desktop build info both read it.
+version = "0.1.0"

@@ -37,7 +37,20 @@ object SampleStringProvider : StringProvider {
         SearchStringId.SEARCH_TITLE to SampleStrings.NAV_SEARCH,
         SearchStringId.SEARCH_TODO to SampleStrings.SEARCH_TODO,
         SettingsStringId.SETTINGS_TITLE to SampleStrings.NAV_SETTINGS,
-        SettingsStringId.SETTINGS_TODO to SampleStrings.SETTINGS_TODO,
+        SettingsStringId.SETTINGS_SECTION_APPEARANCE to SampleStrings.SETTINGS_SECTION_APPEARANCE,
+        SettingsStringId.SETTINGS_LABEL_THEME to SampleStrings.SETTINGS_LABEL_THEME,
+        SettingsStringId.SETTINGS_THEME_LIGHT to SampleStrings.SETTINGS_THEME_LIGHT,
+        SettingsStringId.SETTINGS_THEME_DARK to SampleStrings.SETTINGS_THEME_DARK,
+        SettingsStringId.SETTINGS_THEME_SYSTEM to SampleStrings.SETTINGS_THEME_SYSTEM,
+        SettingsStringId.SETTINGS_SECTION_SIMULATION to SampleStrings.SETTINGS_SECTION_SIMULATION,
+        SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY to SampleStrings.SETTINGS_LABEL_SIMULATE_DELAY,
+        SettingsStringId.SETTINGS_DELAY_NONE to SampleStrings.SETTINGS_DELAY_NONE,
+        SettingsStringId.SETTINGS_DELAY_ONE_SECOND to SampleStrings.SETTINGS_DELAY_ONE_SECOND,
+        SettingsStringId.SETTINGS_DELAY_TWO_SECONDS to SampleStrings.SETTINGS_DELAY_TWO_SECONDS,
+        SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS to SampleStrings.SETTINGS_DELAY_FIVE_SECONDS,
+        SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,
+        SettingsStringId.SETTINGS_LABEL_APP_VERSION to SampleStrings.SETTINGS_LABEL_APP_VERSION,
+        SettingsStringId.SETTINGS_LABEL_BUILD_DATE to SampleStrings.SETTINGS_LABEL_BUILD_DATE,
     )
 
     override fun getString(string: SageStringId): String =

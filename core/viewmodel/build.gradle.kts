@@ -6,6 +6,8 @@ plugins {
 
 dependencies {
     api(libs.androidx.lifecycle.viewmodel)
+    // The base exposes the settings-backed SampleDelayManager every feature view model supplies.
+    api(projects.core.settings)
 
     api(libs.sage.common.list)
     api(libs.sage.common.appcomm)

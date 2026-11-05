@@ -11,7 +11,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
-import net.sigmabeta.sage.list.DelayManager
+import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -32,7 +32,7 @@ class WelcomeViewModel(
     override val stringProvider: StringProvider,
     override val analytics: Analytics,
     override val dispatchers: SageDispatchers,
-    override val delayManager: DelayManager,
+    override val delayManager: SampleDelayManager,
 ) : SampleListViewModel<WelcomeState>() {
     override val screenIdentifier = AnalyticsScreen.ABOUT
 

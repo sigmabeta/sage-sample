@@ -16,7 +16,7 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
-import net.sigmabeta.sage.list.DelayManager
+import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.list.ListState
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
@@ -102,8 +102,8 @@ private class TestViewModel(
         network = dispatcher,
         main = dispatcher,
     )
-    override val delayManager = object : DelayManager {
-        override fun shouldDelay() = false
+    override val delayManager = object : SampleDelayManager {
+        override fun delayMillis() = 0L
     }
 
     val handled = mutableListOf<SageAction>()

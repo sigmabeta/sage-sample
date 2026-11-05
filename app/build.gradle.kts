@@ -19,7 +19,11 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = rootProject.version.toString()
+
+        // Settings' About section displays these. The timestamp is captured when the build's
+        // BuildConfig is generated, so it reflects the build rather than the install.
+        buildConfigField("long", "BUILD_TIME_MS", "${System.currentTimeMillis()}L")
     }
 
     buildTypes {
@@ -38,6 +42,8 @@ android {
 
     buildFeatures {
         compose = true
+        // BuildConfig.VERSION_NAME / VERSION_CODE / BUILD_TIME_MS feed the Settings About rows.
+        buildConfig = true
     }
 }
 
@@ -59,6 +65,7 @@ ktlint {
 }
 
 dependencies {
+    implementation(projects.core.settings)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
     implementation(projects.features.search)
@@ -79,17 +86,21 @@ dependencies {
 
     implementation(libs.sage.common.list)
     implementation(libs.sage.common.appcomm)
+    implementation(libs.sage.common.appinfo)
     implementation(libs.sage.common.analytics)
     implementation(libs.sage.common.logging)
     implementation(libs.sage.common.coroutines)
     implementation(libs.sage.common.ui.components)
     implementation(libs.sage.common.ui.strings)
     implementation(libs.sage.common.ui.listScreens)
+    implementation(libs.sage.common.storage.common)
 
     implementation(libs.sage.android.coroutines)
     implementation(libs.sage.android.logging)
     implementation(libs.sage.android.ui.strings)
-    implementation(libs.sage.android.ui.themes)
+
+    // Preferences DataStore backs the app's SAGE Storage implementation (settings, theme).
+    implementation(libs.androidx.dataStore.preferences)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)

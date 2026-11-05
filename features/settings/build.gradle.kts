@@ -9,13 +9,21 @@ plugins {
 
 dependencies {
     api(projects.core.viewmodel)
+    // The persisted preferences the screen edits; also exposes the delay seam.
+    api(projects.core.settings)
     // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
     api(libs.metrox.viewmodel)
 
     api(libs.sage.common.list)
     api(libs.sage.common.appcomm)
+    api(libs.sage.common.appinfo)
     api(libs.sage.common.analytics)
     api(libs.sage.common.logging)
     api(libs.sage.common.ui.components)
     api(libs.sage.common.ui.strings)
+
+    implementation(libs.kotlinx.collections.immutable)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

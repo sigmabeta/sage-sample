@@ -7,6 +7,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 
 /**
  * The application-wide dependency graph.
@@ -23,6 +24,12 @@ import net.sigmabeta.sage.di.AppScope
 @SingleIn(AppScope::class)
 @DependencyGraph(AppScope::class)
 interface SampleAppGraph : ViewModelGraph {
+    /**
+     * The composition root reads the persisted theme from this app-scoped manager before any
+     * screen exists, so it is a graph accessor rather than a per-screen view model.
+     */
+    val settingsManager: SampleSettingsManager
+
     /**
      * Contributed modules that take a `Context` (strings, analytics) get the application
      * context from this binding. With a single app-scope graph there is no qualifier to

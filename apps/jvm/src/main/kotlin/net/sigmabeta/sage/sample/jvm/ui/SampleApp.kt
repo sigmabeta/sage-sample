@@ -6,18 +6,27 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import net.sigmabeta.sage.sample.jvm.ui.navigation.SampleNavHost
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 
 /**
  * Composition root. The theme wraps the navigation host; everything below it is a destination.
  *
- * Android gets `SageMaterial` from `sage.android.ui.themes`, which is Android-only. The desktop
- * app inlines the same light/dark `MaterialTheme` wrapper, following the system theme.
+ * [settingsManager] is app-scoped and persisted, so a theme chosen on the Settings screen
+ * recomposes this root and applies immediately.
  */
 @Composable
-fun SampleApp() {
+fun SampleApp(settingsManager: SampleSettingsManager) {
+    val themeMode by settingsManager.themeMode.collectAsState()
+
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) darkColorScheme() else lightColorScheme(),
+        colorScheme = if (themeMode.isDark(isSystemInDarkTheme())) {
+            darkColorScheme()
+        } else {
+            lightColorScheme()
+        },
         typography = Typography(),
     ) {
         SampleNavHost()

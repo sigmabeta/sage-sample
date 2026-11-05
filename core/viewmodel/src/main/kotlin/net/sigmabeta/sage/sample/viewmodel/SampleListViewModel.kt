@@ -25,10 +25,10 @@ import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
-import net.sigmabeta.sage.list.DelayManager
 import net.sigmabeta.sage.list.ListState
 import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.list.SageScheduler
+import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
@@ -68,7 +68,7 @@ abstract class SampleListViewModel<StateType : ListState> :
     protected abstract val stringProvider: StringProvider
     protected abstract val analytics: Analytics
     protected abstract val dispatchers: SageDispatchers
-    protected abstract val delayManager: DelayManager
+    protected abstract val delayManager: SampleDelayManager
 
     /** SAGE's coroutine seam, backed by [viewModelScope] instead of an app-wide scope. */
     val scheduler: SageScheduler by lazy {
@@ -152,13 +152,13 @@ abstract class SampleListViewModel<StateType : ListState> :
 
     /**
      * Collects this flow on [dispatcher] within [SageScheduler.coroutineScope] (the
-     * `viewModelScope`), and honours SAGE's debug delay-seam when [shouldDelay] is on.
+     * `viewModelScope`), after the delay configured on the Settings screen.
      */
     protected fun <EmissionType> Flow<EmissionType>.runInBackground(
         dispatcher: CoroutineDispatcher = scheduler.dispatchers.disk,
-        shouldDelay: Boolean = scheduler.delayManager.shouldDelay(),
+        delayMillis: Long = this@SampleListViewModel.delayManager.delayMillis(),
     ): Job {
-        val possiblyDelayedFlow = if (shouldDelay) this.onStart { delay(DEBUG_DELAY_MILLIS) } else this
+        val possiblyDelayedFlow = if (delayMillis > 0L) this.onStart { delay(delayMillis) } else this
         return possiblyDelayedFlow
             .flowOn(dispatcher)
             .launchIn(scheduler.coroutineScope)
@@ -189,5 +189,3 @@ abstract class SampleListViewModel<StateType : ListState> :
         internalUiEvents.tryEmit(event)
     }
 }
-
-private const val DEBUG_DELAY_MILLIS = 5_000L

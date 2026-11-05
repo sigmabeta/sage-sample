@@ -34,5 +34,21 @@ object SampleStrings {
     const val BROWSE_DEMO_ITEM_VOYAGER = "Voyager navigation"
 
     const val SEARCH_TODO = "TODO: search content"
-    const val SETTINGS_TODO = "TODO: settings content"
+
+    const val SETTINGS_SECTION_APPEARANCE = "Appearance"
+    const val SETTINGS_LABEL_THEME = "Theme"
+    const val SETTINGS_THEME_LIGHT = "Light"
+    const val SETTINGS_THEME_DARK = "Dark"
+    const val SETTINGS_THEME_SYSTEM = "System"
+
+    const val SETTINGS_SECTION_SIMULATION = "Simulation"
+    const val SETTINGS_LABEL_SIMULATE_DELAY = "Simulate delay"
+    const val SETTINGS_DELAY_NONE = "None"
+    const val SETTINGS_DELAY_ONE_SECOND = "1 second"
+    const val SETTINGS_DELAY_TWO_SECONDS = "2 seconds"
+    const val SETTINGS_DELAY_FIVE_SECONDS = "5 seconds"
+
+    const val SETTINGS_SECTION_ABOUT = "About"
+    const val SETTINGS_LABEL_APP_VERSION = "App version"
+    const val SETTINGS_LABEL_BUILD_DATE = "Build date"
 }

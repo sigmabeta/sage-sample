@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
             ) {
-                SampleApp()
+                SampleApp(settingsManager = graph.settingsManager)
             }
         }
     }

@@ -29,7 +29,7 @@ fun main() {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
             ) {
-                SampleApp()
+                SampleApp(settingsManager = graph.settingsManager)
             }
         }
     }

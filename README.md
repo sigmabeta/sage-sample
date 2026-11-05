@@ -2,8 +2,9 @@
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
 Android app module (`:app`), one Compose Desktop app module (`:apps:jvm`), four pure-JVM feature
-modules (Welcome, plus Browse/Search/Settings placeholders over a shared `:core:viewmodel` base),
-and SAGE itself as a Git submodule consumed through a Gradle composite build.
+modules over shared `:core` modules (Welcome, Browse, Search, and a Settings screen with
+persisted preferences), and SAGE itself as a Git submodule consumed through a Gradle composite
+build.
 
 ## Requirements
 
@@ -100,7 +101,8 @@ app/                        Android application
   di/SampleMetroViewModelFactory.kt  the factory behind metroViewModel()
   di/SampleBindings.kt      app-side implementations of SAGE seams
   MainActivity.kt           installs LocalMetroViewModelFactory, hosts the Compose UI
-  ui/SampleApp.kt           theme + navigation host
+  storage/PreferencesStorage.kt  DataStore-backed SAGE Storage (settings persistence)
+  ui/SampleApp.kt           settings-driven theme + navigation host
   ui/ListItemContent.kt     renders each SAGE ListModel
   ui/navigation/
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
@@ -113,15 +115,22 @@ app/                        Android application
     SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
 apps/jvm/                   Compose Desktop application (shares the feature modules)
   Main.kt                   builds the desktop Metro graph and opens the window
+  JvmBuildInfo.kt           generated version/build time for the About rows
   SampleStrings.kt          desktop text, mirroring app/src/main/res/values/strings.xml
   SampleStringProvider.kt   feature SageStringId -> desktop text
   di/JvmSampleAppGraph.kt   desktop @DependencyGraph(AppScope::class) : ViewModelGraph
-  di/JvmSampleBindings.kt   JVM implementations of SAGE seams (strings, logging, dispatchers)
+  di/JvmSampleBindings.kt   JVM implementations of SAGE seams (strings, logging, dispatchers, storage)
   di/JvmMetroViewModelFactory.kt  the factory behind metroViewModel() on desktop
-  ui/SampleApp.kt           theme + navigation host
+  storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
+  ui/SampleApp.kt           settings-driven theme + navigation host
   ui/ListItemContent.kt     renders each SAGE ListModel
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
   ui/navigation/            same destinations, chrome and back stack as :app
+core/settings/              pure-JVM preference vocabulary shared by both apps
+  ThemeMode.kt              light/dark/system, plus the system-dark resolution
+  SimulateDelay.kt          none / 1s / 2s / 5s simulated-load durations
+  SampleSettingsManager.kt  StateFlow preferences over SAGE's Storage seam
+  SampleDelayManager.kt     duration-aware extension of SAGE's DelayManager
 core/viewmodel/             pure-JVM ViewModel base shared by every feature
   SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, scheduler
 features/welcome/           pure-JVM feature module (no Android dependencies)
@@ -130,7 +139,7 @@ features/welcome/           pure-JVM feature module (no Android dependencies)
   WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
 features/browse/            same shape; asynchronous LCE content with demo outcomes
 features/search/            same shape; placeholder content (TODO)
-features/settings/          same shape; placeholder content (TODO)
+features/settings/          theme + simulate-delay dropdowns, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene
 CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
 detekt-config.yml           ruleset read by the SAGE base plugins
@@ -258,14 +267,15 @@ SAGE's `common` UI modules and Voyager directly; the app-owned port lives in `ap
 - **Text:** there are no Android resources. `SampleStrings` holds the same values as
   `app/src/main/res/values/strings.xml`, and `SampleStringProvider` maps feature `SageStringId`s
   to them — the desktop twin of `SampleBindings`.
-- **Theme:** `sage.android.ui.themes` is Android-only, so `SampleApp` wraps `MaterialTheme` with
-  `lightColorScheme` / `darkColorScheme`, following the system theme.
+- **Theme:** both composition roots wrap `MaterialTheme` with `lightColorScheme` /
+  `darkColorScheme`, selected by the persisted `ThemeMode` (light, dark, or follow the system).
+  The choice lives in `SampleSettingsManager`, outside any screen's view model.
 - **View model stores:** Voyager supplies per-screen `ViewModelStoreOwner`s only on Android.
   `WithPerScreenViewModelStore` hangs a store off a Voyager `ScreenModel`, so a screen keeps its
   view model while it stays in the back stack and clears it when popped.
-- **Dispatchers:** `JvmSampleBindings` provides `SageDispatchers` with `Dispatchers.Main` backed
-  by `kotlinx-coroutines-swing` (the AWT event queue), plus the JVM `Hatchet`, analytics and
-  delay-policy bindings.
+- **Dispatchers and storage:** `JvmSampleBindings` provides `SageDispatchers` with
+  `Dispatchers.Main` backed by `kotlinx-coroutines-swing` (the AWT event queue), plus the JVM
+  `Hatchet`, analytics, `AppInfo`, and a properties-file `Storage` implementation.
 
 The Metro graph is `JvmSampleAppGraph`; `Main.kt` builds it once and installs its
 `metroViewModelFactory` above the window, exactly as `MainActivity` does on Android.

@@ -4,6 +4,7 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 
 /**
  * The desktop app's dependency graph — the JVM counterpart of the Android `SampleAppGraph`.
@@ -18,6 +19,12 @@ import net.sigmabeta.sage.di.AppScope
 @SingleIn(AppScope::class)
 @DependencyGraph(AppScope::class)
 interface JvmSampleAppGraph : ViewModelGraph {
+    /**
+     * The composition root reads the persisted theme from this app-scoped manager before any
+     * screen exists, so it is a graph accessor rather than a per-screen view model.
+     */
+    val settingsManager: SampleSettingsManager
+
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(): JvmSampleAppGraph

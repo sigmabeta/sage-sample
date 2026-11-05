@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.ui
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,17 +17,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
+import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.SingleTextListModel
+import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.vector
 
 /**
@@ -57,6 +64,12 @@ fun ListItemContent(
         is SingleTextListModel -> Text(
             text = model.name,
             style = MaterialTheme.typography.bodyMedium,
+            color = if (model.active) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            fontWeight = if (model.active) FontWeight.Medium else FontWeight.Normal,
             modifier = modifier
                 .fillMaxWidth()
                 .clickable(enabled = model.clickAction !is SageAction.Noop) {
@@ -65,6 +78,78 @@ fun ListItemContent(
                 .padding(padding)
                 .padding(vertical = 8.dp),
         )
+
+        // Collapsed, a dropdown reads like a label/value row with a trailing caret. Expanding it
+        // renders each option through this same dispatcher, so an option can be any ListModel.
+        is DropdownSettingListModel -> {
+            val caretRotation by animateFloatAsState(
+                targetValue = if (model.expanded) 180f else 0f,
+                label = "DropdownSettingListModel.caretRotation",
+            )
+            Column(modifier = modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = model.onExpandClicked !is SageAction.Noop) {
+                            sink.sendAction(model.onExpandClicked)
+                        }
+                        .padding(padding)
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = model.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = model.options.getOrNull(model.selectedPosition)?.first.orEmpty(),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Icon(
+                        imageVector = Icon.Caret.vector(),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.rotate(caretRotation),
+                    )
+                }
+
+                if (model.expanded) {
+                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                        model.options.forEach { (_, option) ->
+                            ListItemContent(option, sink, Modifier, padding)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Display-only About rows use SageAction.Noop and are therefore not clickable.
+        is LabelValueListModel -> Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(enabled = model.clickAction !is SageAction.Noop) {
+                    sink.sendAction(model.clickAction)
+                }
+                .padding(padding)
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = model.label,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            model.value?.let { value ->
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
 
         is LoadingItemListModel -> Box(
             modifier = modifier

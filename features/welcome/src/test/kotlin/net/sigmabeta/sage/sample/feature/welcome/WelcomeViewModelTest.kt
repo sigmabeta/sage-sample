@@ -14,7 +14,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.SingleTextListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
-import net.sigmabeta.sage.list.DelayManager
+import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
 import org.junit.After
@@ -77,8 +77,8 @@ class WelcomeViewModelTest {
             network = dispatcher,
             main = dispatcher,
         ),
-        delayManager = object : DelayManager {
-            override fun shouldDelay() = false
+        delayManager = object : SampleDelayManager {
+            override fun delayMillis() = 0L
         },
     )
 }
