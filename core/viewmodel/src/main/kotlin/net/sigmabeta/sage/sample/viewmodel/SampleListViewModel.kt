@@ -50,6 +50,17 @@ import net.sigmabeta.sage.ui.StringProvider
  *
  * The class stays feature-agnostic: everything screen-specific is [initialState] and
  * [handleAction].
+ *
+ * ## Foreground resume / pause
+ *
+ * There is exactly one foreground pair: the app's shared screen sends [SageAction.Resume] when it
+ * enters composition and [SageAction.Pause] when it leaves. SAGE's own `ListScreen` / `GridScreen`
+ * additionally emit a `Resume` whenever the rendered title changes, which is not a second
+ * foreground entry.
+ *
+ * [sendAction] coalesces the pair: only a false→true `Resume` and a true→false `Pause` reach
+ * [handleAction] (and analytics), so a feature's resume/pause side effects run once per foreground
+ * entry no matter how many title changes SAGE reports.
  */
 abstract class SampleListViewModel<StateType : ListState> :
     ViewModel(),
@@ -85,7 +96,16 @@ abstract class SampleListViewModel<StateType : ListState> :
             )
     }
 
+    /** Whether the screen is currently between an accepted `Resume` and `Pause`. */
+    private var resumed = false
+
     override fun sendAction(action: SageAction) {
+        // Coalesce the foreground pair before analytics or handling: SAGE's list/grid screens also
+        // send `Resume` on every title change, and those are not new foreground entries.
+        if (!acceptsForegroundTransition(action)) {
+            return
+        }
+
         if (action.isInitAction()) {
             analytics.logScreenView(action, screenIdentifier)
         } else {
@@ -95,6 +115,33 @@ abstract class SampleListViewModel<StateType : ListState> :
         viewModelScope.launch(scheduler.dispatchers.main) {
             handleAction(action)
         }
+    }
+
+    /**
+     * Tracks the foreground state and reports whether [action] is a real transition.
+     *
+     * A repeated `Resume` (or `Pause`) returns `false`; every other action is always accepted.
+     */
+    private fun acceptsForegroundTransition(action: SageAction): Boolean = when (action) {
+        SageAction.Resume -> {
+            if (resumed) {
+                false
+            } else {
+                resumed = true
+                true
+            }
+        }
+
+        SageAction.Pause -> {
+            if (resumed) {
+                resumed = false
+                true
+            } else {
+                false
+            }
+        }
+
+        else -> true
     }
 
     protected abstract fun handleAction(action: SageAction)

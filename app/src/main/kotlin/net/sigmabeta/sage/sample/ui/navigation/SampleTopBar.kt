@@ -12,30 +12,31 @@ import net.sigmabeta.sage.ui.Icon as SageIcon
 import net.sigmabeta.sage.ui.vector
 
 /**
- * The shared top bar.
+ * The shared top bar, rendering the state derived by [topBarState].
  *
- * The leading icon is the navigation affordance for the *current* destination: a hamburger on
- * top-level screens (opens Settings) and a back arrow everywhere else (pops the screen).
+ * The title belongs to the active screen's SAGE title state; the leading affordance is a
+ * hamburger that opens Settings ([SampleTopBarLeading.MENU]) or a back arrow that pops the screen
+ * ([SampleTopBarLeading.BACK]). Navigation-tab labels stay app-owned in [SampleDestination].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SampleTopBar(
-    destination: SampleDestination,
+    state: SampleTopBarState,
     onOpenSettings: () -> Unit,
     onBack: () -> Unit,
 ) {
     TopAppBar(
-        title = { Text(stringResource(destination.labelRes)) },
+        title = { Text(state.title) },
         navigationIcon = {
-            if (destination.isTopLevel) {
-                IconButton(onClick = onOpenSettings) {
+            when (state.leading) {
+                SampleTopBarLeading.MENU -> IconButton(onClick = onOpenSettings) {
                     Icon(
                         imageVector = SageIcon.Menu.vector(),
                         contentDescription = stringResource(R.string.cd_open_settings),
                     )
                 }
-            } else {
-                IconButton(onClick = onBack) {
+
+                SampleTopBarLeading.BACK -> IconButton(onClick = onBack) {
                     Icon(
                         imageVector = SageIcon.Back.vector(),
                         contentDescription = stringResource(R.string.cd_navigate_back),
