@@ -22,6 +22,10 @@
     <string name="browse_demo_content">Load content</string>
     <string name="browse_demo_empty">Load empty state</string>
     <string name="browse_demo_error">Load error state</string>
+    <!-- Demo content row names. Browse's repository reads these through StringProvider. -->
+    <string name="browse_demo_item_lists">SAGE lists</string>
+    <string name="browse_demo_item_metro">Metro view models</string>
+    <string name="browse_demo_item_voyager">Voyager navigation</string>
     <string name="search_todo">TODO: search content</string>
     <string name="settings_todo">TODO: settings content</string>
 </resources>

@@ -72,16 +72,15 @@ sealed interface SampleScreenLayout {
  * Chooses between the list and grid presentations from the screen's SAGE [ColumnType] and the
  * window's [WidthClass].
  *
- * One column always means [SampleScreenLayout.List], so a screen that does not opt into columns
- * keeps exactly its existing presentation.
+ * At most one column always means [SampleScreenLayout.List], so a screen that does not opt into
+ * columns keeps exactly its existing presentation. That includes zero columns: SAGE's
+ * `numberOfColumns` is integer division, so a wide `Regular`/`Staggered` descriptor on a narrow
+ * window yields 0, which is the same single-column case rather than an error.
  */
 fun screenLayoutFor(columnType: ColumnType, widthClass: WidthClass): SampleScreenLayout {
     val columns = columnType.numberOfColumns(widthClass)
-    require(columns > 0) {
-        "ColumnType $columnType yields no columns at $widthClass"
-    }
 
-    return if (columns == 1) {
+    return if (columns <= 1) {
         SampleScreenLayout.List
     } else {
         SampleScreenLayout.Grid(

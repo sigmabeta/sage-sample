@@ -46,7 +46,11 @@ prefer the conventional SAGE way over a local shortcut.
 - **Navigation is Voyager** (`cafe.adriel.voyager`), owned by `SampleNavHost`'s single
   `Navigator`. Home/Browse/Search are top-level; Settings is pushed from the hamburger.
   Selecting a top-level destination resets the stack to `[Home, target]`, so back from
-  Browse/Search returns Home. The nav suite is a `NavigationBar` on a
+  Browse/Search returns Home. Features emit SAGE `SageEvent`s through
+  `SampleNavEffects`; `navActionFor` translates a route into `ShowTopLevel` for a
+  top-level destination or `Push` for anything else, so a feature navigating to
+  `settings` pushes it (once, like the hamburger) instead of replacing the stack.
+  The nav suite is a `NavigationBar` on a
   `WidthClass.COMPACT` window and a `NavigationRail` on anything wider — hand-rolled
   because the `material3-adaptive-navigation-suite` artifact pins material3 older than
   the BOM. `SampleNavHost` computes the width class once (600/840 dp breakpoints, via
@@ -60,9 +64,9 @@ prefer the conventional SAGE way over a local shortcut.
   only marks nav items and supplies the pre-report fallback.
 - **List versus grid is derived, not chosen per screen.** `SampleScreens` reads
   `LocalSampleWidthClass` and calls `screenLayoutFor(state.columnType, widthClass)`:
-  one column keeps SAGE's `ListScreen`; more columns use `GridScreen` with the column
-  count and, for `ColumnType.Staggered`, the staggered/horizontal-scroller flags. Every
-  sample screen stays `ColumnType.One`, so the grid path is covered by tests.
+  one or zero columns keep SAGE's `ListScreen`; more columns use `GridScreen` with the
+  column count and, for `ColumnType.Staggered`, the staggered/horizontal-scroller flags.
+  Every sample screen stays `ColumnType.One`, so the grid path is covered by tests.
 - **One foreground Resume/Pause path.** The app's shared screen owns
   `DisposableEffect { Resume; onDispose { Pause } }`. SAGE's `ListScreen`/`GridScreen`
   also emit `Resume` on title change; `SampleListViewModel.sendAction` coalesces the
@@ -188,6 +192,8 @@ app/                        Android application
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
     SampleScreens.kt        one Voyager Screen per destination
     SampleNavHost.kt        the back stack and top-level switch semantics
+    SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
+    SampleNavAction.kt      pure SageEvent -> ShowTopLevel / Push / Pop policy
     SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
     SampleTopBar.kt         title/back from the active screen's SAGE title state
     SampleChrome.kt         pure top-bar/width-class/layout derivation + locals

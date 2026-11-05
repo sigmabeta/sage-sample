@@ -47,7 +47,7 @@ class BrowseViewModelTest {
         assertTrue(viewModel.uiStateActual.value.listItems.first() is LoadingItemListModel)
 
         repository.emit(
-            BrowseOutcome.SUCCESS,
+            BrowseOutcome.CONTENT,
             LCE.Content(
                 listOf(
                     BrowseItem(id = 1L, name = "Alpha"),
@@ -110,7 +110,7 @@ class BrowseViewModelTest {
             val state = viewModel.uiStateActual
             advanceUntilIdle()
 
-            // The init load (SUCCESS) is still collecting. Start a second load; the fix cancels
+            // The init load (CONTENT) is still collecting. Start a second load; the fix cancels
             // the first collection instead of leaving both alive.
             viewModel.sendAction(BrowseAction.LoadEmpty)
             advanceUntilIdle()
@@ -121,13 +121,13 @@ class BrowseViewModelTest {
 
             // A late value on the superseded stream must not overwrite the current outcome.
             repository.emit(
-                BrowseOutcome.SUCCESS,
+                BrowseOutcome.CONTENT,
                 LCE.Content(listOf(BrowseItem(id = 1L, name = "Stale"))),
             )
             advanceUntilIdle()
 
             assertTrue(
-                "the superseded SUCCESS load must not publish after LoadEmpty",
+                "the superseded CONTENT load must not publish after LoadEmpty",
                 state.value.listItems.first() is EmptyStateListModel,
             )
         }
