@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
@@ -20,6 +23,7 @@ import net.sigmabeta.sage.analytics.AnalyticsScreenId
 import net.sigmabeta.sage.analytics.isInitAction
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.list.DelayManager
 import net.sigmabeta.sage.list.ListState
@@ -34,12 +38,15 @@ import net.sigmabeta.sage.ui.StringProvider
  * from the Dagger era, where a `ViewModel` shell wired the brain to a screen. Metro lets each screen
  * resolve its own `ViewModel`, so the brain *is* the ViewModel:
  *
- * - it is contributed into Metro's ViewModel map by the feature module (see
- *   `@ContributesIntoMap` + `@ViewModelKey` on each view model), so `metroViewModel<...>()` can
- *   build it;
- * - `viewModelScope` replaces the app-wide scheduler scope, so work is cancelled when the screen
- *   goes away (Android owns the lifetime);
- * - there is no `BrainProvider`/factory indirection and no graph accessor per screen.
+ * - the feature module contributes its factory into Metro's ViewModel map (see
+ *   `@ContributesIntoMap` + `@ViewModelKey` on each view model), and `metroViewModel<...>()` uses
+ *   it to build an instance;
+ * - that instance lives in the Voyager screen's own `ViewModelStore`: it is retained while the
+ *   screen stays in the back stack and cleared when the screen is popped or removed, at which
+ *   point `viewModelScope` — which replaces the app-wide scheduler scope — is cancelled. The
+ *   app-scope contribution never makes the instance app-scoped, and popping + re-pushing builds a
+ *   fresh one;
+ * - there is no `BrainProvider` shell and no graph accessor per screen.
  *
  * The class stays feature-agnostic: everything screen-specific is [initialState] and
  * [handleAction].
@@ -118,6 +125,28 @@ abstract class SampleListViewModel<StateType : ListState> :
         return possiblyDelayedFlow
             .flowOn(dispatcher)
             .launchIn(scheduler.coroutineScope)
+    }
+
+    // --- One-shot UI events ----------------------------------------------------------------
+    //
+    // Navigation (and other transient effects) is an intent, not screen state: it must fire once
+    // and never be replayed when a screen is re-pushed. `replay = 0` is the load-bearing part —
+    // a collector only sees events emitted while it is subscribed.
+
+    private val internalUiEvents = MutableSharedFlow<SageEvent>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    /** Transient effects for the screen to render/forward; see [emitEvent]. */
+    val uiEvents: SharedFlow<SageEvent> = internalUiEvents
+
+    /** Emits a one-shot effect on the view model's scope, on the main dispatcher. */
+    protected fun emitEvent(event: SageEvent) {
+        viewModelScope.launch(scheduler.dispatchers.main) {
+            internalUiEvents.tryEmit(event)
+        }
     }
 }
 

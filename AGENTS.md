@@ -50,10 +50,16 @@ prefer the conventional SAGE way over a local shortcut.
   `[Home, target]`, so back from Browse/Search returns Home. The nav suite is a
   `NavigationBar` below 600 dp and a `NavigationRail` above it — hand-rolled because
   the `material3-adaptive-navigation-suite` artifact pins material3 older than the BOM.
-- **ViewModels are activity-scoped**, not app-scoped: they come from the Compose
-  `ViewModelStoreOwner`, so popping and re-pushing a screen keeps its state until the
-  activity goes away. `viewModelScope` replaces the app-wide coroutine scope (each VM
-  builds its own `SageScheduler` in `:core:viewmodel`).
+- **A screen ViewModel lives and dies with its Voyager screen.** Voyager gives every
+  `Screen` its own `ViewModelStoreOwner` (the screen's content resolves against it), so a
+  ViewModel is retained while the screen stays in the back stack — including while covered
+  by a pushed screen — and is cleared when the screen is popped or removed; `viewModelScope`
+  is cancelled then, and popping + re-pushing builds a fresh ViewModel. Metro's
+  `@ContributesIntoMap(AppScope::class, ...)` + `@ViewModelKey` contributes only a *factory*
+  to the app graph: the instance lives in the Voyager store, so no screen ViewModel is
+  `@SingleIn`. `SampleMetroViewModelFactory` / `LocalMetroViewModelFactory` supply that
+  factory without changing the store owner or the lifetime. `viewModelScope` replaces the
+  app-wide coroutine scope (each VM builds its own `SageScheduler` in `:core:viewmodel`).
 - **Screen split:** a feature owns the state machine and the app owns rendering.
   `WelcomeState : ListState` declares the content; `WelcomeViewModel :
   SampleListViewModel<WelcomeState>` owns actions and analytics; `SampleScreens`

@@ -54,6 +54,7 @@ object SampleBindings {
         WelcomeStringId.WELCOME_ABOUT_HEADER -> R.string.welcome_about_header
         WelcomeStringId.WELCOME_ABOUT_BODY_COMPOSITE_BUILD -> R.string.welcome_about_body_composite_build
         WelcomeStringId.WELCOME_ABOUT_BODY_LIST_STATE -> R.string.welcome_about_body_list_state
+        WelcomeStringId.WELCOME_OPEN_BROWSE -> R.string.welcome_open_browse
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {

@@ -186,9 +186,12 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
   back from Browse or Search returns Home.
 - **Settings** is pushed from the hamburger. The leading top-bar icon is the hamburger on
   top-level screens and a back arrow on Settings (it pops).
-- **Each screen resolves its own view model** with `metroViewModel<...>()`; view models are
-  activity-scoped (the Compose `ViewModelStoreOwner`), so a screen that is popped and pushed again
-  finds its state until the activity goes away.
+- **Each screen resolves its own view model** with `metroViewModel<...>()`. Voyager gives every
+  screen its own `ViewModelStoreOwner`, so a view model is retained while its screen stays in the
+  back stack (even while another screen covers it) and is cleared when the screen is popped or
+  removed; popping and re-pushing a screen builds a fresh one. Metro contributes only the factory
+  (`@ContributesIntoMap` + `@ViewModelKey`); the instance lives in the Voyager store, which is why
+  screen view models are not `@SingleIn`.
 
 ## Adding a feature
 

@@ -18,4 +18,9 @@ dependencies {
     api(libs.sage.common.logging)
     api(libs.sage.common.ui.components)
     api(libs.sage.common.ui.strings)
+
+    // The feature is plain JVM, so its view model tests run on plain JUnit with
+    // kotlinx-coroutines-test for the scheduler.
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
