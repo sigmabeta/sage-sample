@@ -17,7 +17,7 @@
 # Usage:
 #   scripts/ci/verify.sh                     # run everything
 #   scripts/ci/verify.sh static-analysis unit-test   # run only the named task(s)
-#   scripts/ci/verify.sh --skip-apps         # everything except lint + APK builds (fast inner loop)
+#   scripts/ci/verify.sh --skip-apps         # everything except lint + app builds (fast inner loop)
 #   scripts/ci/verify.sh --rerun             # force every task to re-run (Gradle --rerun-tasks)
 #   scripts/ci/verify.sh --list              # list task names
 #   VERIFY_OUT=/tmp/v scripts/ci/verify.sh   # override the output folder
@@ -40,10 +40,11 @@ ALL_TASKS=(
   "unit-test|test --continue"
   "android-lint|:app:lintRelease"
   "apk|:app:assembleDebug :app:assembleRelease"
+  "jvm-app|:apps:jvm:assemble"
 )
-# The lint/APK tasks are the heavy ones: they need an Android SDK (local.properties / ANDROID_HOME)
-# and compile the app. --skip-apps leaves them out for a quick inner loop.
-APP_BUILD_TASKS="android-lint apk"
+# The lint/APK/JVM-build tasks are the heavy ones: they need an Android SDK (local.properties /
+# ANDROID_HOME) or package the desktop app. --skip-apps leaves them out for a quick inner loop.
+APP_BUILD_TASKS="android-lint apk jvm-app"
 
 # ---- arg parsing -----------------------------------------------------------
 filter=()
