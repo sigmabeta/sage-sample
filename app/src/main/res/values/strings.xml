@@ -5,6 +5,7 @@
     <string name="welcome_about_header">About</string>
     <string name="welcome_about_body_composite_build">SAGE is consumed as a Gradle composite build from the sage/ submodule.</string>
     <string name="welcome_about_body_list_state">Each feature is a pure JVM module that produces a ListState rendered by SAGE\'s ListScreen.</string>
+    <string name="welcome_open_browse">Open Browse</string>
 
     <!-- Navigation scaffold. The app owns these labels because destinations are an app concern;
          feature screens keep their own text behind their SageStringId enums. -->
