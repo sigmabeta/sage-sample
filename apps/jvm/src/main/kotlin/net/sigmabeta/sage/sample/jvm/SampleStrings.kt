@@ -25,10 +25,6 @@ object SampleStrings {
     const val CD_NAVIGATE_BACK = "Back"
 
     const val BROWSE_EMPTY = "Nothing to browse yet."
-    const val BROWSE_DEMO_HEADER = "Demo outcomes"
-    const val BROWSE_DEMO_CONTENT = "Load content"
-    const val BROWSE_DEMO_EMPTY = "Load empty state"
-    const val BROWSE_DEMO_ERROR = "Load error state"
     const val BROWSE_DEMO_ITEM_LISTS = "SAGE lists"
     const val BROWSE_DEMO_ITEM_METRO = "Metro view models"
     const val BROWSE_DEMO_ITEM_VOYAGER = "Voyager navigation"

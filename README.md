@@ -128,16 +128,16 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   ui/navigation/            same destinations, chrome and back stack as :app
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
-  SimulateDelay.kt          none / 1s / 2s / 5s simulated-load durations
+  SimulateDelay.kt          none / 1s / 2s / 5s duration for every background load
   SampleSettingsManager.kt  StateFlow preferences over SAGE's Storage seam
   SampleDelayManager.kt     duration-aware extension of SAGE's DelayManager
 core/viewmodel/             pure-JVM ViewModel base shared by every feature
-  SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, scheduler
+  SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, delayed background seam
 features/welcome/           pure-JVM feature module (no Android dependencies)
   WelcomeState.kt           ListState: what the screen contains
   WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
   WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
-features/browse/            same shape; asynchronous LCE content with demo outcomes
+features/browse/            same shape; asynchronous LCE content
 features/search/            same shape; placeholder content (TODO)
 features/settings/          theme + simulate-delay dropdowns, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene

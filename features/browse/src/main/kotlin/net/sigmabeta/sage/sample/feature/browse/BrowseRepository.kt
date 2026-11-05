@@ -10,7 +10,7 @@ import net.sigmabeta.sage.appcomm.LCE
  * without knowing where the data came from. Tests inject their own fake implementation.
  */
 fun interface BrowseRepository {
-    fun load(outcome: BrowseOutcome): Flow<LCE<List<BrowseItem>>>
+    fun load(): Flow<LCE<List<BrowseItem>>>
 }
 
 /** The operation name Browse's LCE values carry through loading and error states. */

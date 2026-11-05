@@ -16,7 +16,7 @@ class DemoBrowseRepositoryTest {
     fun `demo content names come from the string provider`() = runTest {
         val repository = DemoBrowseRepository(FakeStringProvider())
 
-        val content = repository.load(BrowseOutcome.CONTENT).toList().last() as LCE.Content
+        val content = repository.load().toList().single() as LCE.Content
 
         assertEquals(
             listOf(
@@ -29,13 +29,10 @@ class DemoBrowseRepositoryTest {
     }
 
     @Test
-    fun `every demo outcome streams loading before its terminal value`() = runTest {
-        BrowseOutcome.entries.forEach { outcome ->
-            val emissions = DemoBrowseRepository(FakeStringProvider()).load(outcome).toList()
+    fun `the repository emits terminal content without adding its own delay`() = runTest {
+        val emissions = DemoBrowseRepository(FakeStringProvider()).load().toList()
 
-            assertEquals("loading first for $outcome", 2, emissions.size)
-            assertTrue("first value is loading for $outcome", emissions.first() is LCE.Loading)
-            assertTrue("second value is terminal for $outcome", emissions.last() !is LCE.Loading)
-        }
+        assertEquals(1, emissions.size)
+        assertTrue(emissions.single() is LCE.Content)
     }
 }

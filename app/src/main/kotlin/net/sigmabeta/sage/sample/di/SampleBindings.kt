@@ -66,10 +66,6 @@ object SampleBindings {
     private fun browseResource(id: BrowseStringId): Int = when (id) {
         BrowseStringId.BROWSE_TITLE -> R.string.nav_browse
         BrowseStringId.BROWSE_EMPTY -> R.string.browse_empty
-        BrowseStringId.BROWSE_DEMO_HEADER -> R.string.browse_demo_header
-        BrowseStringId.BROWSE_DEMO_CONTENT -> R.string.browse_demo_content
-        BrowseStringId.BROWSE_DEMO_EMPTY -> R.string.browse_demo_empty
-        BrowseStringId.BROWSE_DEMO_ERROR -> R.string.browse_demo_error
         BrowseStringId.BROWSE_DEMO_ITEM_LISTS -> R.string.browse_demo_item_lists
         BrowseStringId.BROWSE_DEMO_ITEM_METRO -> R.string.browse_demo_item_metro
         BrowseStringId.BROWSE_DEMO_ITEM_VOYAGER -> R.string.browse_demo_item_voyager

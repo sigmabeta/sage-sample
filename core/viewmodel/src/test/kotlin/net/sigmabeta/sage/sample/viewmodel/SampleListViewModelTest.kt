@@ -3,7 +3,11 @@ package net.sigmabeta.sage.sample.viewmodel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -22,6 +26,7 @@ import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -34,7 +39,7 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SampleListViewModelTest {
-    private val dispatcher = UnconfinedTestDispatcher()
+    private val dispatcher = StandardTestDispatcher()
 
     @Before
     fun setUp() {
@@ -87,10 +92,25 @@ class SampleListViewModelTest {
         assertEquals(listOf(SageAction.Noop, SageAction.Noop), viewModel.handled)
         assertEquals(2, viewModel.analytics.loggedActions)
     }
+
+    @Test
+    fun `background work waits for the configured delay before collecting`() =
+        runTest(dispatcher) {
+            val viewModel = TestViewModel(dispatcher, delayMillis = 2_000L)
+            val values = mutableListOf<Int>()
+
+            viewModel.collectInBackground(flowOf(1)) { values += it }
+            advanceTimeBy(1_999L)
+            assertTrue("no emission before the selected delay", values.isEmpty())
+
+            advanceUntilIdle()
+            assertEquals(listOf(1), values)
+        }
 }
 
 private class TestViewModel(
     dispatcher: CoroutineDispatcher,
+    delayMillis: Long = 0L,
 ) : SampleListViewModel<TestState>() {
     override val stringProvider = NoopStringProvider
 
@@ -103,7 +123,7 @@ private class TestViewModel(
         main = dispatcher,
     )
     override val delayManager = object : SampleDelayManager {
-        override fun delayMillis() = 0L
+        override fun delayMillis() = delayMillis
     }
 
     val handled = mutableListOf<SageAction>()
@@ -114,6 +134,11 @@ private class TestViewModel(
 
     override fun handleAction(action: SageAction) {
         handled += action
+    }
+
+    /** Exposes the protected background seam so the delay policy can be tested. */
+    fun collectInBackground(flow: Flow<Int>, onValue: (Int) -> Unit) {
+        flow.onEach(onValue).runInBackground()
     }
 }
 

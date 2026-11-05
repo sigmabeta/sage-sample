@@ -5,7 +5,6 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onEach
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
@@ -20,11 +19,9 @@ import net.sigmabeta.sage.ui.StringProvider
 /**
  * Browse's view model.
  *
- * Initial load and the demo rows all go through [handleAction], which pulls from
- * [BrowseRepository] and publishes each [LCE] through [updateState]. Collection runs in
- * `viewModelScope` via [runInBackground], so it stops when the screen's ViewModel is cleared.
- * Starting a new load cancels the previous collection, so a slow earlier outcome can never
- * overwrite the outcome the user asked for last.
+ * The initial load pulls from [BrowseRepository] and publishes each [LCE] through [updateState].
+ * Collection runs in `viewModelScope` via [runInBackground], so it stops when the screen's
+ * ViewModel is cleared and waits for the duration selected on the Settings screen.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -40,27 +37,21 @@ class BrowseViewModel(
 
     override fun initialState(): BrowseState = BrowseState()
 
-    /** The in-flight load; a new load cancels it so only the latest outcome can publish. */
-    private var loadJob: Job? = null
-
     init {
         sendAction(SageAction.InitNoArgs)
     }
 
     override fun handleAction(action: SageAction) {
         when (action) {
-            is SageAction.InitNoArgs, is BrowseAction.LoadContent -> load(BrowseOutcome.CONTENT)
-            is BrowseAction.LoadEmpty -> load(BrowseOutcome.EMPTY)
-            is BrowseAction.LoadError -> load(BrowseOutcome.ERROR)
+            is SageAction.InitNoArgs -> load()
             else -> Unit
         }
     }
 
-    private fun load(outcome: BrowseOutcome) {
-        loadJob?.cancel()
+    private fun load() {
         updateState { BrowseState(LCE.Loading(BROWSE_OPERATION_NAME)) }
 
-        loadJob = repository.load(outcome)
+        repository.load()
             .onEach { content ->
                 updateState { BrowseState(content) }
             }

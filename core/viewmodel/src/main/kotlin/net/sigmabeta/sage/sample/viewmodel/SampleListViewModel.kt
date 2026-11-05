@@ -152,12 +152,16 @@ abstract class SampleListViewModel<StateType : ListState> :
 
     /**
      * Collects this flow on [dispatcher] within [SageScheduler.coroutineScope] (the
-     * `viewModelScope`), after the delay configured on the Settings screen.
+     * `viewModelScope`), after the simulated delay selected on the Settings screen.
+     *
+     * This is the sample's single asynchronous seam: every feature background operation goes
+     * through it, so the selected duration applies uniformly and `None` is the only way to skip
+     * the wait.
      */
     protected fun <EmissionType> Flow<EmissionType>.runInBackground(
         dispatcher: CoroutineDispatcher = scheduler.dispatchers.disk,
-        delayMillis: Long = this@SampleListViewModel.delayManager.delayMillis(),
     ): Job {
+        val delayMillis = this@SampleListViewModel.delayManager.delayMillis()
         val possiblyDelayedFlow = if (delayMillis > 0L) this.onStart { delay(delayMillis) } else this
         return possiblyDelayedFlow
             .flowOn(dispatcher)

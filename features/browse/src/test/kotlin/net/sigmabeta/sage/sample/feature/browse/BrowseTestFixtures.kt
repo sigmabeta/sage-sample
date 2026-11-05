@@ -42,20 +42,18 @@ internal class FakeAnalytics : Analytics {
 /**
  * Repository seam used by the view model tests.
  *
- * Each outcome gets its own replayed stream, so the test decides exactly when a value reaches the
- * view model. No real delays, no background threads.
+ * The stream is a replayed [MutableSharedFlow], so the test decides exactly when a value reaches
+ * the view model. No real delays, no background threads.
  */
 internal class FakeBrowseRepository : BrowseRepository {
-    private val streams = mutableMapOf<BrowseOutcome, MutableSharedFlow<LCE<List<BrowseItem>>>>()
+    private val stream = MutableSharedFlow<LCE<List<BrowseItem>>>(
+        replay = 1,
+        extraBufferCapacity = 1,
+    )
 
-    override fun load(outcome: BrowseOutcome): Flow<LCE<List<BrowseItem>>> = streamFor(outcome)
+    override fun load(): Flow<LCE<List<BrowseItem>>> = stream
 
-    suspend fun emit(outcome: BrowseOutcome, value: LCE<List<BrowseItem>>) {
-        streamFor(outcome).emit(value)
+    suspend fun emit(value: LCE<List<BrowseItem>>) {
+        stream.emit(value)
     }
-
-    private fun streamFor(outcome: BrowseOutcome): MutableSharedFlow<LCE<List<BrowseItem>>> =
-        streams.getOrPut(outcome) {
-            MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
-        }
 }
