@@ -45,21 +45,50 @@ prefer the conventional SAGE way over a local shortcut.
   Dagger-era path this structure replaces.
 - **Navigation is Voyager** (`cafe.adriel.voyager`), owned by `SampleNavHost`'s single
   `Navigator`. Home/Browse/Search are top-level; Settings is pushed from the hamburger.
-  The top-bar icon is the hamburger on top-level destinations and a back arrow
-  (pop) elsewhere. Selecting a top-level destination resets the stack to
-  `[Home, target]`, so back from Browse/Search returns Home. The nav suite is a
-  `NavigationBar` below 600 dp and a `NavigationRail` above it — hand-rolled because
-  the `material3-adaptive-navigation-suite` artifact pins material3 older than the BOM.
-- **ViewModels are activity-scoped**, not app-scoped: they come from the Compose
-  `ViewModelStoreOwner`, so popping and re-pushing a screen keeps its state until the
-  activity goes away. `viewModelScope` replaces the app-wide coroutine scope (each VM
-  builds its own `SageScheduler` in `:core:viewmodel`).
+  Selecting a top-level destination resets the stack to `[Home, target]`, so back from
+  Browse/Search returns Home. Features emit SAGE `SageEvent`s through
+  `SampleNavEffects`; `navActionFor` translates a route into `ShowTopLevel` for a
+  top-level destination or `Push` for anything else, so a feature navigating to
+  `settings` pushes it (once, like the hamburger) instead of replacing the stack.
+  The nav suite is a `NavigationBar` on a
+  `WidthClass.COMPACT` window and a `NavigationRail` on anything wider — hand-rolled
+  because the `material3-adaptive-navigation-suite` artifact pins material3 older than
+  the BOM. `SampleNavHost` computes the width class once (600/840 dp breakpoints, via
+  `widthClassFromDp`) and provides it through `LocalSampleWidthClass`.
+- **The top bar is screen-driven, with a destination fallback.** The active screen reports
+  its SAGE `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState`
+  derives the title (`title` falling back to the destination label) and the leading
+  affordance (`shouldShowBack` → back arrow, otherwise hamburger), so `MENU` opens
+  Settings and `BACK` pops. `remember(current)` resets the report on destination change.
+  `SampleDestination` tab labels/icons and `isTopLevel` remain app-owned; `isTopLevel`
+  only marks nav items and supplies the pre-report fallback.
+- **List versus grid is derived, not chosen per screen.** `SampleScreens` reads
+  `LocalSampleWidthClass` and calls `screenLayoutFor(state.columnType, widthClass)`:
+  one or zero columns keep SAGE's `ListScreen`; more columns use `GridScreen` with the
+  column count and, for `ColumnType.Staggered`, the staggered/horizontal-scroller flags.
+  Every sample screen stays `ColumnType.One`, so the grid path is covered by tests.
+- **One foreground Resume/Pause path.** The app's shared screen owns
+  `DisposableEffect { Resume; onDispose { Pause } }`. SAGE's `ListScreen`/`GridScreen`
+  also emit `Resume` on title change; `SampleListViewModel.sendAction` coalesces the
+  pair so only false→true `Resume` and true→false `Pause` reach `handleAction` and
+  analytics.
+- **A screen ViewModel lives and dies with its Voyager screen.** Voyager gives every
+  `Screen` its own `ViewModelStoreOwner` (the screen's content resolves against it), so a
+  ViewModel is retained while the screen stays in the back stack — including while covered
+  by a pushed screen — and is cleared when the screen is popped or removed; `viewModelScope`
+  is cancelled then, and popping + re-pushing builds a fresh ViewModel. Metro's
+  `@ContributesIntoMap(AppScope::class, ...)` + `@ViewModelKey` contributes only a *factory*
+  to the app graph: the instance lives in the Voyager store, so no screen ViewModel is
+  `@SingleIn`. `SampleMetroViewModelFactory` / `LocalMetroViewModelFactory` supply that
+  factory without changing the store owner or the lifetime. `viewModelScope` replaces the
+  app-wide coroutine scope (each VM builds its own `SageScheduler` in `:core:viewmodel`).
 - **Screen split:** a feature owns the state machine and the app owns rendering.
   `WelcomeState : ListState` declares the content; `WelcomeViewModel :
   SampleListViewModel<WelcomeState>` owns actions and analytics; `SampleScreens`
-  resolves it with `metroViewModel`, observes `uiStateActual` and passes it to SAGE's
-  `ListScreen`; `ListItemContent` renders each `ListModel`. Unknown model types fall
-  through to a spacer.
+  resolves it with `metroViewModel`, observes `uiStateActual`, reports its title through
+  `LocalSampleTitleBarSink` and passes it to SAGE's `ListScreen` or, for multi-column
+  states, `GridScreen`; `ListItemContent` renders each `ListModel`. Unknown model types
+  fall through to a spacer.
 - **Text never touches `R.string` in a feature.** Features expose a
   `SageStringId` enum (`WelcomeStringId`) and read text through `StringProvider`.
   `SampleBindings` is the only place that maps ids to resources — adding a string
@@ -78,9 +107,10 @@ prefer the conventional SAGE way over a local shortcut.
 - **Lint config is required:** `detekt-config.yml` at the repo root is read by
   SAGE's convention plugins. `.editorconfig` mirrors SAGE's ktlint ruleset,
   including the `@Composable` PascalCase exemption — don't delete either.
-- **No tests exist yet.** `./gradlew test` and CI's `unit-test` job are already
-  wired, so adding `src/test` sources needs no build changes. The feature modules are
-  pure JVM (plain JUnit); the app would use Android unit tests.
+- **Unit tests live beside their module.** `./gradlew test` and CI's `unit-test` job run
+  them. The feature modules and `:core:viewmodel` are pure JVM (plain JUnit); `:app` uses
+  Android unit tests for app-owned logic such as route mapping, chrome derivation and
+  layout selection. No test needs an emulator.
 - There is no Paparazzi/screenshot setup, no device test suite, no native code, and
   no desktop/JS target. Don't boot an emulator to verify changes.
 
@@ -162,8 +192,11 @@ app/                        Android application
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
     SampleScreens.kt        one Voyager Screen per destination
     SampleNavHost.kt        the back stack and top-level switch semantics
-    SampleNavScaffold.kt    top bar + bottom bar/rail
-    SampleTopBar.kt         hamburger on top level, back arrow elsewhere
+    SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
+    SampleNavAction.kt      pure SageEvent -> ShowTopLevel / Push / Pop policy
+    SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
+    SampleTopBar.kt         title/back from the active screen's SAGE title state
+    SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
 core/viewmodel/             pure-JVM ViewModel base shared by every feature
   SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, viewModelScope scheduler
 features/welcome/           pure-JVM feature module (no Android dependencies)

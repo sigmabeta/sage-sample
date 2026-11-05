@@ -23,6 +23,11 @@ object WelcomeState : ListState() {
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> =
         listOf(
+            SingleTextListModel(
+                name = stringProvider.getString(WelcomeStringId.WELCOME_OPEN_BROWSE),
+                clickAction = WelcomeAction.OpenBrowse,
+                dataId = OPEN_BROWSE_DATA_ID,
+            ),
             SectionHeaderListModel(
                 title = stringProvider.getString(WelcomeStringId.WELCOME_ABOUT_HEADER),
             ),
@@ -37,4 +42,12 @@ object WelcomeState : ListState() {
                 dataId = 2L,
             ),
         )
+
+    /**
+     * Stable model id for the Browse row.
+     *
+     * The id identifies the row across state rebuilds; it is part of the screen's contract, so
+     * tests pin it rather than deriving it from the label.
+     */
+    const val OPEN_BROWSE_DATA_ID = 3L
 }

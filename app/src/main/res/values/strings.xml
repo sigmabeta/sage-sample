@@ -5,6 +5,7 @@
     <string name="welcome_about_header">About</string>
     <string name="welcome_about_body_composite_build">SAGE is consumed as a Gradle composite build from the sage/ submodule.</string>
     <string name="welcome_about_body_list_state">Each feature is a pure JVM module that produces a ListState rendered by SAGE\'s ListScreen.</string>
+    <string name="welcome_open_browse">Open Browse</string>
 
     <!-- Navigation scaffold. The app owns these labels because destinations are an app concern;
          feature screens keep their own text behind their SageStringId enums. -->
@@ -16,7 +17,15 @@
     <string name="cd_navigate_back">Back</string>
 
     <!-- Placeholder bodies for the feature modules whose content is still TODO. -->
-    <string name="browse_todo">TODO: browse content</string>
+    <string name="browse_empty">Nothing to browse yet.</string>
+    <string name="browse_demo_header">Demo outcomes</string>
+    <string name="browse_demo_content">Load content</string>
+    <string name="browse_demo_empty">Load empty state</string>
+    <string name="browse_demo_error">Load error state</string>
+    <!-- Demo content row names. Browse's repository reads these through StringProvider. -->
+    <string name="browse_demo_item_lists">SAGE lists</string>
+    <string name="browse_demo_item_metro">Metro view models</string>
+    <string name="browse_demo_item_voyager">Voyager navigation</string>
     <string name="search_todo">TODO: search content</string>
     <string name="settings_todo">TODO: settings content</string>
 </resources>

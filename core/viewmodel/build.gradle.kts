@@ -12,4 +12,9 @@ dependencies {
     api(libs.sage.common.analytics)
     api(libs.sage.common.coroutines)
     api(libs.sage.common.ui.strings)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
+    // `ListState` returns `ListModel`, and SAGE's list module keeps `ui:components` internal.
+    testImplementation(libs.sage.common.ui.components)
 }

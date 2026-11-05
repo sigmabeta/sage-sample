@@ -54,11 +54,19 @@ object SampleBindings {
         WelcomeStringId.WELCOME_ABOUT_HEADER -> R.string.welcome_about_header
         WelcomeStringId.WELCOME_ABOUT_BODY_COMPOSITE_BUILD -> R.string.welcome_about_body_composite_build
         WelcomeStringId.WELCOME_ABOUT_BODY_LIST_STATE -> R.string.welcome_about_body_list_state
+        WelcomeStringId.WELCOME_OPEN_BROWSE -> R.string.welcome_open_browse
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {
         BrowseStringId.BROWSE_TITLE -> R.string.nav_browse
-        BrowseStringId.BROWSE_TODO -> R.string.browse_todo
+        BrowseStringId.BROWSE_EMPTY -> R.string.browse_empty
+        BrowseStringId.BROWSE_DEMO_HEADER -> R.string.browse_demo_header
+        BrowseStringId.BROWSE_DEMO_CONTENT -> R.string.browse_demo_content
+        BrowseStringId.BROWSE_DEMO_EMPTY -> R.string.browse_demo_empty
+        BrowseStringId.BROWSE_DEMO_ERROR -> R.string.browse_demo_error
+        BrowseStringId.BROWSE_DEMO_ITEM_LISTS -> R.string.browse_demo_item_lists
+        BrowseStringId.BROWSE_DEMO_ITEM_METRO -> R.string.browse_demo_item_metro
+        BrowseStringId.BROWSE_DEMO_ITEM_VOYAGER -> R.string.browse_demo_item_voyager
     }
 
     private fun searchResource(id: SearchStringId): Int = when (id) {
