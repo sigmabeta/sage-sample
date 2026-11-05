@@ -1,0 +1,102 @@
+name: CI
+
+# Push / PR checks for every branch. The jobs mirror scripts/ci/verify.sh, which runs the same
+# Gradle tasks sequentially on a developer machine. There is no tag/release workflow yet: the
+# release build type has no signing config, so a tag could only publish an unsigned APK.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static-analysis:
+    # Cheapest feedback first, and the gate for the two compile-heavy jobs below: a style or
+    # detekt break fails here before a runner spends minutes compiling the app.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: ktlint + detekt
+        run: >-
+          ./gradlew ktlintCheck detekt --continue
+          --build-cache --no-daemon --max-workers=2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: static-analysis-reports
+          path: '**/build/reports/**'
+          if-no-files-found: ignore
+
+  unit-test:
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests (app + feature modules)
+        run: ./gradlew test --continue --build-cache --no-daemon --max-workers=2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: '**/build/test-results/**/TEST-*.xml'
+          if-no-files-found: ignore
+
+  android:
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Ubuntu runners ship with the SDK, but the compile platform is not guaranteed to be
+      # present. `packages` is overridden because the action's default requests the legacy
+      # `tools` package, which Google removed from the SDK repository.
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+      # lintRelease compiles the release graph, so running it before the APKs makes the
+      # subsequent assemble steps incremental on this runner.
+      - name: Android lint + debug/release APKs
+        run: >-
+          ./gradlew :app:lintRelease :app:assembleDebug :app:assembleRelease
+          --build-cache --no-daemon --max-workers=4
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-lint-report
+          path: 'app/build/reports/**'
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: 'app/build/outputs/apk/**/*.apk'
+          if-no-files-found: ignore

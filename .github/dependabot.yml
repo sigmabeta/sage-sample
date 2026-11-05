@@ -1,0 +1,15 @@
+# Dependabot configuration.
+#
+# App dependencies live in the SAGE submodule's catalog (sage/gradle/libs.versions.toml) and are
+# updated by bumping the submodule, so only the GitHub Actions used by the workflows are tracked
+# here.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"

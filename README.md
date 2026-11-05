@@ -8,7 +8,7 @@ through a Gradle composite build.
 
 | Tool | Version |
 |------|---------|
-| JDK | 17 |
+| JDK | 17+ (CI uses Temurin 21) |
 | Android SDK | platform 36 |
 | Gradle | 9.5 (wrapper) |
 
@@ -31,6 +31,32 @@ A plain clone needs the submodule initialised first:
 ```bash
 git submodule update --init --recursive
 ```
+
+## Verification
+
+CI is `.github/workflows/ci.yml`. Three jobs run on every push, pull request, and manual dispatch:
+
+| Job | Command |
+|-----|---------|
+| `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
+| `unit-test` | `./gradlew test --continue` |
+| `android` | `./gradlew :app:lintRelease :app:assembleDebug :app:assembleRelease` |
+
+The two compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
+Reports, JUnit XML, and the APKs are uploaded as workflow artifacts.
+
+Locally, `scripts/ci/verify.sh` runs the same tasks sequentially, keeps going after a failure so
+one run shows everything, and writes a summary with all reports to `build/verification/`:
+
+```bash
+scripts/ci/verify.sh                 # everything
+scripts/ci/verify.sh --skip-apps     # ktlint/detekt + unit tests only (fast inner loop)
+scripts/ci/verify.sh static-analysis # just the named task(s)
+scripts/ci/verify.sh --list          # task names
+```
+
+The release APK is unsigned: the sample has no release signing config, so `assembleRelease`
+produces an unsigned artifact that must be signed before installing.
 
 ## Updating SAGE
 

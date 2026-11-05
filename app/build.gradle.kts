@@ -5,6 +5,9 @@ plugins {
     // `@Inject` constructor / `@ContributesTo(AppScope::class)` binding applies it.
     alias(libs.plugins.metro)
     alias(libs.plugins.detekt)
+    // The app applies plugins directly (SAGE's convention plugins target library modules), so it
+    // opts into ktlint itself — otherwise `./gradlew ktlintCheck` would skip this module.
+    alias(libs.plugins.ktlint)
 }
 
 android {
@@ -47,6 +50,12 @@ kotlin {
 detekt {
     config.setFrom("$rootDir/detekt-config.yml")
     baseline = file("detekt-baseline.xml")
+}
+
+ktlint {
+    // Pin the engine to SAGE's catalog version so the app formats identically to modules that go
+    // through the sage.jvm / sage.android conventions (which call configureKtlint()).
+    version.set(libs.versions.ktlintTool.get())
 }
 
 dependencies {
