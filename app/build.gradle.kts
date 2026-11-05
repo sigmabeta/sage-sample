@@ -1,8 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.hilt)
-    alias(libs.plugins.ksp)
+    // Metro is SAGE's DI compiler plugin. Every module that declares or consumes an
+    // `@Inject` constructor / `@ContributesTo(AppScope::class)` binding applies it.
+    alias(libs.plugins.metro)
+    alias(libs.plugins.detekt)
 }
 
 android {
@@ -11,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "net.sigmabeta.sage.sample"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
@@ -42,8 +44,16 @@ kotlin {
     }
 }
 
+detekt {
+    config.setFrom("$rootDir/detekt-config.yml")
+    baseline = file("detekt-baseline.xml")
+}
+
 dependencies {
     implementation(projects.features.welcome)
+
+    // The AppScope marker (net.sigmabeta.sage.di.AppScope) used by the app graph.
+    implementation(libs.sage.common.di)
 
     implementation(libs.sage.common.list)
     implementation(libs.sage.common.appcomm)
@@ -52,22 +62,18 @@ dependencies {
     implementation(libs.sage.common.coroutines)
     implementation(libs.sage.common.ui.components)
     implementation(libs.sage.common.ui.strings)
+    implementation(libs.sage.common.ui.listScreens)
 
-    implementation(libs.sage.android.ui.list)
+    implementation(libs.sage.android.coroutines)
+    implementation(libs.sage.android.logging)
     implementation(libs.sage.android.ui.strings)
     implementation(libs.sage.android.ui.themes)
-    implementation(libs.sage.android.logging)
-    implementation(libs.sage.android.coroutines)
-    implementation(libs.sage.fake.analytics)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
-
-    implementation(libs.hilt)
-    ksp(libs.hilt.compiler)
 
     implementation(libs.kotlinx.collections.immutable)
 }

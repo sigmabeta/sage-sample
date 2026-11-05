@@ -11,11 +11,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.appcomm.ActionSink
-import net.sigmabeta.sage.appcomm.VglsAction
+import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.SingleTextListModel
 
+/**
+ * The app's renderer for SAGE [ListModel]s.
+ *
+ * SAGE owns the screen scaffolding (state, scrolling, insets, pagination); the app owns the
+ * pixel rendering of each model type. Unknown models fall through to a spacer so feature modules
+ * can introduce their own model types without breaking the app.
+ */
 @Composable
 fun ListItemContent(
     model: ListModel,
@@ -38,7 +45,7 @@ fun ListItemContent(
             style = MaterialTheme.typography.bodyMedium,
             modifier = modifier
                 .fillMaxWidth()
-                .clickable(enabled = model.clickAction !is VglsAction.Noop) {
+                .clickable(enabled = model.clickAction !is SageAction.Noop) {
                     sink.sendAction(model.clickAction)
                 }
                 .padding(padding)

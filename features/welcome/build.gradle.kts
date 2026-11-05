@@ -1,5 +1,9 @@
 plugins {
+    // A feature module is pure JVM: its brain depends only on SAGE's common (multiplatform)
+    // modules, so it stays free of Android types and is unit-testable without a device.
     alias(libs.plugins.sage.jvm)
+    // Metro compiler plugin, so the brain's `@Inject` constructor is available to the app graph.
+    alias(libs.plugins.sage.di)
 }
 
 dependencies {

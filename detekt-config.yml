@@ -1,0 +1,10 @@
+# Detekt config for this app. The SAGE base plugins (sage.jvm / sage.android / sage.kmp)
+# read this file from the consumer's root directory, so every module is linted with the same
+# ruleset. Start from detekt's defaults and apply the overrides below on top (module builds
+# enable `buildUponDefaultConfig` so unspecified rules keep their default activation).
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false

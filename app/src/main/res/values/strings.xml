@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SAGE Sample</string>
+    <string name="welcome_title">SAGE Sample</string>
+    <string name="welcome_about_header">About</string>
+    <string name="welcome_about_body_composite_build">SAGE is consumed as a Gradle composite build from the sage/ submodule.</string>
+    <string name="welcome_about_body_list_state">Each feature is a pure JVM module that produces a ListState rendered by SAGE\'s ListScreen.</string>
 </resources>
