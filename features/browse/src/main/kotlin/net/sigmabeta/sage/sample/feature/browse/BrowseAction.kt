@@ -11,4 +11,5 @@ import net.sigmabeta.sage.appcomm.SageAction
  */
 sealed class BrowseAction : SageAction() {
     data object OpenListItems : BrowseAction()
+    data object OpenListItemsWithImages : BrowseAction()
 }

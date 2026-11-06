@@ -29,6 +29,12 @@ class SampleNavActionTest {
             SampleNavAction.Push(SampleDestination.LIST_ITEMS),
             navActionFor(SageEvent.NavigateTo(destination = "list-items", source = "test")),
         )
+        assertEquals(
+            SampleNavAction.Push(SampleDestination.LIST_ITEMS_WITH_IMAGES),
+            navActionFor(
+                SageEvent.NavigateTo(destination = "list-items-with-images", source = "test"),
+            ),
+        )
     }
 
     @Test

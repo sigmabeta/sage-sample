@@ -2,9 +2,9 @@
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
 Android app module (`:app`), one Compose Desktop app module (`:apps:jvm`), five pure-JVM feature
-modules over shared `:core` modules (Welcome, Browse, List Items, Search, and a Settings screen
-with persisted preferences), and SAGE itself as a Git submodule consumed through a Gradle composite
-build.
+modules over shared `:core` modules (Welcome, Browse, List Items — as text-only and generated-image
+variants — Search, and a Settings screen with persisted preferences), and SAGE itself as a Git
+submodule consumed through a Gradle composite build.
 
 ## Requirements
 
@@ -144,7 +144,8 @@ features/welcome/           pure-JVM feature module (no Android dependencies)
   WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
   WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
 features/browse/            same shape; asynchronous LCE content
-features/listitems/         same shape; 25 generated NameCaption rows via SampleItemRepository
+features/listitems/         List Items (NameCaption) and List Items with Images
+                            (ImageNameCaption over generated:// Coil art), one repository
 features/search/            same shape; placeholder content (TODO)
 features/settings/          theme + simulate-delay dropdowns, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene
@@ -230,6 +231,12 @@ SAGE splits a screen in two:
 Text goes through `StringProvider` and a feature-owned `SageStringId` enum, so feature modules stay
 platform-agnostic; `SampleBindings` is the only place that knows about `R.string`.
 
+The two List Items screens share one generated repository. The text-only variant maps each
+`SampleItem` to `NameCaptionListModel`; the image variant maps the same data to
+`ImageNameCaptionListModel` with a deterministic `generated://` URL in its `SourceInfo`.
+`ListItemContent` renders those URLs with Coil's `AsyncImage`, so the artwork comes from
+`:core:bitmaps`' fetcher rather than bundled bitmap assets.
+
 ### Navigation
 
 Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigator`:
@@ -239,6 +246,8 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
   `NavigationRail` at 600 dp and wider. Selecting one resets the stack to `[home, target]`, so
   back from Browse or Search returns Home.
 - **Settings** is pushed from the hamburger.
+- **List Items and List Items with Images** are pushed from Browse. Both are non-top-level
+  routes, so the back arrow returns to Browse rather than resetting the stack.
 - **Feature navigation is translated, not re-implemented.** Features emit SAGE
   `SageEvent`s (`NavigateTo`, `NavigateSingleTopLevel`, `NavigateBack`) through
   `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known route to `ShowTopLevel`

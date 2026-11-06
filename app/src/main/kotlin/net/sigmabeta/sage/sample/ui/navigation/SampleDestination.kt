@@ -24,6 +24,12 @@ enum class SampleDestination(
     BROWSE("browse", R.string.nav_browse, Icon.Browse, isTopLevel = true),
     SEARCH("search", R.string.nav_search, Icon.Search, isTopLevel = true),
     LIST_ITEMS("list-items", R.string.nav_list_items, Icon.Browse, isTopLevel = false),
+    LIST_ITEMS_WITH_IMAGES(
+        "list-items-with-images",
+        R.string.nav_list_items_with_images,
+        Icon.Browse,
+        isTopLevel = false,
+    ),
     SETTINGS("settings", R.string.nav_settings, Icon.Person, isTopLevel = false),
     ;
 

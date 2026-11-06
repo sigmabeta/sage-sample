@@ -176,6 +176,7 @@ private fun screenFor(destination: SampleDestination): SampleScreen = when (dest
     SampleDestination.HOME -> HomeScreen
     SampleDestination.BROWSE -> BrowseScreen
     SampleDestination.LIST_ITEMS -> ListItemsScreen
+    SampleDestination.LIST_ITEMS_WITH_IMAGES -> ListItemsWithImagesScreen
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
 }

@@ -57,7 +57,10 @@ class BrowseViewModelTest {
 
         val contentRows = viewModel.uiStateActual.value.listItems
             .filterIsInstance<SingleTextListModel>()
-            .filter { it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID }
+            .filter {
+                it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID &&
+                    it.dataId != BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID
+            }
 
         assertEquals(listOf(1L, 2L), contentRows.map { it.dataId })
         assertEquals(listOf("Alpha", "Beta"), contentRows.map { it.name })

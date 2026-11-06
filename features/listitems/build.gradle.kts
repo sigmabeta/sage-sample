@@ -20,6 +20,10 @@ dependencies {
     // `StringGenerator` (the seeded fake-data generator) ships with SAGE's string module.
     api(libs.sage.common.ui.strings)
 
+    // `GeneratedImageFetcher.urlFor` is the single source of truth for `generated://` request
+    // URLs. The feature only builds the URL; the apps' Coil loaders do the rendering.
+    implementation(projects.core.bitmaps)
+
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
 }

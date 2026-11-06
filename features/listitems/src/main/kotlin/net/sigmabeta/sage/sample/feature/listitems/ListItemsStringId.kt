@@ -11,4 +11,6 @@ import net.sigmabeta.sage.ui.SageStringId
 enum class ListItemsStringId : SageStringId {
     LIST_ITEMS_TITLE,
     LIST_ITEMS_ITEM_CLICKED,
+    LIST_ITEMS_WITH_IMAGES_TITLE,
+    LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED,
 }

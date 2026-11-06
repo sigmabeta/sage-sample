@@ -20,6 +20,14 @@ class SampleDestinationTest {
     }
 
     @Test
+    fun `fromRoute maps the list items with images route to its destination`() {
+        assertEquals(
+            SampleDestination.LIST_ITEMS_WITH_IMAGES,
+            SampleDestination.fromRoute("list-items-with-images"),
+        )
+    }
+
+    @Test
     fun `fromRoute returns null for an unknown route`() {
         assertNull(SampleDestination.fromRoute("no-such-destination"))
     }

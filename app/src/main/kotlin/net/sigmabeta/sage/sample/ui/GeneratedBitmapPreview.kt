@@ -18,8 +18,8 @@ import net.sigmabeta.sage.sample.bitmaps.GeneratedImageFetcher
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 
 /**
- * Shows the deterministic placeholder art from `:core:bitmaps`. Preview-only: no runtime screen
- * renders generated bitmaps.
+ * Shows the deterministic placeholder art from `:core:bitmaps`. The List Items with Images screen
+ * requests the same art at runtime through Coil; these previews exercise the generator directly.
  */
 @Preview
 @Composable

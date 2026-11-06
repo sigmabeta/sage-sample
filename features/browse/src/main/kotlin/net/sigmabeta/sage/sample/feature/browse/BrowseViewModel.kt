@@ -56,6 +56,14 @@ class BrowseViewModel(
                 ),
             )
 
+            is BrowseAction.OpenListItemsWithImages -> emitEvent(
+                SageEvent.NavigateTo(
+                    // Same route contract, guarded by SampleDestinationTest.
+                    destination = "list-items-with-images",
+                    source = "BrowseViewModel",
+                ),
+            )
+
             else -> Unit
         }
     }
