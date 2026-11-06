@@ -28,11 +28,6 @@ object SampleStrings {
     const val CD_OPEN_SETTINGS = "Open settings"
     const val CD_NAVIGATE_BACK = "Back"
 
-    const val BROWSE_EMPTY = "Nothing to browse yet."
-    const val BROWSE_DEMO_ITEM_LISTS = "SAGE lists"
-    const val BROWSE_DEMO_ITEM_METRO = "Metro view models"
-    const val BROWSE_DEMO_ITEM_VOYAGER = "Voyager navigation"
-
     const val SEARCH_TODO = "TODO: search content"
 
     const val SETTINGS_SECTION_APPEARANCE = "Appearance"

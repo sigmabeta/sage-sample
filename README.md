@@ -147,7 +147,7 @@ features/welcome/           pure-JVM feature module (no Android dependencies)
   WelcomeState.kt           ListState: what the screen contains
   WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
   WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
-features/browse/            same shape; asynchronous LCE content
+features/browse/            same shape; static destination rows (no loading/content)
 features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)

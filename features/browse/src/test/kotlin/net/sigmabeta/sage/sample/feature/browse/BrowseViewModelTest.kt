@@ -10,10 +10,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageEvent
-import net.sigmabeta.sage.components.EmptyStateListModel
-import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.SingleTextListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
@@ -27,13 +24,11 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class BrowseViewModelTest {
     private lateinit var dispatcher: TestDispatcher
-    private lateinit var repository: FakeBrowseRepository
 
     @Before
     fun setUp() {
         dispatcher = StandardTestDispatcher()
         Dispatchers.setMain(dispatcher)
-        repository = FakeBrowseRepository()
     }
 
     @After
@@ -42,48 +37,19 @@ class BrowseViewModelTest {
     }
 
     @Test
-    fun `init loads content through the action and state path`() = runTest {
+    fun `the screen renders its destinations without a loading state`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiStateActual.value.listItems.any { it is LoadingItemListModel })
+        val rows = viewModel.uiStateActual.value.listItems
 
-        repository.emit(
-            LCE.Content(
-                listOf(
-                    BrowseItem(id = 1L, name = "Alpha"),
-                    BrowseItem(id = 2L, name = "Beta"),
-                ),
-            ),
-        )
-        advanceUntilIdle()
-
-        val contentRows = viewModel.uiStateActual.value.listItems
-            .filterIsInstance<SingleTextListModel>()
-            .filter {
-                it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID &&
-                    it.dataId != BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID &&
-                    it.dataId != BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID
-            }
-
-        assertEquals(listOf(1L, 2L), contentRows.map { it.dataId })
-        assertEquals(listOf("Alpha", "Beta"), contentRows.map { it.name })
+        assertEquals(3, rows.size)
+        assertTrue(rows.all { it is SingleTextListModel })
+        assertTrue(rows.none { it is LoadingItemListModel })
     }
 
     @Test
-    fun `empty content publishes the empty state`() = runTest {
-        val viewModel = createViewModel()
-        val state = viewModel.uiStateActual
-        advanceUntilIdle()
-
-        repository.emit(LCE.Content(emptyList()))
-        advanceUntilIdle()
-
-        assertTrue(state.value.listItems.any { it is EmptyStateListModel })
-    }
-
-    @Test
-    fun `opening the grid emits its navigation route`() = runTest {
+    fun `each destination row emits its navigation route`() = runTest {
         val viewModel = createViewModel()
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -91,26 +57,17 @@ class BrowseViewModelTest {
         }
         advanceUntilIdle()
 
+        viewModel.sendAction(BrowseAction.OpenListItems)
+        viewModel.sendAction(BrowseAction.OpenListItemsWithImages)
         viewModel.sendAction(BrowseAction.OpenGridOfImages)
         advanceUntilIdle()
 
-        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
-        assertEquals("grid-of-images", navigation.destination)
-        assertEquals("BrowseViewModel", navigation.source)
-    }
-
-    @Test
-    fun `an error publishes the error state`() = runTest {
-        val viewModel = createViewModel()
-        val state = viewModel.uiStateActual
-        advanceUntilIdle()
-
-        repository.emit(LCE.Error("browse", IllegalStateException("boom")))
-        advanceUntilIdle()
-
-        val errorState = state.value.listItems.filterIsInstance<ErrorStateListModel>().single()
-        assertEquals("browse", errorState.failedOperationName)
-        assertEquals("boom", errorState.error.message)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>()
+        assertEquals(
+            listOf("list-items", "list-items-with-images", "grid-of-images"),
+            navigation.map { it.destination },
+        )
+        assertTrue(navigation.all { it.source == "BrowseViewModel" })
     }
 
     private fun createViewModel() = BrowseViewModel(
@@ -125,6 +82,5 @@ class BrowseViewModelTest {
         delayManager = object : SampleDelayManager {
             override fun delayMillis() = 0L
         },
-        repository = repository,
     )
 }

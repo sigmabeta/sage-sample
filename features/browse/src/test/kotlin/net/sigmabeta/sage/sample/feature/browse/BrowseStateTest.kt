@@ -1,9 +1,6 @@
 package net.sigmabeta.sage.sample.feature.browse
 
-import net.sigmabeta.sage.appcomm.LCE
-import net.sigmabeta.sage.components.EmptyStateListModel
-import net.sigmabeta.sage.components.ErrorStateListModel
-import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.SingleTextListModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -12,90 +9,47 @@ import org.junit.Test
 class BrowseStateTest {
     private val strings = FakeStringProvider()
 
-    /** The two destination rows Browse always shows, whatever the loaded content is. */
-    private val openDestinationIds = setOf(
-        BrowseState.OPEN_LIST_ITEMS_DATA_ID,
-        BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID,
-        BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID,
-    )
+    @Test
+    fun `browse lists only its three destination rows`() {
+        val rows = BrowseState.toListItems(strings)
+
+        assertEquals(3, rows.size)
+        assertTrue(rows.all { it is SingleTextListModel })
+    }
 
     @Test
-    fun `the list items row is always present and opens the destination`() {
-        val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
+    fun `the list items row opens its destination`() {
+        val openRow = BrowseState.toListItems(strings)[0] as SingleTextListModel
 
-        val openRow = items.first() as SingleTextListModel
         assertEquals("str-BROWSE_OPEN_LIST_ITEMS", openRow.name)
         assertTrue(openRow.clickAction is BrowseAction.OpenListItems)
         assertEquals(BrowseState.OPEN_LIST_ITEMS_DATA_ID, openRow.dataId)
     }
 
     @Test
-    fun `the list items with images row is always present and opens its destination`() {
-        val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
+    fun `the list items with images row opens its destination`() {
+        val openRow = BrowseState.toListItems(strings)[1] as SingleTextListModel
 
-        val openRow = items[1] as SingleTextListModel
         assertEquals("str-BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES", openRow.name)
         assertTrue(openRow.clickAction is BrowseAction.OpenListItemsWithImages)
         assertEquals(BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID, openRow.dataId)
     }
 
     @Test
-    fun `the grid of images row is always present and opens its destination`() {
-        val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
+    fun `the grid of images row opens its destination`() {
+        val openRow = BrowseState.toListItems(strings)[2] as SingleTextListModel
 
-        val openRow = items[2] as SingleTextListModel
         assertEquals("str-BROWSE_OPEN_GRID_OF_IMAGES", openRow.name)
         assertTrue(openRow.clickAction is BrowseAction.OpenGridOfImages)
         assertEquals(BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID, openRow.dataId)
     }
 
     @Test
-    fun `loading content maps to loading rows`() {
-        val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
-
-        assertTrue(items.any { it is LoadingItemListModel })
-        assertTrue(
-            items.none {
-                it is SingleTextListModel && it.dataId !in openDestinationIds
-            },
-        )
-    }
-
-    @Test
-    fun `content maps to single text rows with stable ids`() {
-        val state = BrowseState(
-            LCE.Content(
-                listOf(
-                    BrowseItem(id = 11L, name = "Alpha"),
-                    BrowseItem(id = 22L, name = "Beta"),
-                ),
-            ),
-        )
-
-        val rows = state.toListItems(strings)
+    fun `no row is an inactive no-op`() {
+        val actions = BrowseState.toListItems(strings)
             .filterIsInstance<SingleTextListModel>()
-            .filter { it.dataId !in openDestinationIds }
+            .map { it.clickAction }
 
-        assertEquals(listOf(11L, 22L), rows.map { it.dataId })
-        assertEquals(listOf("Alpha", "Beta"), rows.map { it.name })
-    }
-
-    @Test
-    fun `empty content maps to an empty state`() {
-        val items = BrowseState(LCE.Content(emptyList())).toListItems(strings)
-
-        val emptyState = items.filterIsInstance<EmptyStateListModel>().single()
-        assertEquals("str-BROWSE_EMPTY", emptyState.explanation)
-    }
-
-    @Test
-    fun `error maps to an error state`() {
-        val items = BrowseState(
-            LCE.Error("browse", IllegalStateException("boom")),
-        ).toListItems(strings)
-
-        val errorState = items.filterIsInstance<ErrorStateListModel>().single()
-        assertEquals("browse", errorState.failedOperationName)
-        assertEquals("boom", errorState.error.message)
+        assertTrue(actions.none { it is SageAction.Noop })
     }
 }
