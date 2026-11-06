@@ -5,6 +5,7 @@ import coil3.SingletonImageLoader
 import dev.zacsweers.metro.createGraphFactory
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.di.SampleAppGraph
+import net.sigmabeta.sage.ui.perf.isPerfMeasurementEnabled
 
 class SampleApplication : Application() {
     override fun onCreate() {
@@ -12,6 +13,10 @@ class SampleApplication : Application() {
         // Register before any composable resolves the singleton, so AsyncImage requests for
         // `generated://` URLs reach :core:bitmaps' fetcher instead of the default loader.
         SingletonImageLoader.setSafe { context -> generatedImageLoader(context) }
+
+        // The shared renderers wrap each item in SAGE's perf measurement; keep that visibility in
+        // debug builds and skip the timing overhead in release.
+        isPerfMeasurementEnabled = BuildConfig.DEBUG
     }
 
     /**

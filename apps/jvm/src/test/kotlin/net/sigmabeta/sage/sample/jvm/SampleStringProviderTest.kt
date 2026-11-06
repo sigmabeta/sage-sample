@@ -5,6 +5,7 @@ import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
+import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.ui.SageStringId
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -23,7 +24,8 @@ class SampleStringProviderTest {
             BrowseStringId.entries +
             ListItemsStringId.entries +
             SearchStringId.entries +
-            SettingsStringId.entries
+            SettingsStringId.entries +
+            ComponentStringId.entries
 
         ids.forEach { id ->
             assertFalse("Missing desktop text for $id", SampleStringProvider.getString(id).isBlank())

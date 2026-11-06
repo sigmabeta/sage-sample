@@ -22,6 +22,7 @@ import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
 import net.sigmabeta.sage.sample.storage.PreferencesStorage
 import net.sigmabeta.sage.sample.storage.settingsDataStore
+import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.storage.common.Storage
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
@@ -52,6 +53,7 @@ object SampleBindings {
                 is ListItemsStringId -> listItemsResource(id)
                 is SearchStringId -> searchResource(id)
                 is SettingsStringId -> settingsResource(id)
+                is ComponentStringId -> componentResource(id)
                 else -> error("No R.string mapping for $id")
             }
         }
@@ -103,6 +105,18 @@ object SampleBindings {
         SettingsStringId.SETTINGS_SECTION_ABOUT -> R.string.settings_section_about
         SettingsStringId.SETTINGS_LABEL_APP_VERSION -> R.string.settings_label_app_version
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE -> R.string.settings_label_build_date
+    }
+
+    /** Accessibility labels owned by the shared component renderers. */
+    private fun componentResource(id: ComponentStringId): Int = when (id) {
+        ComponentStringId.ACCY_OCL_CHECKBOX -> R.string.cd_component_checkbox
+        ComponentStringId.ACCY_OCL_DROPDOWN -> R.string.cd_component_dropdown
+        ComponentStringId.ACCY_OCL_RATING -> R.string.cd_component_rating
+        ComponentStringId.ACCY_OCL_SINGLE_LINE -> R.string.cd_component_single_line
+        ComponentStringId.ACCY_OCL_VALUE -> R.string.cd_component_value
+        ComponentStringId.ACCY_ST_DESC_CHECKED -> R.string.state_component_checked
+        ComponentStringId.ACCY_ST_DESC_LOADING -> R.string.state_component_loading
+        ComponentStringId.ACCY_ST_DESC_UNCHECKED -> R.string.state_component_unchecked
     }
 
     @Provides

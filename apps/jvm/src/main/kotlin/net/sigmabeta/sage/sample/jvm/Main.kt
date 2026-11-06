@@ -12,6 +12,7 @@ import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
 import net.sigmabeta.sage.sample.jvm.ui.SampleApp
+import net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider
 
 /**
  * Desktop entry point: builds the app-scoped Metro graph once and opens the Compose window.
@@ -34,6 +35,7 @@ fun main() {
         ) {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
+                LocalComponentStringProvider provides graph.stringProvider,
             ) {
                 SampleApp(settingsManager = graph.settingsManager)
             }

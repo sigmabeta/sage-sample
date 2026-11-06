@@ -50,4 +50,14 @@ object SampleStrings {
     const val SETTINGS_SECTION_ABOUT = "About"
     const val SETTINGS_LABEL_APP_VERSION = "App version"
     const val SETTINGS_LABEL_BUILD_DATE = "Build date"
+
+    // Accessibility text for the shared component renderers (:core:ui:components:api).
+    const val CD_COMPONENT_CHECKBOX = "Toggle checkbox"
+    const val CD_COMPONENT_DROPDOWN = "Expand dropdown"
+    const val CD_COMPONENT_RATING = "Rate"
+    const val CD_COMPONENT_SINGLE_LINE = "Open %s"
+    const val CD_COMPONENT_VALUE = "Open"
+    const val STATE_COMPONENT_CHECKED = "Checked"
+    const val STATE_COMPONENT_LOADING = "Loading"
+    const val STATE_COMPONENT_UNCHECKED = "Unchecked"
 }

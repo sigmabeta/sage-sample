@@ -5,6 +5,7 @@ import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
+import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -54,6 +55,14 @@ object SampleStringProvider : StringProvider {
         SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,
         SettingsStringId.SETTINGS_LABEL_APP_VERSION to SampleStrings.SETTINGS_LABEL_APP_VERSION,
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE to SampleStrings.SETTINGS_LABEL_BUILD_DATE,
+        ComponentStringId.ACCY_OCL_CHECKBOX to SampleStrings.CD_COMPONENT_CHECKBOX,
+        ComponentStringId.ACCY_OCL_DROPDOWN to SampleStrings.CD_COMPONENT_DROPDOWN,
+        ComponentStringId.ACCY_OCL_RATING to SampleStrings.CD_COMPONENT_RATING,
+        ComponentStringId.ACCY_OCL_SINGLE_LINE to SampleStrings.CD_COMPONENT_SINGLE_LINE,
+        ComponentStringId.ACCY_OCL_VALUE to SampleStrings.CD_COMPONENT_VALUE,
+        ComponentStringId.ACCY_ST_DESC_CHECKED to SampleStrings.STATE_COMPONENT_CHECKED,
+        ComponentStringId.ACCY_ST_DESC_LOADING to SampleStrings.STATE_COMPONENT_LOADING,
+        ComponentStringId.ACCY_ST_DESC_UNCHECKED to SampleStrings.STATE_COMPONENT_UNCHECKED,
     )
 
     override fun getString(string: SageStringId): String =

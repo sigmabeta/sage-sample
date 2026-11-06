@@ -5,6 +5,7 @@ import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.ui.StringProvider
 
 /**
  * The desktop app's dependency graph — the JVM counterpart of the Android `SampleAppGraph`.
@@ -24,6 +25,13 @@ interface JvmSampleAppGraph : ViewModelGraph {
      * screen exists, so it is a graph accessor rather than a per-screen view model.
      */
     val settingsManager: SampleSettingsManager
+
+    /**
+     * Installed into
+     * [net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider] at the composition
+     * root so the shared component renderers can resolve their accessibility labels.
+     */
+    val stringProvider: StringProvider
 
     @DependencyGraph.Factory
     fun interface Factory {

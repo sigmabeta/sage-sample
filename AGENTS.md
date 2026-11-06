@@ -49,12 +49,18 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   zero columns and uses `GridScreen` (staggered when the column type asks) above that.
 - **One foreground pair:** the shared screen sends `Resume`/`Pause`; SAGE's list screens also
   send `Resume` on title change, coalesced in `SampleListViewModel.sendAction`.
-- **Text never touches `R.string` in a feature.** Use a `SageStringId` enum + `StringProvider`;
-  `SampleBindings` (Android) and `SampleStringProvider` (desktop) are the only id → text mappings.
-  Demo/repository content included.
+- **Text never touches `R.string` in a feature or shared UI module.** Use a `SageStringId` enum +
+  `StringProvider`; `SampleBindings` (Android) and `SampleStringProvider` (desktop) are the only
+  id → text mappings. Demo/repository content included. The shared renderer suite owns
+  `ComponentStringId` for accessibility labels and reads them from `LocalComponentStringProvider`,
+  which the composition roots install from the graph's `StringProvider`.
+- **Renderers are shared, not per-app.** `:core:ui:components:api` is the KMP Compose suite ported
+  from Chipbox: `ListModel.Content` dispatches every non-Chipbox-specific SAGE model to its
+  renderer, and it re-exports `libs.sage.common.ui.components`. Both apps supply
+  `ListModel.Content` to `ListScreen`/`GridScreen`; don't reintroduce app-local `ListItemContent`.
 - **Module plugins:** `:features:*` and `:core:viewmodel` apply `sage.jvm` (features also
-  `sage.di`; `:core:settings` applies both); `:core:bitmaps` applies `sage.kmp` +
-  `sage.compose.kmp` because its Compose rendering is shared by both apps; `:apps:jvm` applies
+  `sage.di`; `:core:settings` applies both); `:core:bitmaps` and `:core:ui:components:api` apply
+  `sage.kmp` + `sage.compose.kmp` because their Compose rendering is shared by both apps; `:apps:jvm` applies
   `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler and JetBrains Compose plugins);
   `:app` applies `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly. Add
   SAGE dependencies through `libs.sage.*`, never a local version.
@@ -144,7 +150,7 @@ Don't `git commit` or `git push` unless explicitly asked.
 
 See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `app/`
 (Android application), `apps/jvm/` (Compose Desktop application), `core/bitmaps/` (KMP Compose
-preview art), `core/settings/` and
+preview art), `core/ui/components/api/` (KMP Compose renderer suite), `core/settings/` and
 `core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`
 (agent tooling), `docs/agents/` (tracker/domain docs), `sage/` (submodule).
 

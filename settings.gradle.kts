@@ -41,6 +41,7 @@ include(
     ":apps:jvm",
     ":core:bitmaps",
     ":core:settings",
+    ":core:ui:components:api",
     ":core:viewmodel",
     ":features:browse",
     ":features:listitems",

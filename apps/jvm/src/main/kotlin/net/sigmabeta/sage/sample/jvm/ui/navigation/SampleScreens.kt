@@ -20,7 +20,7 @@ import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeViewModel
-import net.sigmabeta.sage.sample.jvm.ui.ListItemContent
+import net.sigmabeta.sage.sample.ui.components.api.Content
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.list.GridScreen
 import net.sigmabeta.sage.ui.list.ListScreen
@@ -90,7 +90,8 @@ data object SettingsScreen : SampleScreen {
 }
 
 /**
- * Renders a [SampleListViewModel] with the app's [ListItemContent].
+ * Renders a [SampleListViewModel] with the shared
+ * [net.sigmabeta.sage.sample.ui.components.api.Content] renderer.
  *
  * Every destination goes through this, so the only per-screen decisions are which view model it
  * resolves and, in the view model, what state it produces.
@@ -137,8 +138,8 @@ private fun SampleListScreen(viewModel: SampleListViewModel<*>) {
         debug: Boolean,
         modifier: Modifier,
         padding: PaddingValues,
-    ) -> Unit = { model, sink, _, itemModifier, padding ->
-        ListItemContent(model, sink, itemModifier, padding)
+    ) -> Unit = { model, sink, debug, itemModifier, padding ->
+        model.Content(sink = sink, debug = debug, mod = itemModifier, pad = padding)
     }
 
     val sideMargin = SCREEN_SIDE_MARGIN_DP.dp

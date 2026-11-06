@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import net.sigmabeta.sage.sample.ui.SampleApp
+import net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,6 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
+                LocalComponentStringProvider provides graph.stringProvider,
             ) {
                 SampleApp(settingsManager = graph.settingsManager)
             }

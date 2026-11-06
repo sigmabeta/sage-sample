@@ -103,7 +103,6 @@ app/                        Android application
   MainActivity.kt           installs LocalMetroViewModelFactory, hosts the Compose UI
   storage/PreferencesStorage.kt  DataStore-backed SAGE Storage (settings persistence)
   ui/SampleApp.kt           settings-driven theme + navigation host
-  ui/ListItemContent.kt     renders each SAGE ListModel
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/navigation/
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
@@ -124,7 +123,6 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   di/JvmMetroViewModelFactory.kt  the factory behind metroViewModel() on desktop
   storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
   ui/SampleApp.kt           settings-driven theme + navigation host
-  ui/ListItemContent.kt     renders each SAGE ListModel
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
   ui/navigation/            same destinations, chrome and back stack as :app
@@ -132,6 +130,12 @@ core/bitmaps/               KMP Compose module shared by both apps
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
+core/ui/components/api/     KMP Compose renderer suite shared by both apps
+  ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
+  *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
+  subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
+  utils/                    focus, image-size and math helpers
+  previews/                 shared sizing constants + Android @Preview harnesses
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   SimulateDelay.kt          none / 1s / 2s / 5s duration for every background load
@@ -221,9 +225,9 @@ SAGE splits a screen in two:
 2. The app owns rendering. `SampleScreens` resolves the view model with
    `metroViewModel<WelcomeViewModel>()`, observes `uiStateActual`, reports its title
    through `LocalSampleTitleBarSink`, and passes the state to SAGE's `ListScreen` — or to
-   `GridScreen` when `screenLayoutFor` sees more than one column. It supplies
-   `ListItemContent` to draw each `ListModel`. Unknown model types fall through to a
-   spacer, so features can add their own models without breaking the app.
+   `GridScreen` when `screenLayoutFor` sees more than one column. It supplies the shared
+   `ListModel.Content` renderer (`:core:ui:components:api`) to draw each model. Unknown model
+   types fall through to a spacer, so features can add their own models without breaking the app.
 3. The shared screen owns the foreground pair: `Resume` when it enters composition,
    `Pause` when it leaves. `SampleListViewModel.sendAction` coalesces those transitions,
    so SAGE's extra title-change `Resume` does not run feature side effects twice.
@@ -234,8 +238,14 @@ platform-agnostic; `SampleBindings` is the only place that knows about `R.string
 The two List Items screens share one generated repository. The text-only variant maps each
 `SampleItem` to `NameCaptionListModel`; the image variant maps the same data to
 `ImageNameCaptionListModel` with a deterministic `generated://` URL in its `SourceInfo`.
-`ListItemContent` renders those URLs with Coil's `AsyncImage`, so the artwork comes from
-`:core:bitmaps`' fetcher rather than bundled bitmap assets.
+The shared `ImageNameCaptionListItem` and `GridImage` renderers load those URLs through Coil, so
+the artwork comes from `:core:bitmaps`' fetcher rather than bundled bitmap assets.
+
+The renderer suite is ported from Chipbox's `:cbox:common:ui:components:api` and keeps its shape:
+one module that re-exports SAGE's `ListModel` types and owns every non-Chipbox-specific renderer,
+plus `subs/` building blocks and `@Preview` harnesses. Accessibility labels are a module-owned
+`ComponentStringId : SageStringId`; both composition roots install their graph's `StringProvider`
+into `LocalComponentStringProvider`, so the renderers never touch `R.string`.
 
 ### Navigation
 

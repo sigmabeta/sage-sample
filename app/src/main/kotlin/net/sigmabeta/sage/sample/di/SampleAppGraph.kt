@@ -8,6 +8,7 @@ import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.ui.StringProvider
 
 /**
  * The application-wide dependency graph.
@@ -29,6 +30,13 @@ interface SampleAppGraph : ViewModelGraph {
      * screen exists, so it is a graph accessor rather than a per-screen view model.
      */
     val settingsManager: SampleSettingsManager
+
+    /**
+     * The composition root installs this app-scoped provider into
+     * [net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider], so the shared
+     * component renderers can resolve accessibility labels without reaching into DI.
+     */
+    val stringProvider: StringProvider
 
     /**
      * Contributed modules that take a `Context` (strings, analytics) get the application

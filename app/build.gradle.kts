@@ -67,6 +67,7 @@ ktlint {
 dependencies {
     implementation(projects.core.bitmaps)
     implementation(projects.core.settings)
+    implementation(projects.core.ui.components.api)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
     implementation(projects.features.listitems)
@@ -93,6 +94,7 @@ dependencies {
     implementation(libs.sage.common.logging)
     implementation(libs.sage.common.coroutines)
     implementation(libs.sage.common.ui.components)
+    implementation(libs.sage.common.ui.perfCompose)
     implementation(libs.sage.common.ui.strings)
     implementation(libs.sage.common.ui.listScreens)
     implementation(libs.sage.common.storage.common)

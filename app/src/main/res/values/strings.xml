@@ -44,4 +44,15 @@
     <string name="settings_section_about">About</string>
     <string name="settings_label_app_version">App version</string>
     <string name="settings_label_build_date">Build date</string>
+
+    <!-- Accessibility text for the shared component renderers (:core:ui:components:api). These
+         are semantics labels, not visible content, but they still flow through StringProvider. -->
+    <string name="cd_component_checkbox">Toggle checkbox</string>
+    <string name="cd_component_dropdown">Expand dropdown</string>
+    <string name="cd_component_rating">Rate</string>
+    <string name="cd_component_single_line">Open %1$s</string>
+    <string name="cd_component_value">Open</string>
+    <string name="state_component_checked">Checked</string>
+    <string name="state_component_loading">Loading</string>
+    <string name="state_component_unchecked">Unchecked</string>
 </resources>
