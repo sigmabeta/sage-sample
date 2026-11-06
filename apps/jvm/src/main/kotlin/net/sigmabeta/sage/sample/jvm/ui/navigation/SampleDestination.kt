@@ -32,6 +32,12 @@ enum class SampleDestination(
         Icon.Browse,
         isTopLevel = false,
     ),
+    GRID_OF_IMAGES(
+        "grid-of-images",
+        SampleStrings.NAV_GRID_OF_IMAGES,
+        Icon.Browse,
+        isTopLevel = false,
+    ),
     SETTINGS("settings", SampleStrings.NAV_SETTINGS, Icon.Person, isTopLevel = false),
     ;
 

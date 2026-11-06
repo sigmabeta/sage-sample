@@ -27,9 +27,13 @@ class ListItemsListIdentityTest {
         val imageRowIds = ListItemsWithImagesState(LCE.Content(items))
             .toListItems(strings)
             .map { it.dataId }
+        val gridRowIds = GridOfImagesState(LCE.Content(items))
+            .toListItems(strings)
+            .map { it.dataId }
 
         assertEquals(expectedIds, textRowIds)
         assertEquals(expectedIds, imageRowIds)
+        assertEquals(expectedIds, gridRowIds)
         assertEquals(expectedIds.size, expectedIds.distinct().size)
     }
 
@@ -44,6 +48,10 @@ class ListItemsListIdentityTest {
         assertEquals(
             ListItemsWithImagesState(LCE.Content(items)).toListItems(strings).map { it.dataId },
             ListItemsWithImagesState(LCE.Content(items)).toListItems(strings).map { it.dataId },
+        )
+        assertEquals(
+            GridOfImagesState(LCE.Content(items)).toListItems(strings).map { it.dataId },
+            GridOfImagesState(LCE.Content(items)).toListItems(strings).map { it.dataId },
         )
     }
 

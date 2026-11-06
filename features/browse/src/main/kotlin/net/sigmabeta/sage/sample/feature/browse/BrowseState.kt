@@ -30,6 +30,7 @@ data class BrowseState(
         listOf(
             openListItemsRow(stringProvider),
             openListItemsWithImagesRow(stringProvider),
+            openGridOfImagesRow(stringProvider),
         ) + when (val loaded = content) {
             // SAGE's withStandardErrorAndLoading Error branch calls stdlib error(...) and throws
             // (ListState.kt), so route errors through the class's own ErrorStateListModel helper.
@@ -78,11 +79,22 @@ data class BrowseState(
             dataId = OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID,
         )
 
+    /** The 50-image grid, also reachable while content is loading. */
+    private fun openGridOfImagesRow(stringProvider: StringProvider): ListModel =
+        SingleTextListModel(
+            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_GRID_OF_IMAGES),
+            clickAction = BrowseAction.OpenGridOfImages,
+            dataId = OPEN_GRID_OF_IMAGES_DATA_ID,
+        )
+
     companion object {
         /** Stable model id for the List Items row; it is part of the screen's contract. */
         const val OPEN_LIST_ITEMS_DATA_ID = 100L
 
         /** Stable model id for the List Items with Images row. */
         const val OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID = 101L
+
+        /** Stable model id for the Grid of Images row. */
+        const val OPEN_GRID_OF_IMAGES_DATA_ID = 102L
     }
 }

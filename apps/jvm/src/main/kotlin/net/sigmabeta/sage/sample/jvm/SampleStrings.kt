@@ -22,6 +22,7 @@ object SampleStrings {
     const val NAV_SEARCH = "Search"
     const val NAV_LIST_ITEMS = "List Items"
     const val NAV_LIST_ITEMS_WITH_IMAGES = "List Items with Images"
+    const val NAV_GRID_OF_IMAGES = "Grid of images"
     const val LIST_ITEMS_ITEM_CLICKED = "Clicked %s"
     const val NAV_SETTINGS = "Settings"
     const val CD_OPEN_SETTINGS = "Open settings"

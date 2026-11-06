@@ -72,6 +72,7 @@ object SampleBindings {
         BrowseStringId.BROWSE_EMPTY -> R.string.browse_empty
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS -> R.string.nav_list_items
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES -> R.string.nav_list_items_with_images
+        BrowseStringId.BROWSE_OPEN_GRID_OF_IMAGES -> R.string.nav_grid_of_images
         BrowseStringId.BROWSE_DEMO_ITEM_LISTS -> R.string.browse_demo_item_lists
         BrowseStringId.BROWSE_DEMO_ITEM_METRO -> R.string.browse_demo_item_metro
         BrowseStringId.BROWSE_DEMO_ITEM_VOYAGER -> R.string.browse_demo_item_voyager
@@ -82,6 +83,8 @@ object SampleBindings {
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED -> R.string.list_items_item_clicked
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_TITLE -> R.string.nav_list_items_with_images
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.GRID_OF_IMAGES_TITLE -> R.string.nav_grid_of_images
+        ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
     }
 
     private fun searchResource(id: SearchStringId): Int = when (id) {

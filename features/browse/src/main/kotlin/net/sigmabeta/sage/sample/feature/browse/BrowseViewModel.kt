@@ -64,6 +64,14 @@ class BrowseViewModel(
                 ),
             )
 
+            is BrowseAction.OpenGridOfImages -> emitEvent(
+                SageEvent.NavigateTo(
+                    // Same route contract, guarded by SampleDestinationTest.
+                    destination = "grid-of-images",
+                    source = "BrowseViewModel",
+                ),
+            )
+
             else -> Unit
         }
     }

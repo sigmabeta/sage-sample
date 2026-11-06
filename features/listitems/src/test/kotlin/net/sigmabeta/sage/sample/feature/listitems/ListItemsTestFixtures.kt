@@ -57,3 +57,17 @@ internal class FakeSampleItemRepository : SampleItemRepository {
         stream.emit(value)
     }
 }
+
+/** Grid of Images' repository seam, with the same replay-and-emit shape as the list fake. */
+internal class FakeGridOfImagesRepository : GridOfImagesRepository {
+    private val stream = MutableSharedFlow<LCE<List<SampleItem>>>(
+        replay = 1,
+        extraBufferCapacity = 1,
+    )
+
+    override fun load(): Flow<LCE<List<SampleItem>>> = stream
+
+    suspend fun emit(value: LCE<List<SampleItem>>) {
+        stream.emit(value)
+    }
+}

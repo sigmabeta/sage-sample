@@ -16,6 +16,7 @@ class BrowseStateTest {
     private val openDestinationIds = setOf(
         BrowseState.OPEN_LIST_ITEMS_DATA_ID,
         BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID,
+        BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID,
     )
 
     @Test
@@ -36,6 +37,16 @@ class BrowseStateTest {
         assertEquals("str-BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES", openRow.name)
         assertTrue(openRow.clickAction is BrowseAction.OpenListItemsWithImages)
         assertEquals(BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID, openRow.dataId)
+    }
+
+    @Test
+    fun `the grid of images row is always present and opens its destination`() {
+        val items = BrowseState(LCE.Loading("browse")).toListItems(strings)
+
+        val openRow = items[2] as SingleTextListModel
+        assertEquals("str-BROWSE_OPEN_GRID_OF_IMAGES", openRow.name)
+        assertTrue(openRow.clickAction is BrowseAction.OpenGridOfImages)
+        assertEquals(BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID, openRow.dataId)
     }
 
     @Test

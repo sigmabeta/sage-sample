@@ -54,14 +54,18 @@ data class ListItemsWithImagesState(
  * The deterministic image request for [item].
  *
  * The URL's path is the seed and its query only selects the rendered size, so the artwork is
- * stable across app runs and independent of the image's display size. The prefix keeps these
- * seeds distinct from any other `generated://` artwork in the app.
+ * stable across app runs and independent of the image's display size. [seedPrefix] keeps one
+ * screen's seeds distinct from any other `generated://` artwork in the app.
  */
-internal fun imageSourceFor(item: SampleItem): SourceInfo = SourceInfo(
+internal fun imageSourceFor(
+    item: SampleItem,
+    seedPrefix: String = LIST_ITEMS_WITH_IMAGES_SEED_PREFIX,
+    imageSize: Int = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
+): SourceInfo = SourceInfo(
     GeneratedImageFetcher.urlFor(
-        seed = "$LIST_ITEMS_WITH_IMAGES_SEED_PREFIX/${item.id}",
-        width = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
-        height = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
+        seed = "$seedPrefix/${item.id}",
+        width = imageSize,
+        height = imageSize,
     ),
 )
 

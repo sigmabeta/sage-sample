@@ -28,6 +28,14 @@ class SampleDestinationTest {
     }
 
     @Test
+    fun `fromRoute maps the grid of images route to its destination`() {
+        assertEquals(
+            SampleDestination.GRID_OF_IMAGES,
+            SampleDestination.fromRoute("grid-of-images"),
+        )
+    }
+
+    @Test
     fun `fromRoute returns null for an unknown route`() {
         assertNull(SampleDestination.fromRoute("no-such-destination"))
     }

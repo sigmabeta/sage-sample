@@ -35,6 +35,12 @@ class SampleNavActionTest {
                 SageEvent.NavigateTo(destination = "list-items-with-images", source = "test"),
             ),
         )
+        assertEquals(
+            SampleNavAction.Push(SampleDestination.GRID_OF_IMAGES),
+            navActionFor(
+                SageEvent.NavigateTo(destination = "grid-of-images", source = "test"),
+            ),
+        )
     }
 
     @Test

@@ -16,6 +16,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
+import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
@@ -78,6 +79,15 @@ data object ListItemsWithImagesScreen : SampleScreen {
     @Composable
     override fun Content() {
         SampleListScreen(metroViewModel<ListItemsWithImagesViewModel>())
+    }
+}
+
+data object GridOfImagesScreen : SampleScreen {
+    override val destination = SampleDestination.GRID_OF_IMAGES
+
+    @Composable
+    override fun Content() {
+        SampleListScreen(metroViewModel<GridOfImagesViewModel>())
     }
 }
 

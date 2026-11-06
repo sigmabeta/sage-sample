@@ -2,13 +2,16 @@ package net.sigmabeta.sage.sample.feature.browse
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
@@ -59,7 +62,8 @@ class BrowseViewModelTest {
             .filterIsInstance<SingleTextListModel>()
             .filter {
                 it.dataId != BrowseState.OPEN_LIST_ITEMS_DATA_ID &&
-                    it.dataId != BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID
+                    it.dataId != BrowseState.OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID &&
+                    it.dataId != BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID
             }
 
         assertEquals(listOf(1L, 2L), contentRows.map { it.dataId })
@@ -76,6 +80,23 @@ class BrowseViewModelTest {
         advanceUntilIdle()
 
         assertTrue(state.value.listItems.any { it is EmptyStateListModel })
+    }
+
+    @Test
+    fun `opening the grid emits its navigation route`() = runTest {
+        val viewModel = createViewModel()
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvents.collect { event -> events += event }
+        }
+        advanceUntilIdle()
+
+        viewModel.sendAction(BrowseAction.OpenGridOfImages)
+        advanceUntilIdle()
+
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("grid-of-images", navigation.destination)
+        assertEquals("BrowseViewModel", navigation.source)
     }
 
     @Test
