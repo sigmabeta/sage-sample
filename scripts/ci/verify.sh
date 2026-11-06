@@ -37,7 +37,7 @@ GRADLE_FLAGS=(--build-cache --configuration-cache --console=plain)
 # Mirrors the CI jobs: static-analysis, unit-test, android-lint + apk.
 ALL_TASKS=(
   "static-analysis|ktlintCheck detekt --continue"
-  "unit-test|test --continue"
+  "unit-test|test :core:bitmaps:jvmTest --continue"
   "android-lint|:app:lintRelease"
   "apk|:app:assembleDebug :app:assembleRelease"
   "jvm-app|:apps:jvm:assemble"

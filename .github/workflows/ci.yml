@@ -55,8 +55,10 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Unit tests (app + feature modules)
-        run: ./gradlew test --continue --build-cache --no-daemon --max-workers=2
+      - name: Unit tests (app, feature modules, shared KMP)
+        run: >-
+          ./gradlew test :core:bitmaps:jvmTest --continue
+          --build-cache --no-daemon --max-workers=2
       - uses: actions/upload-artifact@v4
         if: always()
         with:

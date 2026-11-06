@@ -42,7 +42,7 @@ CI is `.github/workflows/ci.yml`. Four jobs run on every push, pull request, and
 | Job | Command |
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
-| `unit-test` | `./gradlew test --continue` |
+| `unit-test` | `./gradlew test :core:bitmaps:jvmTest --continue` |
 | `android` | `./gradlew :app:lintRelease :app:assembleDebug :app:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
 
@@ -63,9 +63,9 @@ The release APK is unsigned: the sample has no release signing config, so `assem
 produces an unsigned artifact that must be signed before installing.
 
 Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
-`:core:viewmodel`, and the desktop app; Android unit tests in `:app` for app-owned logic such as
-route mapping, chrome derivation, and layout selection. No emulator is needed; there is no
-Paparazzi, device, or native target.
+`:core:viewmodel`, and the desktop app; `:core:bitmaps` uses the KMP `jvmTest` source set;
+Android unit tests in `:app` for app-owned logic such as route mapping, chrome derivation, and
+layout selection. No emulator is needed; there is no Paparazzi, device, or native target.
 
 Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
 `scripts/dev/`:
@@ -104,6 +104,7 @@ app/                        Android application
   storage/PreferencesStorage.kt  DataStore-backed SAGE Storage (settings persistence)
   ui/SampleApp.kt           settings-driven theme + navigation host
   ui/ListItemContent.kt     renders each SAGE ListModel
+  ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/navigation/
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
     SampleScreens.kt        one Voyager Screen per destination
@@ -124,8 +125,12 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
   ui/SampleApp.kt           settings-driven theme + navigation host
   ui/ListItemContent.kt     renders each SAGE ListModel
+  ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
   ui/navigation/            same destinations, chrome and back stack as :app
+core/bitmaps/               KMP Compose module shared by both apps
+  BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
+  GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   SimulateDelay.kt          none / 1s / 2s / 5s duration for every background load

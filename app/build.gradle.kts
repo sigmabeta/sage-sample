@@ -65,6 +65,7 @@ ktlint {
 }
 
 dependencies {
+    implementation(projects.core.bitmaps)
     implementation(projects.core.settings)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
@@ -106,6 +107,9 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
+    // `@Preview` for the generated-bitmap preview; the tooling runtime is debug-only.
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
 

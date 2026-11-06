@@ -30,6 +30,7 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
 }
 
 dependencies {
+    implementation(projects.core.bitmaps)
     implementation(projects.core.settings)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
