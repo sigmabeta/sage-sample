@@ -72,6 +72,11 @@ dependencies {
     // so without this artifact `viewModelScope` fails with "Main dispatcher is missing".
     implementation(libs.kotlinx.coroutines.swing)
 
+    // Coil serves `generated://` requests through :core:bitmaps' fetcher; compose provides
+    // AsyncImage for the preview.
+    implementation(libs.coil.kt.meta)
+    implementation(libs.coil.kt.compose)
+
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.screenmodel)
     implementation(libs.voyager.transitions)

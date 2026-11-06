@@ -12,6 +12,13 @@ kotlin {
     }
 
     sourceSets {
+        named("commonMain") {
+            dependencies {
+                // The generated-image fetcher is a Coil component; re-exported so both apps can
+                // build the loader without declaring coil-core themselves.
+                api(libs.coil.kt.core)
+            }
+        }
         named("jvmTest") {
             dependencies {
                 implementation(kotlin("test"))

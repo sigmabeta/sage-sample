@@ -113,6 +113,11 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
 
+    // Coil serves `generated://` requests through :core:bitmaps' fetcher; compose provides
+    // AsyncImage for the preview.
+    implementation(libs.coil.kt.meta)
+    implementation(libs.coil.kt.compose)
+
     // Voyager owns the navigation back stack; SAGE's catalog pins the version.
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.transitions)

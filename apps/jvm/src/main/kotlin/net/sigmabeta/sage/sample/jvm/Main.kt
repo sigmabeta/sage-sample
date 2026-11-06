@@ -6,8 +6,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import coil3.SingletonImageLoader
 import dev.zacsweers.metro.createGraphFactory
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
 import net.sigmabeta.sage.sample.jvm.ui.SampleApp
 
@@ -19,6 +21,10 @@ import net.sigmabeta.sage.sample.jvm.ui.SampleApp
  */
 fun main() {
     val graph = createGraphFactory<JvmSampleAppGraph.Factory>().create()
+
+    // Register before any composable resolves the singleton, so AsyncImage requests for
+    // `generated://` URLs reach :core:bitmaps' fetcher instead of the default loader.
+    SingletonImageLoader.setSafe { context -> generatedImageLoader(context) }
 
     application {
         Window(

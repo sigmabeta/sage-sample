@@ -131,6 +131,7 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
 core/bitmaps/               KMP Compose module shared by both apps
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
+  GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   SimulateDelay.kt          none / 1s / 2s / 5s duration for every background load

@@ -61,10 +61,13 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 - **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
   convention plugins — don't delete either.
 - **Tests live beside their module:** feature/core and `:apps:jvm` are pure JVM (JUnit);
-  `:core:bitmaps` tests the seeded `specFor` value in `src/jvmTest` (no Skia); `:app` uses Android
-  unit tests for app-owned logic. No emulator, device suite, Paparazzi, or native code.
-- **Generated bitmaps are preview-only:** `:core:bitmaps` backs `@Preview` placeholder art. Don't
-  add it to a runtime screen without a real image-loading story (Coil and a platform decoder).
+  `:core:bitmaps` tests the seeded `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
+  `:app` uses Android unit tests for app-owned logic. No emulator, device suite, Paparazzi, or
+  native code.
+- **Generated bitmaps are placeholder art:** `:core:bitmaps` serves `@Preview`s and
+  `generated://` Coil requests (seeded by the URL's scheme/authority/path; `?width=&height=`
+  picks the size without changing the art). Don't treat them as real image content; add a
+  network fetcher/decoder before pointing a request at an arbitrary URL.
 - **Search:** use `git grep`/`rg`; when using `find`/`grep`, prune `build/` and `.gradle/`.
   Generated Android lint/dependency XML is enormous.
 

@@ -11,18 +11,21 @@ import androidx.compose.ui.graphics.lerp
 import kotlin.random.Random
 
 /**
- * Deterministic placeholder-image generator for `@Preview`s.
+ * Deterministic placeholder-image generator for `@Preview`s and `generated://` Coil requests.
  *
  * Seeds a [Random] from the source object's hash so the same input always produces the same
- * artwork, then draws a per-row gradient into a Compose [ImageBitmap]. Multiplatform graphics
- * keeps this in commonMain, so the Android and desktop apps share one implementation.
+ * artwork, then draws a per-row gradient into a Compose [ImageBitmap]. Callers that need a
+ * specific output size pass [width]/[height]; otherwise the seeded size is a small square.
+ * Multiplatform graphics keeps this in commonMain, so the Android and desktop apps share one
+ * implementation.
  */
 object BitmapGenerator {
     fun generateBitmap(
         sourceInfo: Any,
-        squareImage: Boolean = true,
+        width: Int? = null,
+        height: Int? = null,
     ): ImageBitmap {
-        val spec = specFor(sourceInfo, squareImage)
+        val spec = specFor(sourceInfo, width, height)
 
         val bitmap = ImageBitmap(spec.width, spec.height)
         val canvas = Canvas(bitmap)
@@ -62,14 +65,18 @@ internal data class BitmapSpec(
     val colorBottomRight: Color,
 )
 
-internal fun specFor(sourceInfo: Any, squareImage: Boolean): BitmapSpec {
+internal fun specFor(sourceInfo: Any, width: Int? = null, height: Int? = null): BitmapSpec {
+    require(width == null || width > 0) { "width must be positive: $width" }
+    require(height == null || height > 0) { "height must be positive: $height" }
+
     val rng = Random(sourceInfo.hashCode())
-    val width = rng.nextInt(RNG_LIMIT) + RNG_LIMIT
-    val height = if (squareImage) width else rng.nextInt(RNG_LIMIT) + RNG_LIMIT
+    val seeded = rng.nextInt(RNG_LIMIT) + RNG_LIMIT
+    val resolvedWidth = width ?: height ?: seeded
+    val resolvedHeight = height ?: width ?: seeded
 
     return BitmapSpec(
-        width = width,
-        height = height,
+        width = resolvedWidth,
+        height = resolvedHeight,
         colorTopLeft = Color(rng.nextInt()),
         colorTopRight = Color(rng.nextInt()),
         colorBottomLeft = Color(rng.nextInt()),
