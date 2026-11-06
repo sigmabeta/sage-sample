@@ -30,7 +30,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: ktlint + detekt
         run: >-
           ./gradlew ktlintCheck detekt --continue
@@ -54,7 +54,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Unit tests (app, feature modules, shared KMP)
         run: >-
           ./gradlew test :core:bitmaps:jvmTest --continue
@@ -78,7 +78,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Compose Desktop app jar
         run: ./gradlew :apps:jvm:assemble --build-cache --no-daemon --max-workers=2
       - uses: actions/upload-artifact@v4
@@ -106,7 +106,7 @@ jobs:
       - uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       # lintRelease compiles the release graph, so running it before the APKs makes the
       # subsequent assemble steps incremental on this runner.
       - name: Android lint + debug/release APKs
