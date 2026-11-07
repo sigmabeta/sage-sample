@@ -1,8 +1,10 @@
 package net.sigmabeta.sage.sample.feature.home
 
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.HorizontalScrollerListModel
@@ -40,16 +42,82 @@ class HomeStateTest {
     }
 
     @Test
-    fun `an uninitialized section contributes no rows`() {
-        val rows = stateWith(LCE.Uninitialized).toListItems(strings)
+    fun `an unstarted section contributes no rows`() {
+        val rows = stateWith(LCE.Uninitialized, hasEmitted = false).toListItems(strings)
 
         assertTrue(rows.isEmpty())
     }
 
     @Test
-    fun `a content section with no items contributes no rows`() {
-        val rows = stateWith(LCE.Content(HomeModuleSection("Empty", persistentListOf())))
+    fun `empty demo mode shows one screen-level empty state in the stable plan`() {
+        val rows = stateWithSections(stableSections(LCE.Uninitialized)).toListItems(strings)
+
+        val empty = rows.filterIsInstance<EmptyStateListModel>().single()
+        assertEquals("str-HOME_EMPTY", empty.explanation)
+        assertEquals(Icon.Home, empty.icon)
+        assertTrue(
+            rows.none {
+                it is SectionHeaderListModel ||
+                    it is LoadingItemListModel ||
+                    it is ErrorStateListModel
+            },
+        )
+    }
+
+    @Test
+    fun `empty content sections show one screen-level empty state in a randomized plan`() {
+        val emptySection = LCE.Content(HomeModuleSection("Empty", persistentListOf()))
+        val rows = stateWithSections(randomizedSections(emptySection)).toListItems(strings)
+
+        assertEquals(
+            "str-HOME_EMPTY",
+            rows.filterIsInstance<EmptyStateListModel>().single().explanation,
+        )
+    }
+
+    @Test
+    fun `a mix of uninitialized and empty content is still empty demo mode`() {
+        val rows = stateWithSections(
+            listOf(
+                "big_image_1" to LCE.Uninitialized,
+                "grid_images_2" to LCE.Content(HomeModuleSection("Empty", persistentListOf())),
+            ),
+        ).toListItems(strings)
+
+        assertEquals(
+            "str-HOME_EMPTY",
+            rows.filterIsInstance<EmptyStateListModel>().single().explanation,
+        )
+    }
+
+    @Test
+    fun `an empty section beside content contributes no rows and no screen-level empty state`() {
+        val rows = stateWithSections(
+            listOf(
+                "big_image_1" to LCE.Content(HomeModuleSection("Empty", persistentListOf())),
+                "grid_images_2" to LCE.Content(section("Gallery", gridItem(11L))),
+            ),
+        ).toListItems(strings)
+
+        assertTrue(rows.none { it is EmptyStateListModel })
+        assertEquals("Gallery", rows.filterIsInstance<SectionHeaderListModel>().single().title)
+    }
+
+    @Test
+    fun `loading sections render placeholders instead of the empty state`() {
+        val rows = stateWithSections(stableSections(LCE.Loading("home.module.load")))
             .toListItems(strings)
+
+        assertTrue(rows.none { it is EmptyStateListModel })
+        assertTrue(rows.filterIsInstance<LoadingItemListModel>().isNotEmpty())
+    }
+
+    @Test
+    fun `a plan that has not emitted yet does not show the empty state`() {
+        val rows = stateWithSections(
+            stableSections(LCE.Uninitialized),
+            hasEmitted = false,
+        ).toListItems(strings)
 
         assertTrue(rows.isEmpty())
     }
@@ -70,20 +138,81 @@ class HomeStateTest {
     }
 
     @Test
-    fun `an erroring section renders its own error row`() {
-        val failure = IllegalStateException("boom")
-        val rows = stateWith(LCE.Error("home.gallery.load", failure)).toListItems(strings)
+    fun `all modules failing collapse to one screen-level error in the stable plan`() {
+        val rows = stateWithSections(
+            listOf(
+                "big_image_1" to LCE.Error("home.big_image_1.load", IllegalStateException("hero")),
+                "grid_images_2" to LCE.Error("home.grid_images_2.load", IllegalStateException("grid")),
+            ),
+        ).toListItems(strings)
 
         val error = rows.filterIsInstance<ErrorStateListModel>().single()
-        assertEquals("home.gallery.load", error.failedOperationName)
+        assertEquals("str-HOME_ALL_ERROR", error.errorString)
+        assertEquals("hero", error.error.message)
+    }
+
+    @Test
+    fun `all modules failing collapse to one screen-level error in a randomized plan`() {
+        val sections = (1..10).map { index ->
+            "module_$index" to LCE.Error(
+                "home.module_$index.load",
+                IllegalStateException("failure $index"),
+            )
+        }
+        val rows = stateWithSections(sections).toListItems(strings)
+
+        assertEquals(
+            "str-HOME_ALL_ERROR",
+            rows.filterIsInstance<ErrorStateListModel>().single().errorString,
+        )
+    }
+
+    @Test
+    fun `a loading sibling keeps errors inline instead of collapsing the screen`() {
+        val rows = stateWithSections(
+            listOf(
+                "big_image_1" to LCE.Error("home.big_image_1.load", IllegalStateException("hero")),
+                "grid_images_2" to LCE.Loading("home.grid_images_2.load"),
+            ),
+        ).toListItems(strings)
+
+        assertEquals(
+            "home.big_image_1.load",
+            rows.filterIsInstance<ErrorStateListModel>().single().failedOperationName,
+        )
+        assertTrue(rows.filterIsInstance<LoadingItemListModel>().isNotEmpty())
+    }
+
+    @Test
+    fun `partial errors stay inline and preserve successful siblings`() {
+        val failure = IllegalStateException("boom")
+        val rows = stateWithSections(
+            listOf(
+                "big_image_1" to LCE.Error("home.big_image_1.load", failure),
+                "grid_images_2" to LCE.Content(section("Gallery", gridItem(11L), gridItem(22L))),
+            ),
+        ).toListItems(strings)
+
+        val error = rows.filterIsInstance<ErrorStateListModel>().single()
+        assertEquals("home.big_image_1.load", error.failedOperationName)
         assertEquals(failure, error.error)
+
+        assertEquals("Gallery", rows.filterIsInstance<SectionHeaderListModel>().single().title)
+        val gallery = rows.filterIsInstance<HorizontalScrollerListModel>().single()
+        assertEquals(2, gallery.scrollingItems.filterIsInstance<GridImageListModel>().size)
+        assertTrue(rows.none { it is EmptyStateListModel })
     }
 
     @Test
     fun `combined rows from every section have unique data ids`() {
         val state = HomeState(
             sections = persistentListOf(
-                HomeSectionState("hero", 0, LCE.Content(section("Hero", bigImageItem()))),
+                HomeSectionState(
+                    "hero",
+                    0,
+                    LCE.Content(section("Hero", bigImageItem())),
+                    hasEmitted = true,
+                ),
                 HomeSectionState(
                     "gallery",
                     1,
@@ -93,6 +222,7 @@ class HomeStateTest {
                             persistentListOf(gridItem(11L), gridItem(22L)),
                         ),
                     ),
+                    hasEmitted = true,
                 ),
             ),
         )
@@ -103,9 +233,33 @@ class HomeStateTest {
         assertEquals(rows.size, rows.map { it.dataId }.toSet().size)
     }
 
-    private fun stateWith(lce: LCE<HomeModuleSection>) = HomeState(
-        sections = persistentListOf(HomeSectionState("gallery", 0, lce)),
+    private fun stateWith(
+        lce: LCE<HomeModuleSection>,
+        hasEmitted: Boolean = true,
+    ) = HomeState(
+        sections = persistentListOf(
+            HomeSectionState("gallery", 0, lce, hasEmitted = hasEmitted),
+        ),
     )
+
+    private fun stateWithSections(
+        sections: List<Pair<String, LCE<HomeModuleSection>>>,
+        hasEmitted: Boolean = true,
+    ) = HomeState(
+        sections = sections.mapIndexed { index, (id, lce) ->
+            HomeSectionState(id, index, lce, hasEmitted = hasEmitted)
+        }.toImmutableList(),
+    )
+
+    /** One section per Home definition, as the stable factory plan produces. */
+    private fun stableSections(lce: LCE<HomeModuleSection>): List<Pair<String, LCE<HomeModuleSection>>> =
+        listOf("big_image_1" to lce, "grid_images_2" to lce)
+
+    /** A plan slot-per-module list covering the randomized plan's 2–10 instances. */
+    private fun randomizedSections(
+        lce: LCE<HomeModuleSection>,
+    ): List<Pair<String, LCE<HomeModuleSection>>> =
+        (1..10).map { "module_$it" to lce }
 
     private fun section(title: String, vararg items: ListModel) = HomeModuleSection(
         title = title,

@@ -121,7 +121,7 @@ class HomeViewModel(
                                 sections = state.sections
                                     .map { section ->
                                         if (section.id == module.id) {
-                                            section.copy(lce = lce)
+                                            section.copy(lce = lce, hasEmitted = true)
                                         } else {
                                             section
                                         }

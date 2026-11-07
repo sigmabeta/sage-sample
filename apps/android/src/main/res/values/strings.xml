@@ -5,6 +5,8 @@
     <string name="home_section_big_image">Big image %1$d</string>
     <string name="home_section_grid_images">Grid images %1$d</string>
     <string name="home_item_clicked">%1$s clicked</string>
+    <string name="home_empty">No Home content is available. Change the demo outcome in Settings to load content.</string>
+    <string name="home_all_error">Home content could not be loaded. Change the demo outcome in Settings to try again.</string>
 
     <!-- Navigation scaffold. The app owns these labels because destinations are an app concern;
          feature screens keep their own text behind their SageStringId enums. -->

@@ -4,12 +4,15 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.components.EmptyStateListModel
+import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.HorizontalScrollerListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
+import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
@@ -28,7 +31,46 @@ data class HomeState(
         )
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> =
-        sections.flatMap { it.toListItems() }
+        screenLevelItems(stringProvider) ?: sections.flatMap { it.toListItems() }
+
+    /**
+     * The one row that replaces per-module rows once the whole plan has settled to a terminal,
+     * screen-level state: every module failed, or every module resolved to no content.
+     *
+     * Returns null while any section has not emitted at all: a freshly built plan (including the
+     * brief [HomeViewModel.replacePlan] window) is indistinguishable from Empty demo mode by
+     * [LCE] value alone, because a module that hides itself also publishes `Uninitialized`.
+     * [HomeSectionState.hasEmitted] is what tells the two apart, so the empty state waits for
+     * every module to report once and loading never flashes it.
+     */
+    private fun screenLevelItems(stringProvider: StringProvider): List<ListModel>? {
+        if (sections.any { !it.hasEmitted }) return null
+        return when {
+            sections.isNotEmpty() && sections.all { it.lce is LCE.Error } -> listOf(
+                ErrorStateListModel(
+                    failedOperationName = HOME_LOAD_OPERATION,
+                    errorString = stringProvider.getString(HomeStringId.HOME_ALL_ERROR),
+                    error = (sections.first().lce as LCE.Error).error,
+                ),
+            )
+
+            sections.all { it.lce.resolvesToNoItems() } -> listOf(
+                EmptyStateListModel(
+                    icon = Icon.Home,
+                    explanation = stringProvider.getString(HomeStringId.HOME_EMPTY),
+                    showCrossOut = false,
+                ),
+            )
+
+            else -> null
+        }
+    }
+
+    private fun LCE<HomeModuleSection>.resolvesToNoItems(): Boolean = when (this) {
+        LCE.Uninitialized -> true
+        is LCE.Content -> data.items.isEmpty()
+        else -> false
+    }
 
     // Map the states directly rather than through `withStandardErrorAndLoading`: each section
     // owns its id, so its loading and error rows get a per-module operation name and one module's
@@ -72,12 +114,22 @@ data class HomeState(
     }
 }
 
-/** One module's slot: its stable identity plus the state it last published. */
+/**
+ * One module's slot: its stable identity plus the state it last published.
+ *
+ * [hasEmitted] is false until the module's flow has published at least one value for this plan.
+ * It separates "this plan has not started yet" from a module that genuinely resolved to nothing
+ * (both can hold [LCE.Uninitialized]), so a plan rebuild never looks like Empty demo mode.
+ */
 data class HomeSectionState(
     val id: String,
     val priority: Int,
     val lce: LCE<HomeModuleSection>,
     val showHeader: Boolean = true,
+    val hasEmitted: Boolean = false,
 )
 
 private const val HOME_LOADING_ITEMS = 6
+
+/** Operation name for the screen-level plan result, when per-module operations are not shown. */
+private const val HOME_LOAD_OPERATION = "home.load"
