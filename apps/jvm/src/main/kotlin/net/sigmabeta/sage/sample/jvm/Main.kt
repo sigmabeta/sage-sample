@@ -1,11 +1,12 @@
 package net.sigmabeta.sage.sample.jvm
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
 import net.sigmabeta.sage.sample.jvm.ui.SampleApp
+import net.sigmabeta.sage.sample.jvm.ui.navigation.HeldBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
 import net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider
 
@@ -30,8 +32,9 @@ import net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider
  * Escape and Backspace are caught at the window level so they work whenever the window is focused,
  * not only after a focusable child has been clicked. `onKeyEvent` is the bubble phase: a focused
  * text field consumes Backspace first, so editing is unaffected. Signals are emitted through
- * [backKeyEvents] and run the shell's shared Back policy; [heldBackKeys] fires once per physical
- * press rather than repeating while the key auto-repeats.
+ * [backKeyEvents] and run the shell's shared Back policy; [HeldBackKeys] fires once per physical
+ * press rather than repeating while the key auto-repeats. A window that loses focus forgets the
+ * held keys, because the KeyUp may arrive while another window is focused.
  */
 fun main() {
     val graph = createGraphFactory<JvmSampleAppGraph.Factory>().create()
@@ -42,7 +45,7 @@ fun main() {
 
     application {
         val backKeyEvents = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
-        val heldBackKeys = remember { mutableSetOf<Key>() }
+        val heldBackKeys = remember { HeldBackKeys() }
         Window(
             onCloseRequest = ::exitApplication,
             title = SampleStrings.APP_NAME,
@@ -52,14 +55,14 @@ fun main() {
                     !isBackKey(event.key) -> false
 
                     event.type == KeyEventType.KeyDown -> {
-                        if (heldBackKeys.add(event.key)) {
+                        if (heldBackKeys.press(event.key)) {
                             backKeyEvents.tryEmit(Unit)
                         }
                         true
                     }
 
                     event.type == KeyEventType.KeyUp -> {
-                        heldBackKeys.remove(event.key)
+                        heldBackKeys.release(event.key)
                         true
                     }
 
@@ -67,6 +70,13 @@ fun main() {
                 }
             },
         ) {
+            // A KeyUp can be delivered to another window after focus loss, so forget held keys as
+            // soon as this window is unfocused rather than waiting for a release that never comes.
+            val isWindowFocused = LocalWindowInfo.current.isWindowFocused
+            LaunchedEffect(isWindowFocused) {
+                heldBackKeys.onFocusChanged(isWindowFocused)
+            }
+
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
                 LocalComponentStringProvider provides graph.stringProvider,

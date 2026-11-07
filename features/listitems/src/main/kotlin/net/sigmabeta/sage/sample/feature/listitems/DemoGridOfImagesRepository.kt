@@ -9,6 +9,8 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.demoOutcomeFailure
+import net.sigmabeta.sage.sample.settings.select
 
 /**
  * The sample's generated datasource for Grid of Images.
@@ -38,22 +40,24 @@ class DemoGridOfImagesRepository(
 
         return flow {
             emit(
-                when (outcome) {
-                    DemoOutcome.CONTENT -> LCE.Content(
-                        demoSampleItemsWindow(
-                            offset = offset,
-                            limit = limit,
-                            total = GRID_OF_IMAGES_ITEM_COUNT,
-                        ),
-                    )
-
-                    DemoOutcome.EMPTY -> LCE.Content(emptyList())
-
-                    DemoOutcome.ERROR -> LCE.Error(
-                        operationName = GRID_OF_IMAGES_OPERATION_NAME,
-                        error = IllegalStateException("Demo outcome is ERROR"),
-                    )
-                },
+                outcome.select(
+                    content = {
+                        LCE.Content(
+                            demoSampleItemsWindow(
+                                offset = offset,
+                                limit = limit,
+                                total = GRID_OF_IMAGES_ITEM_COUNT,
+                            ),
+                        )
+                    },
+                    empty = { LCE.Content(emptyList()) },
+                    error = {
+                        LCE.Error(
+                            operationName = GRID_OF_IMAGES_OPERATION_NAME,
+                            error = demoOutcomeFailure(),
+                        )
+                    },
+                ),
             )
         }
     }

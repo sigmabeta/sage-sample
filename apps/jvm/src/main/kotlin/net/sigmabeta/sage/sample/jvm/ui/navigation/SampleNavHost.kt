@@ -52,12 +52,17 @@ fun SampleNavHost(onOuterBack: () -> Unit = {}) {
 private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Unit) {
     val activeTabNavigator = remember { SampleActiveTabNavigator() }
     val shellNavigation = rememberShellNavigation(tabNavigator, activeTabNavigator, onOuterBack)
-    val activeNavigator = activeTabNavigator.navigator
 
-    // `activeScreen` is the top of the active tab's stack; before the first tab registers its
-    // Navigator (one frame), fall back to the tab's own root so chrome never reads a null screen.
+    // `activeScreen` is the top of the current tab's stack. Before the first tab registers its
+    // Navigator, and for the frame in which a tab switch has not yet re-registered, fall back to
+    // the current tab's own root so chrome and the route key never read the outgoing tab's screen.
     val currentTab = tabNavigator.current as SampleTab
-    val activeScreen = (activeNavigator?.lastItem as? SampleScreen) ?: currentTab.root
+    val activeNavigator = activeTabNavigator.navigatorFor(currentTab.key)
+    val activeScreen = activeScreenFor(
+        currentTab = currentTab,
+        registeredTabKey = activeTabNavigator.tabKey,
+        registeredScreen = activeNavigator?.lastItem as? SampleScreen,
+    )
 
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -162,12 +167,14 @@ private class SampleShellNavigation(
 ) : SampleBackHandler {
 
     override fun back() {
+        val currentTab = tabNavigator.current as SampleTab
+        val navigator = activeTabNavigator.navigatorFor(currentTab.key)
         val action = backActionFor(
-            tab = (tabNavigator.current as SampleTab).destination,
-            canPop = activeTabNavigator.navigator?.canPop == true,
+            tab = currentTab.destination,
+            canPop = navigator?.canPop == true,
         )
         when (action) {
-            SampleBackAction.Pop -> activeTabNavigator.navigator?.pop()
+            SampleBackAction.Pop -> navigator?.pop()
             is SampleBackAction.ShowTab -> tabFor(action.destination)?.let(::selectTab)
             SampleBackAction.Outer -> onOuterBack()
         }
@@ -190,7 +197,8 @@ private class SampleShellNavigation(
      * [contentId] is the decoded Content detail ID, `null` for its not-found state.
      */
     fun push(destination: SampleDestination, contentId: ContentId? = null) {
-        val navigator = activeTabNavigator.navigator ?: return
+        val currentTab = tabNavigator.current as SampleTab
+        val navigator = activeTabNavigator.navigatorFor(currentTab.key) ?: return
         val target = screenFor(destination, contentId)
         if (navigator.lastItem != target) {
             navigator.push(target)

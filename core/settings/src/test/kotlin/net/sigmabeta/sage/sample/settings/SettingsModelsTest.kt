@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.settings
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -80,6 +81,47 @@ class SettingsModelsTest {
         assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(""))
         assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("BOGUS"))
         assertEquals(DemoOutcome.CONTENT, DemoOutcome.DEFAULT)
+    }
+
+    @Test
+    fun `demo outcome selects exactly one datasource branch`() {
+        assertEquals(
+            "generated",
+            DemoOutcome.CONTENT.select(
+                content = { "generated" },
+                empty = { "empty" },
+                error = { "error" },
+            ),
+        )
+        assertEquals(
+            "empty",
+            DemoOutcome.EMPTY.select(
+                content = { "generated" },
+                empty = { "empty" },
+                error = { "error" },
+            ),
+        )
+        assertEquals(
+            "error",
+            DemoOutcome.ERROR.select(
+                content = { "generated" },
+                empty = { "empty" },
+                error = { "error" },
+            ),
+        )
+    }
+
+    @Test
+    fun `the demo error outcome fails with one shared exception`() {
+        val failure = assertThrows(IllegalStateException::class.java) {
+            DemoOutcome.ERROR.select<Unit>(
+                content = {},
+                empty = {},
+                error = { throw demoOutcomeFailure() },
+            )
+        }
+
+        assertEquals("Demo outcome is ERROR", failure.message)
     }
 
     @Test

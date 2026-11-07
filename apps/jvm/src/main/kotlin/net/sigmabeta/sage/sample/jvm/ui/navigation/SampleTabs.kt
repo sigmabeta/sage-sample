@@ -41,7 +41,7 @@ sealed class SampleTab(
 
     @Composable
     override fun Content() {
-        SampleTabContent(root)
+        SampleTabContent(this)
     }
 }
 
@@ -59,35 +59,31 @@ fun tabFor(destination: SampleDestination): SampleTab? =
     sampleTabs.firstOrNull { it.destination == destination }
 
 /**
- * Hosts one tab's inner back stack. Registering [navigator] lets the shell pop the active tab from
- * outside this tab's composition; Voyager unmounts the outgoing tab before mounting the incoming
- * one, so the registration always names the visible tab.
+ * Hosts one tab's inner back stack. Registering [navigator] together with its tab lets the shell
+ * pop the active tab from outside this tab's composition. The registration can lag the selected
+ * tab by one frame while Voyager swaps tabs, so the shell checks the registered key before trusting
+ * it (see [activeScreenFor]).
  *
  * `onBackPressed` routes platform Back through the shell's shared handler
  * ([LocalSampleBackHandler]) and returns `false` to decline Voyager's own pop. Voyager's desktop
- * Back dispatcher is a no-op, so this matters once the desktop inputs land; the tab content is
- * still wrapped in [WithPerScreenViewModelStore] because Voyager only supplies per-screen stores on
- * Android.
+ * Back dispatcher is a no-op; the tab content is still wrapped in [WithPerScreenViewModelStore]
+ * because Voyager only supplies per-screen stores on Android.
  */
 @Composable
-private fun SampleTabContent(root: SampleScreen) {
+private fun SampleTabContent(tab: SampleTab) {
     val activeTabNavigator = LocalSampleActiveTabNavigator.current
     val backHandler = LocalSampleBackHandler.current
 
     Navigator(
-        screen = root,
+        screen = tab.root,
         onBackPressed = {
             backHandler.back()
             false
         },
     ) { navigator ->
-        DisposableEffect(navigator) {
-            activeTabNavigator.navigator = navigator
-            onDispose {
-                if (activeTabNavigator.navigator === navigator) {
-                    activeTabNavigator.navigator = null
-                }
-            }
+        DisposableEffect(tab.key, navigator) {
+            activeTabNavigator.register(tab.key, navigator)
+            onDispose { activeTabNavigator.unregister(navigator) }
         }
 
         SlideTransition(navigator) { screen ->
@@ -101,10 +97,35 @@ private fun SampleTabContent(root: SampleScreen) {
 /**
  * Holds the active tab's inner [Navigator] so the shell can pop a tab's pushed screens from outside
  * that tab's composition (the top-bar arrow, platform Back, and feature navigation events).
+ *
+ * [tabKey] names the tab that registered [navigator]. The registration is a composition side effect,
+ * so it can still point at the outgoing tab for one frame after a switch; anything that acts on the
+ * current tab must go through [navigatorFor] rather than reading [navigator] directly.
  */
 @Stable
 class SampleActiveTabNavigator {
+    var tabKey: String? by mutableStateOf(null)
+        private set
+
     var navigator: Navigator? by mutableStateOf(null)
+        private set
+
+    /** Registers [navigator] as [tabKey]'s stack, replacing any previous registration. */
+    fun register(tabKey: String, navigator: Navigator) {
+        this.tabKey = tabKey
+        this.navigator = navigator
+    }
+
+    /** Clears the registration only if [navigator] is still the registered one. */
+    fun unregister(navigator: Navigator) {
+        if (this.navigator === navigator) {
+            this.navigator = null
+            this.tabKey = null
+        }
+    }
+
+    /** The navigator registered for [tabKey], or null while another (outgoing) tab owns it. */
+    fun navigatorFor(tabKey: String): Navigator? = navigator.takeIf { this.tabKey == tabKey }
 }
 
 /** Provided by `SampleNavHost` around the tab navigator; there is no sensible default. */

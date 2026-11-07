@@ -4,6 +4,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.images.SourceInfo
 import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.ui.Icon
@@ -220,6 +222,72 @@ class HomeViewModelTest {
             .filterIsInstance<ErrorStateListModel>()
             .single()
         assertEquals("str-HOME_ALL_ERROR", error.errorString)
+    }
+
+    @Test
+    fun `changing the demo outcome reloads home into the empty and error presentations`() =
+        runTest(dispatcher) {
+            val settings = FakeHomeSettingsManager()
+            val viewModel = createViewModel(
+                listOf(
+                    outcomeDefinition("hero", 0, settings),
+                    outcomeDefinition("gallery", 1, settings),
+                ),
+                settings,
+            )
+            advanceUntilIdle()
+            assertTrue(viewModel.uiStateActual.value.listItems.isNotEmpty())
+            assertTrue(
+                viewModel.uiStateActual.value.listItems.none {
+                    it is EmptyStateListModel || it is ErrorStateListModel
+                },
+            )
+
+            settings.setDemoOutcome(DemoOutcome.EMPTY)
+            advanceUntilIdle()
+
+            val empty = viewModel.uiStateActual.value.listItems
+                .filterIsInstance<EmptyStateListModel>()
+                .single()
+            assertEquals("str-HOME_EMPTY", empty.explanation)
+
+            settings.setDemoOutcome(DemoOutcome.ERROR)
+            advanceUntilIdle()
+
+            val error = viewModel.uiStateActual.value.listItems
+                .filterIsInstance<ErrorStateListModel>()
+                .single()
+            assertEquals("str-HOME_ALL_ERROR", error.errorString)
+        }
+
+    /**
+     * A module whose flow reads the demo outcome when it is collected, like the real generated
+     * repositories: rebuilding the plan is what makes the new outcome take effect.
+     */
+    private fun outcomeDefinition(
+        typeId: String,
+        priority: Int,
+        settings: FakeHomeSettingsManager,
+    ): FakeHomeModuleDefinition = FakeHomeModuleDefinition(typeId, priority) { instanceNumber, _ ->
+        FakeHomeModule(
+            id = "${typeId}_$instanceNumber",
+            priority = instanceNumber - 1,
+            flow = flow {
+                val operationName = "home.${typeId}_$instanceNumber.load"
+                emit(LCE.Loading(operationName))
+                emit(
+                    when (settings.demoOutcome.value) {
+                        DemoOutcome.CONTENT ->
+                            LCE.Content(section("$typeId:$instanceNumber", instanceNumber.toLong()))
+
+                        DemoOutcome.EMPTY -> LCE.Uninitialized
+
+                        DemoOutcome.ERROR ->
+                            LCE.Error(operationName, IllegalStateException("demo"))
+                    },
+                )
+            },
+        )
     }
 
     // Touch the mapped state before the test advances the scheduler: `uiStateActual` is eager,

@@ -10,6 +10,8 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.demoOutcomeFailure
+import net.sigmabeta.sage.sample.settings.select
 import net.sigmabeta.sage.ui.StringGenerator
 
 /**
@@ -36,31 +38,27 @@ import net.sigmabeta.sage.ui.StringGenerator
 class DemoHomeRepository(
     private val settingsManager: SampleSettingsManager,
 ) : HomeRepository {
-    override fun itemCount(seed: String): Int = when (settingsManager.demoOutcome.value) {
-        DemoOutcome.CONTENT -> catalog(seed).size
-        DemoOutcome.EMPTY -> 0
-        DemoOutcome.ERROR -> throw demoFailure()
-    }
+    override fun itemCount(seed: String): Int =
+        settingsManager.demoOutcome.value.select(
+            content = { catalog(seed).size },
+            empty = { 0 },
+            error = { throw demoOutcomeFailure() },
+        )
 
     override fun itemAt(seed: String, index: Int): HomeItem? =
-        when (settingsManager.demoOutcome.value) {
-            DemoOutcome.CONTENT -> catalog(seed).getOrNull(index)
-            DemoOutcome.EMPTY -> null
-            DemoOutcome.ERROR -> throw demoFailure()
-        }
+        settingsManager.demoOutcome.value.select(
+            content = { catalog(seed).getOrNull(index) },
+            empty = { null },
+            error = { throw demoOutcomeFailure() },
+        )
 
     override fun gridImages(seed: String, limit: Int): Flow<LCE<List<HomeItem>>> = flow {
         emit(
-            when (settingsManager.demoOutcome.value) {
-                DemoOutcome.CONTENT -> LCE.Content(catalog(seed).take(limit))
-
-                DemoOutcome.EMPTY -> LCE.Content(emptyList())
-
-                DemoOutcome.ERROR -> LCE.Error(
-                    operationName = "home.$seed.load",
-                    error = demoFailure(),
-                )
-            },
+            settingsManager.demoOutcome.value.select(
+                content = { LCE.Content(catalog(seed).take(limit)) },
+                empty = { LCE.Content(emptyList()) },
+                error = { LCE.Error("home.$seed.load", demoOutcomeFailure()) },
+            ),
         )
     }
 
@@ -74,8 +72,6 @@ class DemoHomeRepository(
             )
         }
     }
-
-    private fun demoFailure() = IllegalStateException("Demo outcome is ERROR")
 
     private companion object {
         const val CATALOG_SIZE = 18

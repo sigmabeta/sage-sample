@@ -9,6 +9,8 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.demoOutcomeFailure
+import net.sigmabeta.sage.sample.settings.select
 
 /**
  * The sample's generated datasource for List Items and List Items with Images.
@@ -39,22 +41,24 @@ class DemoSampleItemRepository(
 
         return flow {
             emit(
-                when (outcome) {
-                    DemoOutcome.CONTENT -> LCE.Content(
-                        demoSampleItemsWindow(
-                            offset = offset,
-                            limit = limit,
-                            total = LIST_ITEMS_ITEM_COUNT,
-                        ),
-                    )
-
-                    DemoOutcome.EMPTY -> LCE.Content(emptyList())
-
-                    DemoOutcome.ERROR -> LCE.Error(
-                        operationName = LIST_ITEMS_OPERATION_NAME,
-                        error = IllegalStateException("Demo outcome is ERROR"),
-                    )
-                },
+                outcome.select(
+                    content = {
+                        LCE.Content(
+                            demoSampleItemsWindow(
+                                offset = offset,
+                                limit = limit,
+                                total = LIST_ITEMS_ITEM_COUNT,
+                            ),
+                        )
+                    },
+                    empty = { LCE.Content(emptyList()) },
+                    error = {
+                        LCE.Error(
+                            operationName = LIST_ITEMS_OPERATION_NAME,
+                            error = demoOutcomeFailure(),
+                        )
+                    },
+                ),
             )
         }
     }

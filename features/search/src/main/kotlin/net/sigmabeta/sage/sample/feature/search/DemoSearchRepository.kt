@@ -9,6 +9,8 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.demoOutcomeFailure
+import net.sigmabeta.sage.sample.settings.select
 
 /**
  * The sample's generated search datasource.
@@ -50,16 +52,16 @@ class DemoSearchRepository(
 
         return flow {
             emit(
-                when (outcome) {
-                    DemoOutcome.CONTENT -> LCE.Content(searchResultsFor(query, kind))
-
-                    DemoOutcome.EMPTY -> LCE.Content(emptyList())
-
-                    DemoOutcome.ERROR -> LCE.Error(
-                        operationName = operationName,
-                        error = IllegalStateException("Demo outcome is ERROR"),
-                    )
-                },
+                outcome.select(
+                    content = { LCE.Content(searchResultsFor(query, kind)) },
+                    empty = { LCE.Content(emptyList()) },
+                    error = {
+                        LCE.Error(
+                            operationName = operationName,
+                            error = demoOutcomeFailure(),
+                        )
+                    },
+                ),
             )
         }
     }
