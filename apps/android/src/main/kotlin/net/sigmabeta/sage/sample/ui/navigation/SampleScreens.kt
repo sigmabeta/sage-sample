@@ -3,7 +3,6 @@ package net.sigmabeta.sage.sample.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -177,9 +176,11 @@ data object SettingsScreen : SampleScreen {
  * - **Layout:** [screenLayoutFor] picks SAGE's `ListScreen` or `GridScreen` (staggered when the
  *   state asks for it) from the state's [net.sigmabeta.sage.list.ColumnType] and the window's
  *   [WidthClass]. A state that fits at most one column keeps the existing list presentation.
- * - **Lifecycle:** exactly one foreground pair is sent here — [SageAction.Resume] on entering
- *   composition and [SageAction.Pause] on leaving. SAGE's own title-change `Resume` is coalesced
- *   in [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
+ * - **Lifecycle:** exactly one foreground pair is sent here by [ScreenLifecycleEffect] — [SageAction.Resume]
+ *   when the active screen is visible and the app is in the foreground, [SageAction.Pause] when it
+ *   is covered, left, or backgrounded. Screens outside the shell (previews, isolated render tests)
+ *   get no owner and therefore no actions. SAGE's own title-change `Resume` is coalesced in
+ *   [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
  */
 @Composable
 private fun SampleListScreen(
@@ -201,10 +202,7 @@ private fun SampleListScreen(
         titleBarSink.onTitleBar(state.title)
     }
 
-    DisposableEffect(viewModel) {
-        viewModel.sendAction(SageAction.Resume)
-        onDispose { viewModel.sendAction(SageAction.Pause) }
-    }
+    ScreenLifecycleEffect(viewModel)
 
     if (content != null) {
         content(state)
