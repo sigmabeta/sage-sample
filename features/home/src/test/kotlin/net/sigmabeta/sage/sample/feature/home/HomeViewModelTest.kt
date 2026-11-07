@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -20,15 +21,18 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.images.SourceInfo
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.ui.Icon
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 /**
  * The module fan-in contract: each module's flow owns one section slot, sections render in
- * priority order, and a row tap becomes a one-shot snackbar event.
+ * priority order, a row tap becomes a one-shot snackbar event, and flipping "Home shows same
+ * content" rebuilds the plan without recreating the screen.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -50,8 +54,8 @@ class HomeViewModelTest {
         val lateModule = MutableSharedFlow<LCE<HomeModuleSection>>(extraBufferCapacity = 1)
         val viewModel = createViewModel(
             listOf(
-                FakeHomeModule("first", 0, flowOf(LCE.Content(section("First", 1L)))),
-                FakeHomeModule("second", 1, lateModule),
+                fakeDefinition("first", 0, flowOf(LCE.Content(section("First", 1L)))),
+                fakeDefinition("second", 1, lateModule),
             ),
         )
 
@@ -72,8 +76,8 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val viewModel = createViewModel(
                 listOf(
-                    FakeHomeModule("later", 20, flowOf(LCE.Content(section("Later", 2L)))),
-                    FakeHomeModule("earlier", 10, flowOf(LCE.Content(section("Earlier", 1L)))),
+                    fakeDefinition("later", 20, flowOf(LCE.Content(section("Later", 2L)))),
+                    fakeDefinition("earlier", 10, flowOf(LCE.Content(section("Earlier", 1L)))),
                 ),
             )
 
@@ -106,10 +110,68 @@ class HomeViewModelTest {
         )
     }
 
+    @Test
+    fun `flipping home shows same content rebuilds the plan and cancels old collections`() =
+        runTest(dispatcher) {
+            val builds = mutableMapOf<String, Int>()
+            val cancelledInstances = mutableListOf<String>()
+
+            fun countingDefinition(
+                typeId: String,
+                priority: Int,
+                title: String,
+                itemBase: Long,
+            ) = FakeHomeModuleDefinition(typeId, priority) { instanceNumber, _ ->
+                val build = builds.merge(typeId, 1, Int::plus)!!
+                // A replaying flow never completes while Home is collecting it, so its
+                // onCompletion runs when the plan rebuild cancels the collector.
+                val updates = MutableSharedFlow<LCE<HomeModuleSection>>(replay = 1)
+                val stateFlow = updates
+                    .onCompletion { cancelledInstances += "${typeId}_$instanceNumber" }
+                updates.tryEmit(
+                    LCE.Content(section("$title:$build", itemBase + build)),
+                )
+
+                    FakeHomeModule(
+                        id = "${typeId}_$instanceNumber",
+                        priority = instanceNumber - 1,
+                        flow = stateFlow,
+                    )
+                }
+
+            val settings = FakeHomeSettingsManager(initialHomeShowsSameContent = true)
+            val viewModel = createViewModel(
+                listOf(
+                    countingDefinition("hero", 0, "Hero", itemBase = 0L),
+                    countingDefinition("gallery", 1, "Gallery", itemBase = 1_000L),
+                ),
+                settings,
+            )
+            advanceUntilIdle()
+
+            assertEquals(listOf("Hero:1", "Gallery:1"), renderedHeaders(viewModel))
+
+            settings.setHomeShowsSameContent(false)
+            advanceUntilIdle()
+
+            // The stable instances were cancelled, and every rendered header comes from a
+            // freshly created plan (build 2 or later).
+            assertEquals(2, cancelledInstances.size)
+            assertTrue(builds.getValue("hero") >= 2)
+            assertTrue(builds.getValue("gallery") >= 2)
+            val headers = renderedHeaders(viewModel)
+            assertTrue(headers.isNotEmpty())
+            assertTrue(headers.none { it.endsWith(":1") })
+        }
+
     // Touch the mapped state before the test advances the scheduler: `uiStateActual` is eager,
     // but its first collection has to be scheduled while time can still advance.
-    private fun createViewModel(modules: List<HomeModule>) = HomeViewModel(
-        modules = modules,
+    private fun createViewModel(
+        definitions: List<HomeModuleDefinition>,
+        settings: SampleSettingsManager = FakeHomeSettingsManager(),
+    ) = HomeViewModel(
+        moduleFactory = HomeModuleFactory(definitions.toSet()),
+        settingsManager = settings,
         stringProvider = FakeStringProvider(),
         analytics = FakeAnalytics(),
         dispatchers = testDispatchers(dispatcher),

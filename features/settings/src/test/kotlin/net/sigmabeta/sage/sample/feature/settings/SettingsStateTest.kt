@@ -140,14 +140,14 @@ class SettingsStateTest {
 
     @Test
     fun `home shows same content toggle reflects the setting and carries the toggle action`() {
-        val off = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
-        assertEquals(false, off.checked)
-        assertEquals(SettingsAction.HomeShowsSameContentToggled, off.clickAction)
-
-        val on = homeShowsSameContentToggle(
-            SettingsState(homeShowsSameContent = true).toListItems(FakeStringProvider),
-        )
+        val on = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
         assertEquals(true, on.checked)
+        assertEquals(SettingsAction.HomeShowsSameContentToggled, on.clickAction)
+
+        val off = homeShowsSameContentToggle(
+            SettingsState(homeShowsSameContent = false).toListItems(FakeStringProvider),
+        )
+        assertEquals(false, off.checked)
     }
 
     @Test

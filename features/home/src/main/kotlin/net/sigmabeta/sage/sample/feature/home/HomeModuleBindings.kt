@@ -1,28 +1,31 @@
 package net.sigmabeta.sage.sample.feature.home
 
-import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
-import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.IntoSet
+import dev.zacsweers.metro.Multibinds
 import net.sigmabeta.sage.di.AppScope
-import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.feature.home.modules.BigImageModuleDefinition
+import net.sigmabeta.sage.sample.feature.home.modules.GridImagesModuleDefinition
 
 /**
- * Supplies one Home screen with its randomized module list.
+ * Contributes the Home row definitions as a shared set, Chipbox-style.
  *
- * The provider is intentionally unscoped: each [HomeViewModel] gets a fresh plan, so popping and
- * re-opening Home produces a new order and count. [HomeModuleFactory] owns the construction so
- * the view model only ever sees the `List<HomeModule>` contract. "Home shows same content" turns
- * that fresh plan into the factory's fixed-seed plan.
+ * Adding a row is one `@Binds @IntoSet` line here plus the definition class; the factory and the
+ * view model never learn about concrete module types. The set itself is unscoped, and the
+ * factory is injected per screen, so popping and re-opening Home rebuilds the plan.
  */
-@BindingContainer
 @ContributesTo(AppScope::class)
-object HomeModuleBindings {
+interface HomeModuleBindings {
 
-    @Provides
-    fun provideHomeModules(
-        factory: HomeModuleFactory,
-        settingsManager: SampleSettingsManager,
-    ): List<HomeModule> = factory.create(
-        homeShowsSameContent = settingsManager.homeShowsSameContent.value,
-    )
+    @Multibinds
+    fun homeModuleDefinitions(): Set<HomeModuleDefinition>
+
+    @Binds
+    @IntoSet
+    fun bindBigImageDefinition(impl: BigImageModuleDefinition): HomeModuleDefinition
+
+    @Binds
+    @IntoSet
+    fun bindGridImagesDefinition(impl: GridImagesModuleDefinition): HomeModuleDefinition
 }
