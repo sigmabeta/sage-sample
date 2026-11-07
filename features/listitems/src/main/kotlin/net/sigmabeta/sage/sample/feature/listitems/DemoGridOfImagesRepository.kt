@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.settings.DemoOutcome
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 
 /**
  * The sample's generated datasource for Grid of Images.
@@ -16,14 +18,38 @@ import net.sigmabeta.sage.di.AppScope
  * the shared `runInBackground` seam, which applies the duration selected on the Settings screen;
  * this repository does not add a delay of its own.
  *
+ * The Settings demo outcome is read when a load is requested, not cached at construction:
+ * [DemoOutcome.CONTENT] returns the generated cells, [DemoOutcome.EMPTY] returns a successful
+ * empty result, and [DemoOutcome.ERROR] fails the load. Because the value is read per call,
+ * changing it affects the next load without an app restart.
+ *
  * Metro binds it to [GridOfImagesRepository] once for the application graph; the sample has no
  * real backend.
  */
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
 @Inject
-class DemoGridOfImagesRepository : GridOfImagesRepository {
-    override fun load(): Flow<LCE<List<SampleItem>>> = flow {
-        emit(LCE.Content(demoSampleItems(GRID_OF_IMAGES_ITEM_COUNT)))
+class DemoGridOfImagesRepository(
+    private val settingsManager: SampleSettingsManager,
+) : GridOfImagesRepository {
+    override fun load(): Flow<LCE<List<SampleItem>>> {
+        val outcome = settingsManager.demoOutcome.value
+
+        return flow {
+            emit(
+                when (outcome) {
+                    DemoOutcome.CONTENT -> LCE.Content(
+                        demoSampleItems(GRID_OF_IMAGES_ITEM_COUNT),
+                    )
+
+                    DemoOutcome.EMPTY -> LCE.Content(emptyList())
+
+                    DemoOutcome.ERROR -> LCE.Error(
+                        operationName = GRID_OF_IMAGES_OPERATION_NAME,
+                        error = IllegalStateException("Demo outcome is ERROR"),
+                    )
+                },
+            )
+        }
     }
 }
