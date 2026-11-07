@@ -1,12 +1,14 @@
 package net.sigmabeta.sage.sample.feature.listitems
 
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -79,7 +81,19 @@ class ListItemsWithImagesStateTest {
     }
 
     @Test
-    fun `error maps to an error state`() {
+    fun `empty content maps to one localized empty state`() {
+        val rows = ListItemsWithImagesState(LCE.Content(emptyList())).toListItems(strings)
+
+        val emptyState = rows.filterIsInstance<EmptyStateListModel>().single()
+        assertEquals("str-LIST_ITEMS_WITH_IMAGES_EMPTY", emptyState.explanation)
+        assertEquals(Icon.Person, emptyState.icon)
+        assertFalse(emptyState.showCrossOut)
+        assertTrue(rows.none { it is ImageNameCaptionListModel })
+        assertEquals(1, rows.size)
+    }
+
+    @Test
+    fun `error maps to one localized error state under the images operation`() {
         val rows = ListItemsWithImagesState(
             LCE.Error(
                 LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
@@ -89,6 +103,48 @@ class ListItemsWithImagesStateTest {
 
         val errorState = rows.filterIsInstance<ErrorStateListModel>().single()
         assertEquals(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME, errorState.failedOperationName)
+        assertEquals("str-LIST_ITEMS_WITH_IMAGES_ERROR", errorState.errorString)
         assertEquals("boom", errorState.error.message)
+        assertTrue(rows.none { it is ImageNameCaptionListModel })
+        assertEquals(1, rows.size)
+    }
+
+    @Test
+    fun `uninitialized content shows loading rather than a blank list`() {
+        val rows = ListItemsWithImagesState(LCE.Uninitialized).toListItems(strings)
+
+        assertTrue(rows.any { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `every terminal state renders at least one row`() {
+        val states = listOf(
+            ListItemsWithImagesState(LCE.Loading(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME)),
+            ListItemsWithImagesState(LCE.Content(emptyList())),
+            ListItemsWithImagesState(
+                LCE.Error(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME, IllegalStateException("boom")),
+            ),
+            ListItemsWithImagesState(LCE.Uninitialized),
+        )
+
+        states.forEach { state ->
+            val rows = state.toListItems(strings)
+            assertTrue("$state rendered no rows", rows.isNotEmpty())
+            assertEquals(rows.size, rows.map { it.dataId }.distinct().size)
+        }
+    }
+
+    @Test
+    fun `empty and error keep the screen title and back`() {
+        listOf(
+            ListItemsWithImagesState(LCE.Content(emptyList())),
+            ListItemsWithImagesState(
+                LCE.Error(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME, IllegalStateException("boom")),
+            ),
+        ).forEach { state ->
+            val title = state.title(strings)
+            assertEquals("str-LIST_ITEMS_WITH_IMAGES_TITLE", title.title)
+            assertTrue(title.shouldShowBack)
+        }
     }
 }

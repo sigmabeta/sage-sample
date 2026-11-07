@@ -1,6 +1,8 @@
 package net.sigmabeta.sage.sample.feature.listitems
 
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.components.EmptyStateListModel
+import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingType
@@ -19,7 +21,9 @@ import net.sigmabeta.sage.ui.StringProvider
  * widens.
  *
  * Loading rows use [LoadingType.SQUARE] with no section header, so the placeholder cells have the
- * same 1:1 shape as the [GridImageListModel] cells they are replaced by.
+ * same 1:1 shape as the [GridImageListModel] cells they are replaced by. An empty successful
+ * result renders one localized [EmptyStateListModel], and a failed load renders one localized
+ * [ErrorStateListModel] naming the operation; neither falls through to a blank grid.
  */
 data class GridOfImagesState(
     val content: LCE<List<SampleItem>> = LCE.Loading(
@@ -36,14 +40,18 @@ data class GridOfImagesState(
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> =
         when (val loaded = content) {
-            is LCE.Error -> error(GRID_OF_IMAGES_OPERATION_NAME, loaded.error)
+            is LCE.Error -> listOf(
+                ErrorStateListModel(
+                    failedOperationName = GRID_OF_IMAGES_OPERATION_NAME,
+                    errorString = stringProvider.getString(ListItemsStringId.GRID_OF_IMAGES_ERROR),
+                    error = loaded.error,
+                ),
+            )
 
-            else -> loaded.withStandardErrorAndLoading(
-                loadingType = LoadingType.SQUARE,
-                loadingWithHeader = false,
-                loadingOperationNameOverride = GRID_OF_IMAGES_OPERATION_NAME,
-            ) {
-                data.map { item ->
+            is LCE.Content -> if (loaded.data.isEmpty()) {
+                listOf(emptyState(stringProvider))
+            } else {
+                loaded.data.map { item ->
                     GridImageListModel(
                         dataId = item.id,
                         name = item.name,
@@ -57,7 +65,24 @@ data class GridOfImagesState(
                     )
                 }
             }
+
+            is LCE.Loading,
+            LCE.Uninitialized -> loading(
+                operationName = GRID_OF_IMAGES_OPERATION_NAME,
+                loadingType = LoadingType.SQUARE,
+                loadingItemCount = LOADING_ITEM_COUNT,
+            )
         }
+
+    private fun emptyState(stringProvider: StringProvider) = EmptyStateListModel(
+        icon = Icon.Album,
+        explanation = stringProvider.getString(ListItemsStringId.GRID_OF_IMAGES_EMPTY),
+        showCrossOut = false,
+    )
+
+    private companion object {
+        const val LOADING_ITEM_COUNT = 10
+    }
 }
 
 private const val GRID_OF_IMAGES_SEED_PREFIX = "grid-of-images"
