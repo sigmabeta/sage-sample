@@ -13,6 +13,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.feature.contentdetail.contentDetailRoute
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -54,12 +55,8 @@ class GridOfImagesViewModel(
 
         when (action) {
             is GridOfImagesAction.ItemClicked -> emitEvent(
-                SageEvent.ShowSnackbar(
-                    message = stringProvider.getStringOneArg(
-                        ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED,
-                        action.item.name,
-                    ),
-                    withDismissAction = false,
+                SageEvent.NavigateTo(
+                    destination = contentDetailRoute(action.contentId),
                     source = "GridOfImagesViewModel",
                 ),
             )

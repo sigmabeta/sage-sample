@@ -32,8 +32,9 @@ import net.sigmabeta.sage.ui.StringProvider
  * `InitWithString` cancels the previous load, so an old ID's late emission cannot overwrite the
  * new screen state.
  *
- * The sample has no backend behaviour behind the generated rows: every tap reports the clicked
- * text in a snackbar.
+ * Related rows and content parts address their own detail IDs and push another detail, so Back
+ * returns through the chain. The hero and generated call-to-action rows have no destination and
+ * still report their text in a snackbar.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -75,9 +76,13 @@ class ContentDetailViewModel(
 
             is ContentDetailAction.CtaClicked -> showClickedName(action.label)
 
-            is ContentDetailAction.ItemClicked -> showClickedName(action.item.name)
+            is ContentDetailAction.ItemClicked -> navigateTo(
+                contentItemContentId(action.item.id),
+            )
 
-            is ContentDetailAction.RelatedClicked -> showClickedName(action.related.name)
+            is ContentDetailAction.RelatedClicked -> navigateTo(
+                relatedContentId(action.related.id),
+            )
 
             else -> Unit
         }
@@ -100,6 +105,16 @@ class ContentDetailViewModel(
     private fun showNotFound() {
         loadJob?.cancel()
         updateState { it.copy(content = LCE.Content(null)) }
+    }
+
+    /** Pushes another detail on the active tab; Back returns to this one. */
+    private fun navigateTo(contentId: ContentId) {
+        emitEvent(
+            SageEvent.NavigateTo(
+                destination = contentDetailRoute(contentId),
+                source = "ContentDetailViewModel",
+            ),
+        )
     }
 
     private fun showClickedName(name: String) {

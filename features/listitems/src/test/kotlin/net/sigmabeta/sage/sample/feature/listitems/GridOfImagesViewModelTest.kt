@@ -18,6 +18,7 @@ import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -103,24 +104,22 @@ class GridOfImagesViewModelTest {
     }
 
     @Test
-    fun `clicking an image emits a snackbar naming it`() = runTest {
+    fun `clicking an image opens the detail for its content id`() = runTest {
         val viewModel = createViewModel()
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             viewModel.uiEvents.collect { event -> events += event }
         }
-        val item = SampleItem(
-            id = 7L,
-            name = "Sleve McDichael",
-            caption = "Fermentum pellentesque iaculis",
-        )
 
-        viewModel.sendAction(GridOfImagesAction.ItemClicked(item))
+        viewModel.sendAction(
+            GridOfImagesAction.ItemClicked(ContentId("grid-of-images:7")),
+        )
         advanceUntilIdle()
 
-        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals("str-GRID_OF_IMAGES_ITEM_CLICKED:Sleve McDichael", snackbar.message)
-        assertEquals("GridOfImagesViewModel", snackbar.source)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/grid-of-images:7", navigation.destination)
+        assertEquals("GridOfImagesViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     @Test

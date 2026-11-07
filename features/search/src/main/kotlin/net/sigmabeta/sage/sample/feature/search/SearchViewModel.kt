@@ -25,6 +25,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.feature.contentdetail.contentDetailRoute
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SearchHistoryManager
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
@@ -109,12 +110,8 @@ class SearchViewModel(
             is SearchAction.HistoryRemoved -> historyManager.remove(action.query)
 
             is SearchAction.ResultClicked -> emitEvent(
-                SageEvent.ShowSnackbar(
-                    message = stringProvider.getStringOneArg(
-                        SearchStringId.SEARCH_RESULT_CLICKED,
-                        action.result.name,
-                    ),
-                    withDismissAction = false,
+                SageEvent.NavigateTo(
+                    destination = contentDetailRoute(action.contentId),
                     source = "SearchViewModel",
                 ),
             )

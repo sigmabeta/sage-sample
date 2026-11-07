@@ -25,7 +25,6 @@ object SampleStringProvider : StringProvider {
         HomeStringId.HOME_TITLE to SampleStrings.HOME_TITLE,
         HomeStringId.HOME_SECTION_BIG_IMAGE to SampleStrings.HOME_SECTION_BIG_IMAGE,
         HomeStringId.HOME_SECTION_GRID_IMAGES to SampleStrings.HOME_SECTION_GRID_IMAGES,
-        HomeStringId.HOME_ITEM_CLICKED to SampleStrings.HOME_ITEM_CLICKED,
         HomeStringId.HOME_EMPTY to SampleStrings.HOME_EMPTY,
         HomeStringId.HOME_ALL_ERROR to SampleStrings.HOME_ALL_ERROR,
         BrowseStringId.BROWSE_TITLE to SampleStrings.NAV_BROWSE,
@@ -54,7 +53,6 @@ object SampleStringProvider : StringProvider {
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR to
             SampleStrings.LIST_ITEMS_WITH_IMAGES_ERROR,
         ListItemsStringId.GRID_OF_IMAGES_TITLE to SampleStrings.NAV_GRID_OF_IMAGES,
-        ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
         ListItemsStringId.GRID_OF_IMAGES_EMPTY to SampleStrings.GRID_OF_IMAGES_EMPTY,
         ListItemsStringId.GRID_OF_IMAGES_ERROR to SampleStrings.GRID_OF_IMAGES_ERROR,
         SearchStringId.SEARCH_TITLE to SampleStrings.NAV_SEARCH,
@@ -63,7 +61,6 @@ object SampleStringProvider : StringProvider {
         SearchStringId.SEARCH_BACK_DESCRIPTION to SampleStrings.SEARCH_BACK_DESCRIPTION,
         SearchStringId.SEARCH_PROMPT to SampleStrings.SEARCH_PROMPT,
         SearchStringId.SEARCH_NO_RESULTS to SampleStrings.SEARCH_NO_RESULTS,
-        SearchStringId.SEARCH_RESULT_CLICKED to SampleStrings.SEARCH_RESULT_CLICKED,
         SearchStringId.SEARCH_SECTION_LIST to SampleStrings.SEARCH_SECTION_LIST,
         SearchStringId.SEARCH_SECTION_GRID to SampleStrings.SEARCH_SECTION_GRID,
         SettingsStringId.SETTINGS_TITLE to SampleStrings.NAV_SETTINGS,

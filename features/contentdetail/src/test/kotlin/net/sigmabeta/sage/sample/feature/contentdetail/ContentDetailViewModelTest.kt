@@ -155,7 +155,7 @@ class ContentDetailViewModelTest {
     }
 
     @Test
-    fun `clicking a part emits a snackbar naming it`() = runTest {
+    fun `clicking a part opens the detail for its content id`() = runTest {
         val viewModel = createViewModel()
         val events = collectEvents(viewModel)
         advanceUntilIdle()
@@ -163,13 +163,14 @@ class ContentDetailViewModelTest {
         viewModel.sendAction(ContentDetailAction.ItemClicked(CONTENT_DETAIL_FIXTURE.items[0]))
         advanceUntilIdle()
 
-        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals("str-CONTENT_DETAIL_ITEM_CLICKED:One", snackbar.message)
-        assertEquals("ContentDetailViewModel", snackbar.source)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/content-detail:item:1", navigation.destination)
+        assertEquals("ContentDetailViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     @Test
-    fun `clicking a related item emits a snackbar naming it`() = runTest {
+    fun `clicking a related item opens another detail`() = runTest {
         val viewModel = createViewModel()
         val events = collectEvents(viewModel)
         advanceUntilIdle()
@@ -177,8 +178,10 @@ class ContentDetailViewModelTest {
         viewModel.sendAction(ContentDetailAction.RelatedClicked(CONTENT_DETAIL_FIXTURE.related[0]))
         advanceUntilIdle()
 
-        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals("str-CONTENT_DETAIL_ITEM_CLICKED:Alpha", snackbar.message)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/content-detail:related:1", navigation.destination)
+        assertEquals("ContentDetailViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     @Test

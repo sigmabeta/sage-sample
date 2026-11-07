@@ -22,6 +22,7 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.images.SourceInfo
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.ui.Icon
@@ -33,7 +34,7 @@ import org.junit.Test
 
 /**
  * The module fan-in contract: each module's flow owns one section slot, sections render in
- * priority order, a row tap becomes a one-shot snackbar event, and flipping "Home shows same
+ * priority order, a row tap opens Content detail for its stable ID, and flipping "Home shows same
  * content" rebuilds the plan without recreating the screen.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -89,7 +90,7 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `an item tap emits a snackbar naming the item`() = runTest(dispatcher) {
+    fun `an item tap opens the detail for its content id`() = runTest(dispatcher) {
         val viewModel = createViewModel(emptyList())
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -97,19 +98,13 @@ class HomeViewModelTest {
         }
         advanceUntilIdle()
 
-        viewModel.sendAction(HomeAction.ItemClicked("Item 7"))
+        viewModel.sendAction(HomeAction.ItemClicked(ContentId("home:big_image_1:7")))
         advanceUntilIdle()
 
-        assertEquals(
-            listOf(
-                SageEvent.ShowSnackbar(
-                    message = "str-HOME_ITEM_CLICKED:Item 7",
-                    withDismissAction = false,
-                    source = "HomeViewModel",
-                ),
-            ),
-            events,
-        )
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/home:big_image_1:7", navigation.destination)
+        assertEquals("HomeViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     @Test
@@ -263,7 +258,7 @@ class HomeViewModelTest {
         name = "Item $id",
         sourceInfo = SourceInfo("generated://home/$id"),
         imagePlaceholder = Icon.Album,
-        clickAction = HomeAction.ItemClicked("Item $id"),
+        clickAction = HomeAction.ItemClicked(ContentId("home:test:$id")),
         aspectRatio = 0.75f,
         maxWidthDp = 400f,
     )

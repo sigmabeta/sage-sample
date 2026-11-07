@@ -80,7 +80,9 @@ data class GridOfImagesState(
                                     imageSize = GRID_OF_IMAGES_IMAGE_SIZE,
                                 ),
                                 imagePlaceholder = Icon.Person,
-                                clickAction = GridOfImagesAction.ItemClicked(item),
+                                clickAction = GridOfImagesAction.ItemClicked(
+                                    gridOfImagesContentId(item.id),
+                                ),
                             ),
                         )
                     }

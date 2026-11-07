@@ -12,7 +12,6 @@ object SampleStrings {
     const val HOME_TITLE = "SAGE Sample"
     const val HOME_SECTION_BIG_IMAGE = "Big image %d"
     const val HOME_SECTION_GRID_IMAGES = "Grid images %d"
-    const val HOME_ITEM_CLICKED = "%s clicked"
     const val HOME_EMPTY =
         "No Home content is available. Change the demo outcome in Settings to load content."
     const val HOME_ALL_ERROR =
@@ -47,7 +46,6 @@ object SampleStrings {
     const val SEARCH_BACK_DESCRIPTION = "Back"
     const val SEARCH_PROMPT = "Type at least 3 characters to search."
     const val SEARCH_NO_RESULTS = "No results for “%s”."
-    const val SEARCH_RESULT_CLICKED = "%s clicked"
     const val SEARCH_SECTION_LIST = "List results"
     const val SEARCH_SECTION_GRID = "Grid results"
 
