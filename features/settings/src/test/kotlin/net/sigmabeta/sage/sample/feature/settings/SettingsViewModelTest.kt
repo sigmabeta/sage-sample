@@ -131,7 +131,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `toggling home shows same content writes through`() = runTest(dispatcher) {
-        val settings = FakeSettingsManager()
+        val settings = FakeSettingsManager(initialHomeShowsSameContent = false)
         val viewModel = createViewModel(settings = settings)
 
         assertFalse(homeShowsSameContentToggle(viewModel.uiStateActual.value.listItems).checked!!)

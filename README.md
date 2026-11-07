@@ -2,8 +2,9 @@
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
 Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), six pure-JVM feature
-modules over shared `:core` modules (a module-driven Home that randomizes 2–10 hero and
-generated-image rows per visit, Browse, a Content detail screen over seeded generated content,
+modules over shared `:core` modules (a module-driven Home that shows a stable plan by default and
+can randomize 2–10 hero and generated-image rows, Browse, a Content detail screen over seeded
+generated content,
 List Items — as text-only, generated-image, and 50-item generated-image grid variants —
 Search, and a Settings screen with persisted preferences), and SAGE itself as a Git submodule
 consumed through a Gradle composite build.
@@ -158,8 +159,9 @@ features/home/             pure-JVM feature module (no Android dependencies)
   HomeState.kt             ListState: one section slot per home module
   HomeViewModel.kt         Metro-contributed ViewModel: fans module flows into their slots
   HomeModule.kt            pluggable row contract + resolved section payload
-  HomeModuleFactory.kt     per-screen randomized 2–10 instance plan
-  HomeModuleBindings.kt    provides the randomized List<HomeModule>
+  HomeModuleDefinition.kt  registered row type: typeId, priority, instance factory
+  HomeModuleFactory.kt     builds the stable or randomized 2–10 instance plan
+  HomeModuleBindings.kt    Metro set of HomeModuleDefinitions (`@Binds @IntoSet`)
   HomeStringId.kt          SageStringId keys; the app maps them to R.string
   modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
   DemoHomeRepository.kt    seeded catalog + generated:// artwork
@@ -256,19 +258,26 @@ platform-agnostic; `SampleBindings` is the only place that knows about `R.string
 
 Home is module-driven, the way Chipbox's home screen is. `HomeModule` is the pluggable row
 contract: a stable id, a priority, an optional section header, and a
-`Flow<LCE<HomeModuleSection>>`. `HomeModuleFactory` builds a fresh randomized plan for each
-screen — between 2 and 10 instances of the two module types, both always represented, in random
-order. `HomeModuleBindings` provides that `List<HomeModule>` to the graph, and `HomeViewModel`
-collects every instance in parallel and patches only that module's slot in `HomeState`.
+`Flow<LCE<HomeModuleSection>>`. Row types register as `HomeModuleDefinition`s; `HomeModuleBindings`
+contributes them through Metro's `@Multibinds Set` + `@Binds @IntoSet`, so adding a row is one
+binding line rather than a factory switch. `HomeModuleFactory` builds the plan for each screen:
+the stable plan (the default) renders one instance of every registered definition in priority
+order, while disabling "Home shows same content" produces the demo's randomized plan — between 2
+and 10 instances, every definition represented, repeated types assigned unique ids and data-id
+ranges. `HomeViewModel` collects every instance in parallel and patches only that module's slot in
+`HomeState`; it also observes the preference and rebuilds the plan in place when it changes, so
+the retained Home tab does not need an app restart.
+
 `HomeState` gives each slot SAGE's standard loading and error rows and wraps multi-item rows in a
 `HorizontalScrollerListModel`; a single-item row (the daily hero) keeps the full width. Each
 instance gets a numbered section title and its own data-id range, so repeated module types
 coexist without tripping SAGE's duplicate-id check. Each instance also passes its id to the
 repository and its artwork URLs, so two instances of the same module render different titles and
 generated art while re-visiting one instance reproduces its content. The Settings screen's
-"Home shows same content" toggle swaps the plan's random source for a fixed seed, so every visit
-reproduces the same rows. The sample ships two modules: `BigImageModule` picks one item per UTC
-day from the instance's generated catalog and renders it as a width-capped `GridImageListModel`,
+"Home shows same content" toggle switches between that stable plan and the randomized one; Home
+observes the setting and swaps the plan without being recreated. The sample ships two modules:
+`BigImageModule` picks one item per UTC day from the instance's generated catalog and renders it
+as a width-capped `GridImageListModel`,
 and `GridImagesModule` asks the repository for a bounded list and renders `GridImageListModel`
 cells.
 
