@@ -1,20 +1,25 @@
 package net.sigmabeta.sage.sample.feature.listitems
 
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.components.EmptyStateListModel
+import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
+import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
  * List Items' content, declared as a SAGE [ListState].
  *
- * The loaded content is an [LCE]: SAGE's `withStandardErrorAndLoading` helper supplies the loading
- * presentation, and errors use the state's own `ErrorStateListModel` helper. The loading rows use
- * [LoadingType.TEXT_CAPTION] and no section header, so the placeholder has the same text-and-caption
- * shape as the [NameCaptionListModel] rows it is replaced by.
+ * The loaded content is an [LCE]. Loading uses [LoadingType.TEXT_CAPTION] placeholder rows with
+ * the same text-and-caption shape as the [NameCaptionListModel] rows they are replaced by. A
+ * successful but empty result renders one localized [EmptyStateListModel], and a failed load
+ * renders one localized [ErrorStateListModel] naming the operation; neither falls through to a
+ * blank list. The error row is built directly because SAGE's `error` helper hardcodes English
+ * copy.
  */
 data class ListItemsState(
     val content: LCE<List<SampleItem>> = LCE.Loading(LIST_ITEMS_OPERATION_NAME),
@@ -27,14 +32,18 @@ data class ListItemsState(
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> =
         when (val loaded = content) {
-            is LCE.Error -> error(LIST_ITEMS_OPERATION_NAME, loaded.error)
+            is LCE.Error -> listOf(
+                ErrorStateListModel(
+                    failedOperationName = LIST_ITEMS_OPERATION_NAME,
+                    errorString = stringProvider.getString(ListItemsStringId.LIST_ITEMS_ERROR),
+                    error = loaded.error,
+                ),
+            )
 
-            else -> loaded.withStandardErrorAndLoading(
-                loadingType = LoadingType.TEXT_CAPTION,
-                loadingWithHeader = false,
-                loadingOperationNameOverride = LIST_ITEMS_OPERATION_NAME,
-            ) {
-                data.map { item ->
+            is LCE.Content -> if (loaded.data.isEmpty()) {
+                listOf(emptyState(stringProvider))
+            } else {
+                loaded.data.map { item ->
                     NameCaptionListModel(
                         dataId = item.id,
                         name = item.name,
@@ -43,5 +52,22 @@ data class ListItemsState(
                     )
                 }
             }
+
+            is LCE.Loading,
+            LCE.Uninitialized -> loading(
+                operationName = LIST_ITEMS_OPERATION_NAME,
+                loadingType = LoadingType.TEXT_CAPTION,
+                loadingItemCount = LOADING_ITEM_COUNT,
+            )
         }
+
+    private fun emptyState(stringProvider: StringProvider) = EmptyStateListModel(
+        icon = Icon.Person,
+        explanation = stringProvider.getString(ListItemsStringId.LIST_ITEMS_EMPTY),
+        showCrossOut = false,
+    )
+
+    private companion object {
+        const val LOADING_ITEM_COUNT = 10
+    }
 }

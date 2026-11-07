@@ -43,25 +43,34 @@ internal class FakeAnalytics : Analytics {
 /**
  * Repository seam used by the view model tests.
  *
- * The stream is a replayed [MutableSharedFlow], so the test decides exactly when a value reaches
- * the view model. No real delays, no background threads.
+ * Each requested ID gets its own replayed [MutableSharedFlow], so the test decides exactly when a
+ * value for a given address reaches the view model, and a stale ID's stream can be driven after
+ * the view model has moved on. No real delays, no background threads.
  */
 internal class FakeContentDetailRepository : ContentDetailRepository {
-    private val stream = MutableSharedFlow<LCE<ContentDetail>>(
-        replay = 1,
-        extraBufferCapacity = 1,
-    )
+    private val streams = mutableMapOf<ContentId, MutableSharedFlow<LCE<ContentDetail?>>>()
 
-    override fun load(): Flow<LCE<ContentDetail>> = stream
+    /** Every ID the view model asked for, in request order. */
+    val requestedIds = mutableListOf<ContentId>()
 
-    suspend fun emit(value: LCE<ContentDetail>) {
-        stream.emit(value)
+    override fun load(contentId: ContentId): Flow<LCE<ContentDetail?>> {
+        requestedIds += contentId
+        return streamFor(contentId)
     }
+
+    suspend fun emit(contentId: ContentId, value: LCE<ContentDetail?>) {
+        streamFor(contentId).emit(value)
+    }
+
+    private fun streamFor(contentId: ContentId): MutableSharedFlow<LCE<ContentDetail?>> =
+        streams.getOrPut(contentId) {
+            MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
+        }
 }
 
 /** A small content detail fixture with stable, easy-to-assert values. */
 internal val CONTENT_DETAIL_FIXTURE = ContentDetail(
-    id = 1L,
+    id = ContentId("list-items:1"),
     title = "Fugiat lorem ipsum",
     details = listOf(
         ContentDetailField(label = "Alpha label", value = "One"),

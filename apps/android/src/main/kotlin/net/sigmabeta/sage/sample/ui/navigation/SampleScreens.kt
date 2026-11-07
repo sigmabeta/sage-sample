@@ -3,13 +3,16 @@ package net.sigmabeta.sage.sample.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.core.screen.ScreenKey
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
@@ -19,6 +22,7 @@ import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
 import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailViewModel
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.feature.home.HomeViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
@@ -67,7 +71,11 @@ data object SearchScreen : SampleScreen {
     @Composable
     override fun Content() {
         val viewModel: SearchViewModel = metroViewModel()
-        val query by viewModel.query.collectAsStateWithLifecycle()
+
+        // The field owns its echo: typing updates this local state synchronously, while the view
+        // model's query flow lags behind the key events. Rendering the view model's value directly
+        // lets fast keystrokes race the state update and reorder characters.
+        var fieldText by remember(viewModel) { mutableStateOf(viewModel.query.value) }
         val navEffects = LocalSampleNavEffects.current
         val chromeController = LocalSampleChromeController.current
 
@@ -77,15 +85,26 @@ data object SearchScreen : SampleScreen {
             chromeController.set(SampleScreenChrome(showTopBar = false))
         }
 
+        // History refills and clears are the only text changes the user did not type.
+        LaunchedEffect(viewModel) {
+            viewModel.fieldUpdates.collect { fieldText = it }
+        }
+
         SampleListScreen(viewModel) { state ->
             SearchContent(
                 listItems = state.listItems,
-                query = query,
+                query = fieldText,
                 hint = SearchStringId.SEARCH_HINT.text(),
                 clearContentDescription = SearchStringId.SEARCH_CLEAR_DESCRIPTION.text(),
                 backContentDescription = SearchStringId.SEARCH_BACK_DESCRIPTION.text(),
-                onQueryChange = { viewModel.sendAction(SageAction.SearchQueryEntered(it)) },
-                onClear = { viewModel.sendAction(SageAction.SearchClearClicked) },
+                onQueryChange = { newText ->
+                    fieldText = newText
+                    viewModel.sendAction(SageAction.SearchQueryEntered(newText))
+                },
+                onClear = {
+                    fieldText = ""
+                    viewModel.sendAction(SageAction.SearchClearClicked)
+                },
                 onBack = {
                     navEffects.onEvent(SageEvent.NavigateBack(source = "SearchScreen"))
                 },
@@ -122,12 +141,33 @@ data object GridOfImagesScreen : SampleScreen {
     }
 }
 
-data object ContentDetailScreen : SampleScreen {
+/**
+ * Content detail for one [ContentId], or the explicit not-found state when the route carried no
+ * usable ID.
+ *
+ * A data class whose [key] embeds the full ID: Voyager keys its per-screen ViewModelStore by
+ * `Screen.key`, so each ID gets its own ViewModel (and its own load) instead of sharing stale
+ * state with the previously opened item. The ID reaches the ViewModel through an init action, not
+ * a graph binding, because the ViewModel itself is graph-constructed.
+ */
+data class ContentDetailScreen(val contentId: ContentId?) : SampleScreen {
     override val destination = SampleDestination.CONTENT_DETAIL
+
+    override val key: ScreenKey = "ContentDetail:${contentId?.value ?: NOT_FOUND_KEY}"
 
     @Composable
     override fun Content() {
-        SampleListScreen(metroViewModel<ContentDetailViewModel>())
+        val viewModel: ContentDetailViewModel = metroViewModel()
+
+        LaunchedEffect(contentId) {
+            viewModel.sendAction(SageAction.InitWithString(contentId?.value.orEmpty()))
+        }
+
+        SampleListScreen(viewModel)
+    }
+
+    private companion object {
+        const val NOT_FOUND_KEY = "none"
     }
 }
 
@@ -154,9 +194,11 @@ data object SettingsScreen : SampleScreen {
  * - **Layout:** [screenLayoutFor] picks SAGE's `ListScreen` or `GridScreen` (staggered when the
  *   state asks for it) from the state's [net.sigmabeta.sage.list.ColumnType] and the window's
  *   [WidthClass]. A state that fits at most one column keeps the existing list presentation.
- * - **Lifecycle:** exactly one foreground pair is sent here — [SageAction.Resume] on entering
- *   composition and [SageAction.Pause] on leaving. SAGE's own title-change `Resume` is coalesced
- *   in [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
+ * - **Lifecycle:** exactly one foreground pair is sent here by [ScreenLifecycleEffect] — [SageAction.Resume]
+ *   when the active screen is visible and the app is in the foreground, [SageAction.Pause] when it
+ *   is covered, left, or backgrounded. Screens outside the shell (previews, isolated render tests)
+ *   get no owner and therefore no actions. SAGE's own title-change `Resume` is coalesced in
+ *   [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
  */
 @Composable
 private fun SampleListScreen(
@@ -178,10 +220,7 @@ private fun SampleListScreen(
         titleBarSink.onTitleBar(state.title)
     }
 
-    DisposableEffect(viewModel) {
-        viewModel.sendAction(SageAction.Resume)
-        onDispose { viewModel.sendAction(SageAction.Pause) }
-    }
+    ScreenLifecycleEffect(viewModel)
 
     if (content != null) {
         content(state)

@@ -4,6 +4,7 @@ import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.CtaListModel
+import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.HeroImageListModel
 import net.sigmabeta.sage.components.HorizontalScrollerListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
@@ -28,19 +29,23 @@ import net.sigmabeta.sage.ui.StringProvider
  * Each section maps the same [LCE] through its own loading shape, so the placeholder for a
  * section looks like the content that replaces it.
  *
+ * [content]'s `null` payload is the explicit not-found state: the repository reports an unknown
+ * [ContentId] as `LCE.Content(null)` and the screen renders one localized explanation instead of
+ * an error or an empty list. The title keeps the destination fallback in that case.
+ *
  * The [ColumnType.Staggered] declaration is what makes the shared screen render SAGE's staggered
  * `GridScreen` once the window is wide enough for more than one column; compact windows keep the
  * single-column list presentation.
  */
 data class ContentDetailState(
-    val content: LCE<ContentDetail> = LCE.Loading(CONTENT_DETAIL_OPERATION_NAME),
+    val content: LCE<ContentDetail?> = LCE.Loading(CONTENT_DETAIL_OPERATION_NAME),
 ) : ListState() {
     override val columnType = ColumnType.Staggered(CONTENT_DETAIL_COLUMN_WIDTH_DP, false)
 
     /**
-     * The loaded item's title, falling back to the destination name while loading or on error.
-     * The screen is pushed from Browse, so it is always below the top level and shows a back
-     * arrow.
+     * The loaded item's title, falling back to the destination name while loading, on error, or
+     * when the addressed ID is unknown. The screen is always pushed, so it is below the top level
+     * and shows a back arrow — including in the not-found state.
      */
     override fun title(stringProvider: StringProvider): TitleBarModel {
         val loadedTitle = (content as? LCE.Content)?.data?.title
@@ -55,32 +60,53 @@ data class ContentDetailState(
         when (val loaded = content) {
             is LCE.Error -> error(CONTENT_DETAIL_OPERATION_NAME, loaded.error)
 
-            else -> listOf(
-                heroSection(),
-                ctaSection(),
-                detailsSection(stringProvider),
-                relatedSection(stringProvider),
-                itemsSection(stringProvider),
+            is LCE.Content ->
+                loaded.data
+                ?.let { detail -> sections(LCE.Content(detail), stringProvider) }
+                ?: listOf(notFound(stringProvider))
+
+            is LCE.Loading -> sections(loaded, stringProvider)
+
+            LCE.Uninitialized -> emptyList()
+        }
+
+    /** The not-found state: one localized explanation with the destination's Back affordance. */
+    private fun notFound(stringProvider: StringProvider): ListModel = EmptyStateListModel(
+        icon = Icon.Warning,
+        explanation = stringProvider.getString(
+            ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND,
+        ),
+    )
+
+    private fun sections(
+        content: LCE<ContentDetail>,
+        stringProvider: StringProvider,
+    ): List<ListModel> = listOf(
+        heroSection(content),
+        ctaSection(content),
+        detailsSection(content, stringProvider),
+        relatedSection(content, stringProvider),
+        itemsSection(content, stringProvider),
+    )
+
+    private fun heroSection(content: LCE<ContentDetail>): ListModel =
+        content.sectionWithStandardErrorAndLoading(
+            sectionName = SECTION_NAME_HERO,
+            loadingType = LoadingType.BIG_IMAGE,
+            loadingItemCount = 1,
+            loadingWithHeader = false,
+        ) {
+            listOf(
+                HeroImageListModel(
+                    sourceInfo = heroSourceFor(data.id),
+                    imagePlaceholder = Icon.Album,
+                    contentDescription = data.title,
+                    clickAction = ContentDetailAction.HeroClicked,
+                ),
             )
         }
 
-    private fun heroSection(): ListModel = content.sectionWithStandardErrorAndLoading(
-        sectionName = SECTION_NAME_HERO,
-        loadingType = LoadingType.BIG_IMAGE,
-        loadingItemCount = 1,
-        loadingWithHeader = false,
-    ) {
-        listOf(
-            HeroImageListModel(
-                sourceInfo = heroSourceFor(data.id),
-                imagePlaceholder = Icon.Album,
-                contentDescription = data.title,
-                clickAction = ContentDetailAction.HeroClicked,
-            ),
-        )
-    }
-
-    private fun ctaSection(): ListModel =
+    private fun ctaSection(content: LCE<ContentDetail>): ListModel =
         content.sectionWithStandardErrorAndLoading(
             sectionName = SECTION_NAME_CTA,
             loadingItemCount = 0,
@@ -98,27 +124,29 @@ data class ContentDetailState(
     // The detail rows' labels and values come from the generated [ContentDetail.details], so the
     // screen carries no fixed metadata vocabulary. A blank field is omitted; when none remain,
     // the header disappears too.
-    private fun detailsSection(stringProvider: StringProvider): ListModel =
-        content.sectionWithStandardErrorAndLoading(
-            sectionName = SECTION_NAME_DETAILS,
-            loadingItemCount = 0,
-            loadingWithHeader = false,
-        ) {
-            val rows = data.details.mapIndexedNotNull { index, field ->
-                field.toLabelValueRow(index.toLong())
-            }
-            if (rows.isEmpty()) {
-                emptyList()
-            } else {
-                listOf(
-                    SectionHeaderListModel(
-                        stringProvider.getString(
-                            ContentDetailStringId.CONTENT_DETAIL_SECTION_DETAILS,
-                        ),
-                    ),
-                ) + rows
-            }
+    private fun detailsSection(
+        content: LCE<ContentDetail>,
+        stringProvider: StringProvider,
+    ): ListModel = content.sectionWithStandardErrorAndLoading(
+        sectionName = SECTION_NAME_DETAILS,
+        loadingItemCount = 0,
+        loadingWithHeader = false,
+    ) {
+        val rows = data.details.mapIndexedNotNull { index, field ->
+            field.toLabelValueRow(index.toLong())
         }
+        if (rows.isEmpty()) {
+            emptyList()
+        } else {
+            listOf(
+                SectionHeaderListModel(
+                    stringProvider.getString(
+                        ContentDetailStringId.CONTENT_DETAIL_SECTION_DETAILS,
+                    ),
+                ),
+            ) + rows
+        }
+    }
 
     private fun ContentDetailField.toLabelValueRow(index: Long): LabelValueListModel? {
         if (label.isBlank() || value.isBlank()) return null
@@ -130,54 +158,58 @@ data class ContentDetailState(
         )
     }
 
-    private fun relatedSection(stringProvider: StringProvider): ListModel =
-        content.sectionWithStandardErrorAndLoading(
-            sectionName = SECTION_NAME_RELATED,
-            loadingType = LoadingType.WIDE_ITEM,
-            loadingWithHeader = true,
-            loadingHorizScrollable = true,
-        ) {
-            listOf(
-                SectionHeaderListModel(
-                    stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED),
-                ),
-                HorizontalScrollerListModel(
-                    dataId = SECTION_NAME_RELATED.hashCode().toLong() + ID_PREFIX_SCROLLER,
-                    scrollingItems = data.related.map { related ->
-                        WideItemListModel(
-                            dataId = ID_PREFIX_RELATED + related.id,
-                            name = related.name,
-                            sourceInfo = relatedSourceFor(related.id),
-                            imagePlaceholder = Icon.Album,
-                            clickAction = ContentDetailAction.RelatedClicked(related),
-                        )
-                    }.toImmutableList(),
-                ),
+    private fun relatedSection(
+        content: LCE<ContentDetail>,
+        stringProvider: StringProvider,
+    ): ListModel = content.sectionWithStandardErrorAndLoading(
+        sectionName = SECTION_NAME_RELATED,
+        loadingType = LoadingType.WIDE_ITEM,
+        loadingWithHeader = true,
+        loadingHorizScrollable = true,
+    ) {
+        listOf(
+            SectionHeaderListModel(
+                stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED),
+            ),
+            HorizontalScrollerListModel(
+                dataId = SECTION_NAME_RELATED.hashCode().toLong() + ID_PREFIX_SCROLLER,
+                scrollingItems = data.related.map { related ->
+                    WideItemListModel(
+                        dataId = ID_PREFIX_RELATED + related.id,
+                        name = related.name,
+                        sourceInfo = relatedSourceFor(related.id),
+                        imagePlaceholder = Icon.Album,
+                        clickAction = ContentDetailAction.RelatedClicked(related),
+                    )
+                }.toImmutableList(),
+            ),
+        )
+    }
+
+    private fun itemsSection(
+        content: LCE<ContentDetail>,
+        stringProvider: StringProvider,
+    ): ListModel = content.sectionWithStandardErrorAndLoading(
+        sectionName = SECTION_NAME_ITEMS,
+        loadingType = LoadingType.TEXT_CAPTION_IMAGE,
+        loadingItemCount = ITEMS_LOADING_COUNT,
+        loadingWithHeader = true,
+    ) {
+        listOf(
+            SectionHeaderListModel(
+                stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS),
+            ),
+        ) + data.items.map { item ->
+            ImageNameCaptionListModel(
+                dataId = ID_PREFIX_ITEMS + item.id,
+                name = item.name,
+                caption = item.caption,
+                sourceInfo = itemSourceFor(item.id),
+                imagePlaceholder = Icon.Person,
+                clickAction = ContentDetailAction.ItemClicked(item),
             )
         }
-
-    private fun itemsSection(stringProvider: StringProvider): ListModel =
-        content.sectionWithStandardErrorAndLoading(
-            sectionName = SECTION_NAME_ITEMS,
-            loadingType = LoadingType.TEXT_CAPTION_IMAGE,
-            loadingItemCount = ITEMS_LOADING_COUNT,
-            loadingWithHeader = true,
-        ) {
-            listOf(
-                SectionHeaderListModel(
-                    stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS),
-                ),
-            ) + data.items.map { item ->
-                ImageNameCaptionListModel(
-                    dataId = ID_PREFIX_ITEMS + item.id,
-                    name = item.name,
-                    caption = item.caption,
-                    sourceInfo = itemSourceFor(item.id),
-                    imagePlaceholder = Icon.Person,
-                    clickAction = ContentDetailAction.ItemClicked(item),
-                )
-            }
-        }
+    }
 
     private companion object {
         const val SECTION_NAME_HERO = "content-detail.hero"
@@ -204,13 +236,13 @@ data class ContentDetailState(
  * keeps this screen's seeds distinct from the list, grid, search and home artwork.
  */
 internal fun heroSourceFor(
-    contentId: Long,
+    contentId: ContentId,
     seedPrefix: String = HERO_SEED_PREFIX,
     imageWidth: Int = HERO_IMAGE_WIDTH,
     imageHeight: Int = HERO_IMAGE_HEIGHT,
 ): SourceInfo = SourceInfo(
     GeneratedImageFetcher.urlFor(
-        seed = "$seedPrefix/$contentId",
+        seed = "$seedPrefix/${contentId.value}",
         width = imageWidth,
         height = imageHeight,
     ),

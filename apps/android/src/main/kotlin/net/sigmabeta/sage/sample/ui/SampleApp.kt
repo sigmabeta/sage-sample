@@ -23,9 +23,12 @@ import net.sigmabeta.sage.sample.ui.navigation.SampleNavHost
  * [settingsManager] is app-scoped and persisted, so a theme or font chosen on the Settings screen
  * recomposes this root and applies immediately. Screens resolve their own view models with
  * `metroViewModel()`, so this does not carry any feature state across the navigation boundary.
+ *
+ * [onOuterBack] is what the shell does when Back reaches past the tab roots; the activity supplies
+ * `finish()`.
  */
 @Composable
-fun SampleApp(settingsManager: SampleSettingsManager) {
+fun SampleApp(settingsManager: SampleSettingsManager, onOuterBack: () -> Unit = {}) {
     val themeMode by settingsManager.themeMode.collectAsState()
     val fontChoice by settingsManager.fontChoice.collectAsState()
     val fontFamily = remember(fontChoice) { fontFamilyFor(fontChoice) }
@@ -38,7 +41,7 @@ fun SampleApp(settingsManager: SampleSettingsManager) {
         },
         typography = sampleTypography(fontFamily),
     ) {
-        SampleNavHost()
+        SampleNavHost(onOuterBack = onOuterBack)
     }
 }
 

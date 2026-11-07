@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.feature.settings
 
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -16,5 +17,7 @@ sealed class SettingsAction : SageAction() {
     data class ThemeModeSelected(val mode: ThemeMode) : SettingsAction()
     data class FontChoiceSelected(val choice: FontChoice) : SettingsAction()
     data class SimulateDelaySelected(val delay: SimulateDelay) : SettingsAction()
+    data class DemoOutcomeSelected(val outcome: DemoOutcome) : SettingsAction()
     data object HomeShowsSameContentToggled : SettingsAction()
+    data object ResetDemoDataClicked : SettingsAction()
 }

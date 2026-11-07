@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.settings
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,6 +10,8 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
+import net.sigmabeta.sage.sample.settings.DemoDataResetter
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.settings.SimulateDelay
@@ -38,21 +41,25 @@ internal class FakeSettingsManager(
     initialThemeMode: ThemeMode = ThemeMode.DEFAULT,
     initialFontChoice: FontChoice = FontChoice.DEFAULT,
     initialSimulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
+    initialDemoOutcome: DemoOutcome = DemoOutcome.DEFAULT,
     initialHomeShowsSameContent: Boolean = DEFAULT_HOME_SHOWS_SAME_CONTENT,
 ) : SampleSettingsManager {
     private val theme = MutableStateFlow(initialThemeMode)
     private val font = MutableStateFlow(initialFontChoice)
     private val delay = MutableStateFlow(initialSimulateDelay)
+    private val demo = MutableStateFlow(initialDemoOutcome)
     private val homeSameContent = MutableStateFlow(initialHomeShowsSameContent)
 
     val setThemeModeCalls: MutableList<ThemeMode> = mutableListOf()
     val setFontChoiceCalls: MutableList<FontChoice> = mutableListOf()
     val setSimulateDelayCalls: MutableList<SimulateDelay> = mutableListOf()
+    val setDemoOutcomeCalls: MutableList<DemoOutcome> = mutableListOf()
     val setHomeShowsSameContentCalls: MutableList<Boolean> = mutableListOf()
 
     override val themeMode: StateFlow<ThemeMode> = theme.asStateFlow()
     override val fontChoice: StateFlow<FontChoice> = font.asStateFlow()
     override val simulateDelay: StateFlow<SimulateDelay> = delay.asStateFlow()
+    override val demoOutcome: StateFlow<DemoOutcome> = demo.asStateFlow()
     override val homeShowsSameContent: StateFlow<Boolean> = homeSameContent.asStateFlow()
 
     override fun setThemeMode(mode: ThemeMode) {
@@ -70,9 +77,34 @@ internal class FakeSettingsManager(
         this.delay.value = delay
     }
 
+    override fun setDemoOutcome(outcome: DemoOutcome) {
+        setDemoOutcomeCalls += outcome
+        demo.value = outcome
+    }
+
     override fun setHomeShowsSameContent(showSameContent: Boolean) {
         setHomeShowsSameContentCalls += showSameContent
         homeSameContent.value = showSameContent
+    }
+}
+
+/**
+ * A controllable [DemoDataResetter]: counts calls and can hold the reset open or make it fail.
+ *
+ * [gate] lets a test keep the reset in flight while it dispatches a second one; [failure] is
+ * thrown after the gate opens.
+ */
+internal class FakeDemoDataResetter(
+    private val gate: CompletableDeferred<Unit>? = null,
+    private val failure: Throwable? = null,
+) : DemoDataResetter {
+    var resetCalls: Int = 0
+        private set
+
+    override suspend fun reset() {
+        resetCalls += 1
+        gate?.await()
+        failure?.let { throw it }
     }
 }
 

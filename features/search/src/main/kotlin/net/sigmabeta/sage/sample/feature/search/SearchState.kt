@@ -6,6 +6,7 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingType
+import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.images.SourceInfo
@@ -18,22 +19,29 @@ import net.sigmabeta.sage.ui.StringProvider
  * Search's content, declared as a SAGE [ListState].
  *
  * [query] is the live text in the app-owned search field. It is kept here (rather than only in
- * the field's composition state) so the view model can debounce it and so the result mapping can
- * seed each row's artwork from it.
+ * the field's composition state) so the view model can debounce it. [submittedQuery] is the
+ * last query that actually reached the repository; it drives everything rendered, so editing
+ * the field never blanks or replaces results before the new query settles.
  *
- * A query feeds two independent [LCE] slots: [listResults] renders as
+ * A submitted query feeds two independent [LCE] slots: [listResults] renders as
  * [ImageNameCaptionListModel] rows, and [gridResults] renders as [GridImageListModel] cells.
  * Each section owns its loading and error rows, so one can fail while the other still shows
  * content. The app's search content draws both in one adaptive grid; row items and headers span
  * the full width, while grid cells keep one column each.
  *
- * Queries shorter than [MIN_QUERY_LENGTH] show a prompt: the same guard the other SAGE apps use
- * to avoid running a search for one or two characters.
+ * With no submitted query the screen shows its resting prompt. Queries shorter than
+ * [MIN_QUERY_LENGTH] never reach the repository, so they never become a submitted query.
+ *
+ * [history] is the persisted recent-search list from the previous runs. It is rendered only while
+ * [submittedQuery] is blank; with fewer than [HISTORY_PROMPT_THRESHOLD] entries the resting prompt
+ * follows the rows, matching Chipbox's sparse-history rule.
  */
 data class SearchState(
     val query: String = "",
+    val submittedQuery: String = "",
     val listResults: LCE<List<SearchResult>> = LCE.Uninitialized,
     val gridResults: LCE<List<SearchResult>> = LCE.Uninitialized,
+    val history: List<String> = emptyList(),
 ) : ListState() {
     override fun title(stringProvider: StringProvider) =
         TitleBarModel(
@@ -42,13 +50,13 @@ data class SearchState(
         )
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> {
-        val trimmedQuery = query.trim()
-        if (trimmedQuery.length < MIN_QUERY_LENGTH) {
-            return listOf(prompt(stringProvider))
+        val submitted = submittedQuery.trim()
+        if (submitted.isEmpty()) {
+            return restingItems(stringProvider)
         }
 
-        val rows = listSection(stringProvider, trimmedQuery) +
-            gridSection(stringProvider, trimmedQuery)
+        val rows = listSection(stringProvider, submitted) +
+            gridSection(stringProvider, submitted)
 
         return rows.ifEmpty {
             listOf(
@@ -56,11 +64,32 @@ data class SearchState(
                     icon = Icon.Search,
                     explanation = stringProvider.getStringOneArg(
                         SearchStringId.SEARCH_NO_RESULTS,
-                        trimmedQuery,
+                        submitted,
                     ),
                     showCrossOut = false,
                 ),
             )
+        }
+    }
+
+    /**
+     * The blank-field screen: recent searches, plus the resting prompt while history is sparse.
+     * At [HISTORY_PROMPT_THRESHOLD] rows the history is long enough to stand on its own.
+     */
+    private fun restingItems(stringProvider: StringProvider): List<ListModel> {
+        val historyRows = history.map { query ->
+            SearchHistoryListModel(
+                dataId = historyDataId(query),
+                name = query,
+                clickAction = SearchAction.HistoryClicked(query),
+                removeAction = SearchAction.HistoryRemoved(query),
+            )
+        }
+
+        return if (historyRows.size < HISTORY_PROMPT_THRESHOLD) {
+            historyRows + prompt(stringProvider)
+        } else {
+            historyRows
         }
     }
 
@@ -79,7 +108,9 @@ data class SearchState(
             caption = result.caption,
             sourceInfo = imageSourceFor(result, query, SearchResultKind.LIST, LIST_IMAGE_SIZE),
             imagePlaceholder = Icon.Search,
-            clickAction = SearchAction.ResultClicked(result),
+            clickAction = SearchAction.ResultClicked(
+                searchContentId(query, SearchResultKind.LIST, result.id),
+            ),
         )
     }
 
@@ -97,7 +128,9 @@ data class SearchState(
             name = result.name,
             sourceInfo = imageSourceFor(result, query, SearchResultKind.GRID, GRID_IMAGE_SIZE),
             imagePlaceholder = Icon.Album,
-            clickAction = SearchAction.ResultClicked(result),
+            clickAction = SearchAction.ResultClicked(
+                searchContentId(query, SearchResultKind.GRID, result.id),
+            ),
         )
     }
 
@@ -149,9 +182,18 @@ data class SearchState(
             showCrossOut = false,
         )
 
+    /**
+     * A stable list id for a history row. Queries are deduped, so the hash only has to keep
+     * different queries apart for focus restoration.
+     */
+    private fun historyDataId(query: String): Long = query.hashCode().toLong()
+
     private companion object {
         const val LOADING_ITEM_COUNT = 5
         const val SEARCH_IMAGE_SEED_PREFIX = "search"
+
+        /** Below this many history rows the resting prompt is appended. */
+        const val HISTORY_PROMPT_THRESHOLD = 5
 
         /** Keeps grid cells' list ids disjoint from the row results' ids. */
         const val GRID_DATA_ID_OFFSET = 1_000_000L

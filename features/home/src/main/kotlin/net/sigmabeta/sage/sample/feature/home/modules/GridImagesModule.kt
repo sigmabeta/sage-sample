@@ -14,6 +14,7 @@ import net.sigmabeta.sage.sample.feature.home.HomeModule
 import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.feature.home.HomeRepository
 import net.sigmabeta.sage.sample.feature.home.HomeStringId
+import net.sigmabeta.sage.sample.feature.home.homeContentId
 import net.sigmabeta.sage.sample.feature.home.homeImageSource
 import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringProvider
@@ -76,7 +77,7 @@ class GridImagesModule(
                             height = GRID_IMAGE_HEIGHT,
                         ),
                         imagePlaceholder = Icon.Album,
-                        clickAction = HomeAction.ItemClicked(item.title),
+                        clickAction = HomeAction.ItemClicked(homeContentId(id, item.id)),
                         aspectRatio = GRID_IMAGE_ASPECT_RATIO,
                     )
                 }.toImmutableList(),

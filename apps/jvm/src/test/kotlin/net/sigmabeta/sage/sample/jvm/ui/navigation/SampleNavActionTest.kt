@@ -1,22 +1,42 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
 
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 /**
  * Turning a feature event into a back-stack operation is app policy: the feature only names a
- * route. Top-level routes reset the stack (tab semantics); every other route pushes, exactly like
- * the hamburger's Settings push.
+ * route. Top-level routes select their tab (clearing the outgoing tab's stack); every other route
+ * pushes onto the active tab, exactly like the hamburger's Settings push.
  */
 class SampleNavActionTest {
     @Test
-    fun `a top-level route resets the stack to that destination`() {
-        assertEquals(
-            SampleNavAction.ShowTopLevel(SampleDestination.BROWSE),
-            navActionFor(SageEvent.NavigateTo(destination = "browse", source = "test")),
-        )
+    fun `every top-level route selects its tab`() {
+        SampleDestination.topLevel.forEach { destination ->
+            val action = navActionFor(SageEvent.NavigateTo(destination.destName, source = "test"))
+
+            assertEquals(SampleNavAction.ShowTopLevel(destination), action)
+            assertSame(
+                "a top-level route must land on a tab, not a pushed screen",
+                tabFor(destination),
+                tabFor((action as SampleNavAction.ShowTopLevel).destination),
+            )
+        }
+    }
+
+    @Test
+    fun `every pushed route belongs to the active tab and has no tab of its own`() {
+        SampleDestination.entries.filterNot { it.isTopLevel }.forEach { destination ->
+            assertNull("$destination must not be a tab", tabFor(destination))
+            assertEquals(
+                SampleNavAction.Push(destination),
+                navActionFor(SageEvent.NavigateTo(destination.destName, source = "test")),
+            )
+            assertEquals(destination, screenFor(destination).destination)
+        }
     }
 
     @Test
@@ -47,6 +67,33 @@ class SampleNavActionTest {
                 SageEvent.NavigateTo(destination = "content-detail", source = "test"),
             ),
         )
+    }
+
+    @Test
+    fun `a content detail route carries its typed id`() {
+        assertEquals(
+            SampleNavAction.Push(
+                SampleDestination.CONTENT_DETAIL,
+                ContentId("list-items:7"),
+            ),
+            navActionFor(
+                SageEvent.NavigateTo(
+                    destination = "content-detail/list-items:7",
+                    source = "test",
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `a content detail route reports the destination without a usable id as not-found`() {
+        listOf("content-detail", "content-detail/", "content-detail/has space").forEach { route ->
+            assertEquals(
+                "route $route must still open the not-found destination",
+                SampleNavAction.Push(SampleDestination.CONTENT_DETAIL, null),
+                navActionFor(SageEvent.NavigateTo(destination = route, source = "test")),
+            )
+        }
     }
 
     @Test

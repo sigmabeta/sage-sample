@@ -5,12 +5,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
+import kotlinx.coroutines.flow.Flow
+import net.sigmabeta.sage.sample.jvm.ui.navigation.LocalPlatformBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.SampleNavHost
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
@@ -21,22 +24,33 @@ import net.sigmabeta.sage.sample.ui.components.api.sampleTypography
  *
  * [settingsManager] is app-scoped and persisted, so a theme or font chosen on the Settings screen
  * recomposes this root and applies immediately.
+ *
+ * [platformBackKeys] carries the window's Escape/Backspace signals into the shell, where they run
+ * the same Back policy as the top-bar arrow. `null` (previews, tests) leaves them unwired.
+ *
+ * [onOuterBack] is the shell's bottom-of-stack Back branch; desktop leaves it empty.
  */
 @Composable
-fun SampleApp(settingsManager: SampleSettingsManager) {
+fun SampleApp(
+    settingsManager: SampleSettingsManager,
+    platformBackKeys: Flow<Unit>? = null,
+    onOuterBack: () -> Unit = {},
+) {
     val themeMode by settingsManager.themeMode.collectAsState()
     val fontChoice by settingsManager.fontChoice.collectAsState()
     val fontFamily = remember(fontChoice) { fontFamilyFor(fontChoice) }
 
-    MaterialTheme(
-        colorScheme = if (themeMode.isDark(isSystemInDarkTheme())) {
-            darkColorScheme()
-        } else {
-            lightColorScheme()
-        },
-        typography = sampleTypography(fontFamily),
-    ) {
-        SampleNavHost()
+    CompositionLocalProvider(LocalPlatformBackKeys provides platformBackKeys) {
+        MaterialTheme(
+            colorScheme = if (themeMode.isDark(isSystemInDarkTheme())) {
+                darkColorScheme()
+            } else {
+                lightColorScheme()
+            },
+            typography = sampleTypography(fontFamily),
+        ) {
+            SampleNavHost(onOuterBack = onOuterBack)
+        }
     }
 }
 

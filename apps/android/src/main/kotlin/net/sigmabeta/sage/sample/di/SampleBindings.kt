@@ -64,7 +64,8 @@ object SampleBindings {
         HomeStringId.HOME_TITLE -> R.string.home_title
         HomeStringId.HOME_SECTION_BIG_IMAGE -> R.string.home_section_big_image
         HomeStringId.HOME_SECTION_GRID_IMAGES -> R.string.home_section_grid_images
-        HomeStringId.HOME_ITEM_CLICKED -> R.string.home_item_clicked
+        HomeStringId.HOME_EMPTY -> R.string.home_empty
+        HomeStringId.HOME_ALL_ERROR -> R.string.home_all_error
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {
@@ -81,15 +82,21 @@ object SampleBindings {
         ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED -> R.string.content_detail_section_related
         ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS -> R.string.content_detail_section_items
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED -> R.string.content_detail_item_clicked
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND -> R.string.content_detail_not_found
     }
 
     private fun listItemsResource(id: ListItemsStringId): Int = when (id) {
         ListItemsStringId.LIST_ITEMS_TITLE -> R.string.nav_list_items
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.LIST_ITEMS_EMPTY -> R.string.list_items_empty
+        ListItemsStringId.LIST_ITEMS_ERROR -> R.string.list_items_error
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_TITLE -> R.string.nav_list_items_with_images
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_EMPTY -> R.string.list_items_with_images_empty
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR -> R.string.list_items_with_images_error
         ListItemsStringId.GRID_OF_IMAGES_TITLE -> R.string.nav_grid_of_images
-        ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.GRID_OF_IMAGES_EMPTY -> R.string.grid_of_images_empty
+        ListItemsStringId.GRID_OF_IMAGES_ERROR -> R.string.grid_of_images_error
     }
 
     private fun searchResource(id: SearchStringId): Int = when (id) {
@@ -99,7 +106,6 @@ object SampleBindings {
         SearchStringId.SEARCH_BACK_DESCRIPTION -> R.string.search_back_description
         SearchStringId.SEARCH_PROMPT -> R.string.search_prompt
         SearchStringId.SEARCH_NO_RESULTS -> R.string.search_no_results
-        SearchStringId.SEARCH_RESULT_CLICKED -> R.string.search_result_clicked
         SearchStringId.SEARCH_SECTION_LIST -> R.string.search_section_list
         SearchStringId.SEARCH_SECTION_GRID -> R.string.search_section_grid
     }
@@ -120,7 +126,16 @@ object SampleBindings {
         SettingsStringId.SETTINGS_DELAY_ONE_SECOND -> R.string.settings_delay_one_second
         SettingsStringId.SETTINGS_DELAY_TWO_SECONDS -> R.string.settings_delay_two_seconds
         SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS -> R.string.settings_delay_five_seconds
+        SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME -> R.string.settings_label_demo_outcome
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT -> R.string.settings_demo_outcome_content
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY -> R.string.settings_demo_outcome_empty
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR -> R.string.settings_demo_outcome_error
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT -> R.string.settings_label_home_shows_same_content
+        SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT -> R.string.settings_caption_home_shows_same_content
+        SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA -> R.string.settings_label_reset_demo_data
+        SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA -> R.string.settings_caption_reset_demo_data
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS -> R.string.settings_reset_demo_data_success
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE -> R.string.settings_reset_demo_data_failure
         SettingsStringId.SETTINGS_SECTION_ABOUT -> R.string.settings_section_about
         SettingsStringId.SETTINGS_LABEL_APP_VERSION -> R.string.settings_label_app_version
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE -> R.string.settings_label_build_date

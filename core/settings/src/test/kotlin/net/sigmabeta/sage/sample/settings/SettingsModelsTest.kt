@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.settings
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -68,12 +69,68 @@ class SettingsModelsTest {
     }
 
     @Test
-    fun `home shows same content parses persisted booleans and defaults to off`() {
+    fun `demo outcome parses every stored name`() {
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("CONTENT"))
+        assertEquals(DemoOutcome.EMPTY, DemoOutcome.fromStorageValue("EMPTY"))
+        assertEquals(DemoOutcome.ERROR, DemoOutcome.fromStorageValue("ERROR"))
+    }
+
+    @Test
+    fun `demo outcome falls back to content for missing or unknown values`() {
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(null))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(""))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("BOGUS"))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.DEFAULT)
+    }
+
+    @Test
+    fun `demo outcome selects exactly one datasource branch`() {
+        assertEquals(
+            "generated",
+            DemoOutcome.CONTENT.select(
+                content = { "generated" },
+                empty = { "empty" },
+                error = { "error" },
+            ),
+        )
+        assertEquals(
+            "empty",
+            DemoOutcome.EMPTY.select(
+                content = { "generated" },
+                empty = { "empty" },
+                error = { "error" },
+            ),
+        )
+        assertEquals(
+            "error",
+            DemoOutcome.ERROR.select(
+                content = { "generated" },
+                empty = { "empty" },
+                error = { "error" },
+            ),
+        )
+    }
+
+    @Test
+    fun `the demo error outcome fails with one shared exception`() {
+        val failure = assertThrows(IllegalStateException::class.java) {
+            DemoOutcome.ERROR.select<Unit>(
+                content = {},
+                empty = {},
+                error = { throw demoOutcomeFailure() },
+            )
+        }
+
+        assertEquals("Demo outcome is ERROR", failure.message)
+    }
+
+    @Test
+    fun `home shows same content parses persisted booleans and defaults to on`() {
         assertTrue(homeShowsSameContentFromStorage("true"))
         assertFalse(homeShowsSameContentFromStorage("false"))
-        assertFalse(homeShowsSameContentFromStorage(null))
-        assertFalse(homeShowsSameContentFromStorage(""))
-        assertFalse(homeShowsSameContentFromStorage("BOGUS"))
-        assertFalse(DEFAULT_HOME_SHOWS_SAME_CONTENT)
+        assertTrue(homeShowsSameContentFromStorage(null))
+        assertTrue(homeShowsSameContentFromStorage(""))
+        assertTrue(homeShowsSameContentFromStorage("BOGUS"))
+        assertTrue(DEFAULT_HOME_SHOWS_SAME_CONTENT)
     }
 }

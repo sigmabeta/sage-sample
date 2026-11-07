@@ -4,7 +4,8 @@
     <string name="home_title">SAGE Sample</string>
     <string name="home_section_big_image">Big image %1$d</string>
     <string name="home_section_grid_images">Grid images %1$d</string>
-    <string name="home_item_clicked">%1$s clicked</string>
+    <string name="home_empty">No Home content is available. Change the demo outcome in Settings to load content.</string>
+    <string name="home_all_error">Home content could not be loaded. Change the demo outcome in Settings to try again.</string>
 
     <!-- Navigation scaffold. The app owns these labels because destinations are an app concern;
          feature screens keep their own text behind their SageStringId enums. -->
@@ -17,6 +18,12 @@
     <string name="nav_content_detail">Content detail</string>
     <string name="nav_settings">Settings</string>
     <string name="list_items_item_clicked">Clicked %1$s</string>
+    <string name="list_items_empty">No list items to show.</string>
+    <string name="list_items_error">Couldn\'t load list items.</string>
+    <string name="list_items_with_images_empty">No items with images to show.</string>
+    <string name="list_items_with_images_error">Couldn\'t load items with images.</string>
+    <string name="grid_of_images_empty">No images to show.</string>
+    <string name="grid_of_images_error">Couldn\'t load images.</string>
     <string name="cd_open_settings">Open settings</string>
     <string name="cd_navigate_back">Back</string>
 
@@ -25,6 +32,7 @@
     <string name="content_detail_section_related">Related</string>
     <string name="content_detail_section_items">Items</string>
     <string name="content_detail_item_clicked">%1$s clicked</string>
+    <string name="content_detail_not_found">This content isn\'t available.</string>
 
     <!-- Search. -->
     <string name="search_hint">Search</string>
@@ -32,7 +40,6 @@
     <string name="search_back_description">Back</string>
     <string name="search_prompt">Type at least 3 characters to search.</string>
     <string name="search_no_results">No results for “%1$s”.</string>
-    <string name="search_result_clicked">%1$s clicked</string>
     <string name="search_section_list">List results</string>
     <string name="search_section_grid">Grid results</string>
 
@@ -52,7 +59,16 @@
     <string name="settings_delay_one_second">1 second</string>
     <string name="settings_delay_two_seconds">2 seconds</string>
     <string name="settings_delay_five_seconds">5 seconds</string>
+    <string name="settings_label_demo_outcome">Demo outcome</string>
+    <string name="settings_demo_outcome_content">Content</string>
+    <string name="settings_demo_outcome_empty">Empty</string>
+    <string name="settings_demo_outcome_error">Error</string>
     <string name="settings_label_home_shows_same_content">Home shows same content</string>
+    <string name="settings_caption_home_shows_same_content">Render Home from one stable plan of modules on every visit.</string>
+    <string name="settings_label_reset_demo_data">Reset demo data</string>
+    <string name="settings_caption_reset_demo_data">Clear recent searches and restore the default demo outcome and Home content.</string>
+    <string name="settings_reset_demo_data_success">Demo data reset</string>
+    <string name="settings_reset_demo_data_failure">Couldn’t reset demo data. Try again.</string>
 
     <string name="settings_section_about">About</string>
     <string name="settings_label_app_version">App version</string>

@@ -10,6 +10,7 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.sample.feature.home.DemoHomeRepository
 import net.sigmabeta.sage.sample.feature.home.FakeHomeRepository
+import net.sigmabeta.sage.sample.feature.home.FakeHomeSettingsManager
 import net.sigmabeta.sage.sample.feature.home.FakeStringProvider
 import net.sigmabeta.sage.sample.feature.home.HomeAction
 import net.sigmabeta.sage.sample.feature.home.HomeItem
@@ -18,6 +19,8 @@ import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.feature.home.HomeRepository
 import net.sigmabeta.sage.sample.feature.home.HomeSectionState
 import net.sigmabeta.sage.sample.feature.home.HomeState
+import net.sigmabeta.sage.sample.feature.home.homeContentId
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -62,7 +65,10 @@ class HomeModulesTest {
         assertEquals("Chosen", hero.name)
         assertEquals(20_000_000L + 7L, hero.dataId)
         assertEquals("generated://home/big_image_3/7?width=528&height=704", hero.sourceInfo.info)
-        assertEquals(HomeAction.ItemClicked("Chosen"), hero.clickAction)
+        assertEquals(
+            HomeAction.ItemClicked(homeContentId("big_image_3", 7L)),
+            hero.clickAction,
+        )
         assertEquals(0.75f, hero.aspectRatio, 0f)
         assertEquals(400f, hero.maxWidthDp!!, 0f)
 
@@ -114,7 +120,10 @@ class HomeModulesTest {
             "generated://home/grid_images_2/1?width=264&height=352",
             cells.first().sourceInfo.info,
         )
-        assertEquals(HomeAction.ItemClicked("Item 1"), cells.first().clickAction)
+        assertEquals(
+            HomeAction.ItemClicked(homeContentId("grid_images_2", 1L)),
+            cells.first().clickAction,
+        )
         assertTrue(cells.all { it.aspectRatio == 0.75f })
 
         assertEquals(listOf("grid_images_2"), repository.gridSeeds)
@@ -161,14 +170,17 @@ class HomeModulesTest {
     @Test
     fun `a randomized plan renders without duplicate list ids`() = runTest {
         val items = (1L..18L).map { HomeItem(id = it, title = "Item $it") }
+        val repository = FakeHomeRepository(items = items)
         val modules = HomeModuleFactory(
-            repository = FakeHomeRepository(items = items),
-            stringProvider = strings,
+            setOf(
+                BigImageModuleDefinition(repository, strings),
+                GridImagesModuleDefinition(repository, strings),
+            ),
         ).create(Random(seed = 7))
 
         val sections = modules.map { module ->
             val section = (module.state().toList().last() as LCE.Content<HomeModuleSection>).data
-            HomeSectionState(module.id, module.priority, LCE.Content(section))
+            HomeSectionState(module.id, module.priority, LCE.Content(section), hasEmitted = true)
         }
         val rows = HomeState(sections.toImmutableList()).toActual(strings).listItems
 
@@ -180,8 +192,29 @@ class HomeModulesTest {
     }
 
     @Test
+    fun `row content ids carry the module namespace and stay unique for equal item ids`() = runTest {
+        val item = HomeItem(id = 7L, title = "Same item")
+        val repository = FakeHomeRepository(items = listOf(item))
+
+        suspend fun heroContentId(module: BigImageModule) =
+            (module.state().toList().last() as LCE.Content<HomeModuleSection>)
+                .data
+                .items
+                .single()
+                .let { (it as GridImageListModel).clickAction as HomeAction.ItemClicked }
+                .contentId
+
+        val first = heroContentId(bigImage(repository, instanceNumber = 1))
+        val second = heroContentId(bigImage(repository, instanceNumber = 2))
+
+        assertEquals("home:big_image_1:7", first.value)
+        assertEquals("home:big_image_2:7", second.value)
+        assertNotEquals(first, second)
+    }
+
+    @Test
     fun `content is generated from each module instance's seed`() = runTest {
-        val repository = DemoHomeRepository()
+        val repository = DemoHomeRepository(FakeHomeSettingsManager())
         val firstBig = bigImage(repository, instanceNumber = 1)
         val secondBig = bigImage(repository, instanceNumber = 2)
         val firstGrid = gridImages(repository, instanceNumber = 1)
@@ -202,6 +235,35 @@ class HomeModulesTest {
         // A second visit to the same instance id reproduces the same content.
         assertEquals(heroName(firstBig), heroName(bigImage(repository, instanceNumber = 1)))
         assertEquals(cellNames(firstGrid), cellNames(gridImages(repository, instanceNumber = 1)))
+    }
+
+    @Test
+    fun `empty demo outcome reaches both modules as hidden sections`() = runTest {
+        val settings = FakeHomeSettingsManager()
+        settings.setDemoOutcome(DemoOutcome.EMPTY)
+        val repository = DemoHomeRepository(settings)
+
+        assertEquals(
+            listOf(LCE.Loading("home.big_image_1.load"), LCE.Uninitialized),
+            bigImage(repository).state().toList(),
+        )
+        assertEquals(
+            listOf(LCE.Loading("home.grid_images_1.load"), LCE.Uninitialized),
+            gridImages(repository).state().toList(),
+        )
+    }
+
+    @Test
+    fun `error demo outcome reaches both modules as errors`() = runTest {
+        val settings = FakeHomeSettingsManager()
+        settings.setDemoOutcome(DemoOutcome.ERROR)
+        val repository = DemoHomeRepository(settings)
+
+        val heroFailure = bigImage(repository).state().toList().last()
+        val gridFailure = gridImages(repository).state().toList().last()
+
+        assertEquals("home.big_image_1.load", (heroFailure as LCE.Error).operationName)
+        assertEquals("home.grid_images_1.load", (gridFailure as LCE.Error).operationName)
     }
 
     private fun bigImage(

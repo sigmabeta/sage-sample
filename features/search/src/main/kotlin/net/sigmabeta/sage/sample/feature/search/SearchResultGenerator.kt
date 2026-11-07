@@ -1,12 +1,13 @@
 package net.sigmabeta.sage.sample.feature.search
 
 import java.util.Random
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.ui.StringGenerator
 
 /** The two independent result sets a query returns. */
-internal enum class SearchResultKind {
-    LIST,
-    GRID,
+internal enum class SearchResultKind(val routeSegment: String) {
+    LIST("list"),
+    GRID("grid"),
 }
 
 /**
@@ -39,6 +40,21 @@ internal fun searchResultsFor(query: String, kind: SearchResultKind): List<Searc
 /** Stable seed for one query + result-set pair; case and surrounding whitespace are ignored. */
 internal fun searchSeedFor(query: String, kind: SearchResultKind): Int =
     "${kind.name}:${normalizeQuery(query)}".hashCode()
+
+/**
+ * The stable content ID for result [resultId] of one query + result set.
+ *
+ * The list and grid sections each number their results from 1, so the query + kind seed is part
+ * of the namespace: equal numeric IDs in the two sections still route apart, and the same query
+ * reproduces the same route on every search.
+ */
+internal fun searchContentId(
+    query: String,
+    kind: SearchResultKind,
+    resultId: Long,
+): ContentId = ContentId(
+    "search:${kind.routeSegment}:${searchSeedFor(query, kind)}:$resultId",
+)
 
 private fun normalizeQuery(query: String): String = query.trim().lowercase()
 

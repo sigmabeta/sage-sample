@@ -10,6 +10,18 @@ import org.junit.Test
  */
 class SampleDestinationTest {
     @Test
+    fun `top-level destinations are Home, Browse and Search in display order`() {
+        assertEquals(
+            listOf(
+                SampleDestination.HOME,
+                SampleDestination.BROWSE,
+                SampleDestination.SEARCH,
+            ),
+            SampleDestination.topLevel,
+        )
+    }
+
+    @Test
     fun `fromRoute maps the browse route to the browse destination`() {
         assertEquals(SampleDestination.BROWSE, SampleDestination.fromRoute("browse"))
     }
@@ -41,6 +53,28 @@ class SampleDestinationTest {
             SampleDestination.CONTENT_DETAIL,
             SampleDestination.fromRoute("content-detail"),
         )
+    }
+
+    @Test
+    fun `fromRoute treats every route under the content detail prefix as content detail`() {
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail/list-items:7"),
+        )
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail/browse:featured"),
+        )
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail/"),
+        )
+    }
+
+    @Test
+    fun `fromRoute does not match destinations that merely start with the prefix`() {
+        assertNull(SampleDestination.fromRoute("content-detailish"))
+        assertNull(SampleDestination.fromRoute("content-detail-extra"))
     }
 
     @Test

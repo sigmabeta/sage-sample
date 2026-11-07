@@ -59,6 +59,33 @@ data class SampleTopBarState(
 )
 
 /**
+ * Identity of the visible route: the active tab plus the top screen of that tab's stack.
+ *
+ * Chrome resets and the scrolling top bar's re-expand are keyed on this, so a tab switch, a deep
+ * push and a pop each look like a navigation even when two of them land on the same destination.
+ */
+fun routeKeyFor(tabKey: String, screenKey: String): String = "$tabKey/$screenKey"
+
+/**
+ * The screen the shell treats as active: the registered top of [currentTab]'s stack when the
+ * registration belongs to that tab, otherwise [currentTab]'s own root.
+ *
+ * The tab registration is installed by a `DisposableEffect`, so for the frame after a tab switch it
+ * can still name the outgoing tab's navigator. Honouring that would briefly render the old screen's
+ * title, leading affordance and route key in the new tab, so an old registration is ignored.
+ */
+fun activeScreenFor(
+    currentTab: SampleTab,
+    registeredTabKey: String?,
+    registeredScreen: SampleScreen?,
+): SampleScreen =
+    if (registeredTabKey == currentTab.key) {
+        registeredScreen ?: currentTab.root
+    } else {
+        currentTab.root
+    }
+
+/**
  * Derives the top bar from the active screen's [TitleBarModel].
  *
  * The screen owns the title while it is rendered; [destinationLabel] and [isTopLevel] are only the

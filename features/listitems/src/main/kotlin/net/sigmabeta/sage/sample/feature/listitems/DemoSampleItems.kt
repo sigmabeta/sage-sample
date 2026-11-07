@@ -24,6 +24,25 @@ internal fun demoSampleItems(count: Int): List<SampleItem> {
 }
 
 /**
+ * Returns the `[offset, offset + limit)` window of a deterministic set of [total] rows.
+ *
+ * The generator is seeded, so building the prefix up to the window's end gives the same rows the
+ * non-paginated screen would show at those positions. Offsets at or past [total] are the catalogue's
+ * end and return an empty page, which is how the paginated screens stop asking for more.
+ */
+internal fun demoSampleItemsWindow(
+    offset: Int,
+    limit: Int,
+    total: Int,
+): List<SampleItem> {
+    val start = offset.coerceAtLeast(0)
+    if (start >= total || limit <= 0) return emptyList()
+
+    val end = (start.toLong() + limit).coerceAtMost(total.toLong()).toInt()
+    return demoSampleItems(end).subList(start, end)
+}
+
+/**
  * Three to five lorem words, using [generator] and the same [random] sequence as the names.
  *
  * `generateLorem` returns between one and 49 words, so the loop collects enough words for the

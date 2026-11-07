@@ -2,77 +2,62 @@ package net.sigmabeta.sage.sample.feature.home
 
 import dev.zacsweers.metro.Inject
 import kotlin.random.Random
-import net.sigmabeta.sage.sample.feature.home.modules.BigImageModule
-import net.sigmabeta.sage.sample.feature.home.modules.GridImagesModule
-import net.sigmabeta.sage.ui.StringProvider
 
 /**
- * Builds the randomized plan for one Home screen.
+ * Builds the module plan for one Home screen from the graph's registered definitions.
  *
- * Each Home screen renders between [MIN_HOME_MODULE_COUNT] and [MAX_HOME_MODULE_COUNT] instances
- * of the two module types, in random order. Both types are always represented so the demo shows
- * the full module range; the remaining slots are random. Every instance gets its own id,
- * priority, visible number, and data-id range, so duplicate modules cannot collide in SAGE's
- * list de-duping.
+ * Stable mode ("Home shows same content", now the default) renders one instance of every
+ * [HomeModuleDefinition] in priority order, so every visit produces the same rows with the same
+ * ids and titles. Randomized mode keeps the demo's 2–10 instance plan: every definition is
+ * represented, the remaining slots repeat definitions at random, and the order is shuffled.
  *
- * Construction happens once per view model: the injected `List<HomeModule>` is stable while the
- * screen lives, and opening Home again builds a new plan (the same plan when the setting is on).
+ * Every plan slot gets its own instance number, priority, and data-id range, so repeated module
+ * types cannot collide in SAGE's list de-duping.
  */
 @Inject
-class HomeModuleFactory(
-    private val repository: HomeRepository,
-    private val stringProvider: StringProvider,
-) {
-    fun create(random: Random = Random.Default): List<HomeModule> {
-        val count = random.nextInt(MIN_HOME_MODULE_COUNT, MAX_HOME_MODULE_COUNT + 1)
-        val types = mutableListOf(HomeModuleType.BIG_IMAGE, HomeModuleType.GRID_IMAGES)
-        repeat(count - MIN_HOME_MODULE_COUNT) {
-            types += HomeModuleType.entries.random(random)
-        }
-        types.shuffle(random)
-
-        return types.mapIndexed { index, type ->
-            val id = "${type.id}_${index + 1}"
-            val instanceNumber = index + 1
-            val dataIdBase = index * HOME_MODULE_DATA_ID_STRIDE
-            when (type) {
-                HomeModuleType.BIG_IMAGE -> BigImageModule(
-                    id = id,
-                    priority = index,
-                    instanceNumber = instanceNumber,
-                    dataIdBase = dataIdBase,
-                    repository = repository,
-                    stringProvider = stringProvider,
-                )
-
-                HomeModuleType.GRID_IMAGES -> GridImagesModule(
-                    id = id,
-                    priority = index,
-                    instanceNumber = instanceNumber,
-                    dataIdBase = dataIdBase,
-                    repository = repository,
-                    stringProvider = stringProvider,
-                )
-            }
-        }
-    }
+class HomeModuleFactory(definitions: Set<HomeModuleDefinition>) {
+    // Tie-break on typeId so a priority collision still yields a deterministic stable plan.
+    private val definitions = definitions.sortedWith(compareBy({ it.priority }, { it.typeId }))
 
     /**
-     * Honors the "Home shows same content" preference: true uses [HOME_MODULE_STATIC_SEED], so
-     * every visit builds the same plan; false draws a fresh random plan.
+     * Honors the "Home shows same content" preference: true renders the stable plan, false draws
+     * a fresh randomized plan.
      */
-    fun create(homeShowsSameContent: Boolean): List<HomeModule> = create(
-        if (homeShowsSameContent) Random(HOME_MODULE_STATIC_SEED) else Random.Default,
-    )
+    fun create(homeShowsSameContent: Boolean): List<HomeModule> =
+        if (homeShowsSameContent) stablePlan() else create(Random.Default)
+
+    /** One instance of every registered definition, ordered by [HomeModuleDefinition.priority]. */
+    private fun stablePlan(): List<HomeModule> = definitions.mapIndexed { index, definition ->
+        definition.create(
+            instanceNumber = index + 1,
+            dataIdBase = index * HOME_MODULE_DATA_ID_STRIDE,
+        )
+    }
+
+    /** A fresh randomized plan; pass a seeded [random] for a reproducible one. */
+    fun create(random: Random = Random.Default): List<HomeModule> {
+        if (definitions.isEmpty()) return emptyList()
+
+        // Every registered definition is always represented, so the count can never fall below
+        // the number of definitions even if more rows are added later.
+        val minCount = maxOf(MIN_HOME_MODULE_COUNT, definitions.size)
+        val maxCount = maxOf(MAX_HOME_MODULE_COUNT, definitions.size)
+        val count = if (maxCount == minCount) minCount else random.nextInt(minCount, maxCount + 1)
+
+        val types = definitions.toMutableList()
+        repeat(count - types.size) { types += definitions.random(random) }
+        types.shuffle(random)
+
+        return types.mapIndexed { index, definition ->
+            definition.create(
+                instanceNumber = index + 1,
+                dataIdBase = index * HOME_MODULE_DATA_ID_STRIDE,
+            )
+        }
+    }
 }
 
-/** The two row implementations Home knows how to instance. */
-private enum class HomeModuleType(val id: String) {
-    BIG_IMAGE("big_image"),
-    GRID_IMAGES("grid_images"),
-}
-
-/** Inclusive bounds for one Home screen's module count. */
+/** Inclusive bounds for one randomized Home plan's module count. */
 internal const val MIN_HOME_MODULE_COUNT = 2
 internal const val MAX_HOME_MODULE_COUNT = 10
 
@@ -81,9 +66,3 @@ internal const val MAX_HOME_MODULE_COUNT = 10
  * room for far larger catalogs without two modules sharing an id.
  */
 internal const val HOME_MODULE_DATA_ID_STRIDE = 10_000_000L
-
-/**
- * The plan seed used when "Home shows same content" is on. It is deliberately fixed and
- * arbitrary: changing it changes the repeated demo layout.
- */
-internal const val HOME_MODULE_STATIC_SEED = 123

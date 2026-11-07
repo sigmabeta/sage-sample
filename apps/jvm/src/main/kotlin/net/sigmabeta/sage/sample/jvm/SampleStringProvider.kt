@@ -25,7 +25,8 @@ object SampleStringProvider : StringProvider {
         HomeStringId.HOME_TITLE to SampleStrings.HOME_TITLE,
         HomeStringId.HOME_SECTION_BIG_IMAGE to SampleStrings.HOME_SECTION_BIG_IMAGE,
         HomeStringId.HOME_SECTION_GRID_IMAGES to SampleStrings.HOME_SECTION_GRID_IMAGES,
-        HomeStringId.HOME_ITEM_CLICKED to SampleStrings.HOME_ITEM_CLICKED,
+        HomeStringId.HOME_EMPTY to SampleStrings.HOME_EMPTY,
+        HomeStringId.HOME_ALL_ERROR to SampleStrings.HOME_ALL_ERROR,
         BrowseStringId.BROWSE_TITLE to SampleStrings.NAV_BROWSE,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS to SampleStrings.NAV_LIST_ITEMS,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
@@ -40,19 +41,26 @@ object SampleStringProvider : StringProvider {
             SampleStrings.CONTENT_DETAIL_SECTION_ITEMS,
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED to
             SampleStrings.CONTENT_DETAIL_ITEM_CLICKED,
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND to SampleStrings.CONTENT_DETAIL_NOT_FOUND,
         ListItemsStringId.LIST_ITEMS_TITLE to SampleStrings.NAV_LIST_ITEMS,
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
+        ListItemsStringId.LIST_ITEMS_EMPTY to SampleStrings.LIST_ITEMS_EMPTY,
+        ListItemsStringId.LIST_ITEMS_ERROR to SampleStrings.LIST_ITEMS_ERROR,
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_TITLE to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_EMPTY to
+            SampleStrings.LIST_ITEMS_WITH_IMAGES_EMPTY,
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR to
+            SampleStrings.LIST_ITEMS_WITH_IMAGES_ERROR,
         ListItemsStringId.GRID_OF_IMAGES_TITLE to SampleStrings.NAV_GRID_OF_IMAGES,
-        ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
+        ListItemsStringId.GRID_OF_IMAGES_EMPTY to SampleStrings.GRID_OF_IMAGES_EMPTY,
+        ListItemsStringId.GRID_OF_IMAGES_ERROR to SampleStrings.GRID_OF_IMAGES_ERROR,
         SearchStringId.SEARCH_TITLE to SampleStrings.NAV_SEARCH,
         SearchStringId.SEARCH_HINT to SampleStrings.SEARCH_HINT,
         SearchStringId.SEARCH_CLEAR_DESCRIPTION to SampleStrings.SEARCH_CLEAR_DESCRIPTION,
         SearchStringId.SEARCH_BACK_DESCRIPTION to SampleStrings.SEARCH_BACK_DESCRIPTION,
         SearchStringId.SEARCH_PROMPT to SampleStrings.SEARCH_PROMPT,
         SearchStringId.SEARCH_NO_RESULTS to SampleStrings.SEARCH_NO_RESULTS,
-        SearchStringId.SEARCH_RESULT_CLICKED to SampleStrings.SEARCH_RESULT_CLICKED,
         SearchStringId.SEARCH_SECTION_LIST to SampleStrings.SEARCH_SECTION_LIST,
         SearchStringId.SEARCH_SECTION_GRID to SampleStrings.SEARCH_SECTION_GRID,
         SettingsStringId.SETTINGS_TITLE to SampleStrings.NAV_SETTINGS,
@@ -70,8 +78,23 @@ object SampleStringProvider : StringProvider {
         SettingsStringId.SETTINGS_DELAY_ONE_SECOND to SampleStrings.SETTINGS_DELAY_ONE_SECOND,
         SettingsStringId.SETTINGS_DELAY_TWO_SECONDS to SampleStrings.SETTINGS_DELAY_TWO_SECONDS,
         SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS to SampleStrings.SETTINGS_DELAY_FIVE_SECONDS,
+        SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME to SampleStrings.SETTINGS_LABEL_DEMO_OUTCOME,
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT to
+            SampleStrings.SETTINGS_DEMO_OUTCOME_CONTENT,
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY to SampleStrings.SETTINGS_DEMO_OUTCOME_EMPTY,
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR to SampleStrings.SETTINGS_DEMO_OUTCOME_ERROR,
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT to
             SampleStrings.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
+        SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT to
+            SampleStrings.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
+        SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA to
+            SampleStrings.SETTINGS_LABEL_RESET_DEMO_DATA,
+        SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA to
+            SampleStrings.SETTINGS_CAPTION_RESET_DEMO_DATA,
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS to
+            SampleStrings.SETTINGS_RESET_DEMO_DATA_SUCCESS,
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE to
+            SampleStrings.SETTINGS_RESET_DEMO_DATA_FAILURE,
         SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,
         SettingsStringId.SETTINGS_LABEL_APP_VERSION to SampleStrings.SETTINGS_LABEL_APP_VERSION,
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE to SampleStrings.SETTINGS_LABEL_BUILD_DATE,

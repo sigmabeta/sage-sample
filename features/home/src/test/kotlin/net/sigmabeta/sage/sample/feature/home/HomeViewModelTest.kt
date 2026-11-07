@@ -4,7 +4,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -15,20 +17,27 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.components.EmptyStateListModel
+import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.images.SourceInfo
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.ui.Icon
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 /**
  * The module fan-in contract: each module's flow owns one section slot, sections render in
- * priority order, and a row tap becomes a one-shot snackbar event.
+ * priority order, a row tap opens Content detail for its stable ID, and flipping "Home shows same
+ * content" rebuilds the plan without recreating the screen.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -50,8 +59,8 @@ class HomeViewModelTest {
         val lateModule = MutableSharedFlow<LCE<HomeModuleSection>>(extraBufferCapacity = 1)
         val viewModel = createViewModel(
             listOf(
-                FakeHomeModule("first", 0, flowOf(LCE.Content(section("First", 1L)))),
-                FakeHomeModule("second", 1, lateModule),
+                fakeDefinition("first", 0, flowOf(LCE.Content(section("First", 1L)))),
+                fakeDefinition("second", 1, lateModule),
             ),
         )
 
@@ -72,8 +81,8 @@ class HomeViewModelTest {
         runTest(dispatcher) {
             val viewModel = createViewModel(
                 listOf(
-                    FakeHomeModule("later", 20, flowOf(LCE.Content(section("Later", 2L)))),
-                    FakeHomeModule("earlier", 10, flowOf(LCE.Content(section("Earlier", 1L)))),
+                    fakeDefinition("later", 20, flowOf(LCE.Content(section("Later", 2L)))),
+                    fakeDefinition("earlier", 10, flowOf(LCE.Content(section("Earlier", 1L)))),
                 ),
             )
 
@@ -83,7 +92,7 @@ class HomeViewModelTest {
         }
 
     @Test
-    fun `an item tap emits a snackbar naming the item`() = runTest(dispatcher) {
+    fun `an item tap opens the detail for its content id`() = runTest(dispatcher) {
         val viewModel = createViewModel(emptyList())
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -91,25 +100,204 @@ class HomeViewModelTest {
         }
         advanceUntilIdle()
 
-        viewModel.sendAction(HomeAction.ItemClicked("Item 7"))
+        viewModel.sendAction(HomeAction.ItemClicked(ContentId("home:big_image_1:7")))
         advanceUntilIdle()
 
-        assertEquals(
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/home:big_image_1:7", navigation.destination)
+        assertEquals("HomeViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
+    }
+
+    @Test
+    fun `flipping home shows same content rebuilds the plan and cancels old collections`() =
+        runTest(dispatcher) {
+            val builds = mutableMapOf<String, Int>()
+            val cancelledInstances = mutableListOf<String>()
+
+            fun countingDefinition(
+                typeId: String,
+                priority: Int,
+                title: String,
+                itemBase: Long,
+            ) = FakeHomeModuleDefinition(typeId, priority) { instanceNumber, _ ->
+                val build = builds.merge(typeId, 1, Int::plus)!!
+                // A replaying flow never completes while Home is collecting it, so its
+                // onCompletion runs when the plan rebuild cancels the collector.
+                val updates = MutableSharedFlow<LCE<HomeModuleSection>>(replay = 1)
+                val stateFlow = updates
+                    .onCompletion { cancelledInstances += "${typeId}_$instanceNumber" }
+                updates.tryEmit(
+                    LCE.Content(section("$title:$build", itemBase + build)),
+                )
+
+                    FakeHomeModule(
+                        id = "${typeId}_$instanceNumber",
+                        priority = instanceNumber - 1,
+                        flow = stateFlow,
+                    )
+                }
+
+            val settings = FakeHomeSettingsManager(initialHomeShowsSameContent = true)
+            val viewModel = createViewModel(
+                listOf(
+                    countingDefinition("hero", 0, "Hero", itemBase = 0L),
+                    countingDefinition("gallery", 1, "Gallery", itemBase = 1_000L),
+                ),
+                settings,
+            )
+            advanceUntilIdle()
+
+            assertEquals(listOf("Hero:1", "Gallery:1"), renderedHeaders(viewModel))
+
+            settings.setHomeShowsSameContent(false)
+            advanceUntilIdle()
+
+            // The stable instances were cancelled, and every rendered header comes from a
+            // freshly created plan (build 2 or later).
+            assertEquals(2, cancelledInstances.size)
+            assertTrue(builds.getValue("hero") >= 2)
+            assertTrue(builds.getValue("gallery") >= 2)
+            val headers = renderedHeaders(viewModel)
+            assertTrue(headers.isNotEmpty())
+            assertTrue(headers.none { it.endsWith(":1") })
+        }
+
+    @Test
+    fun `empty modules settle to one screen-level empty state`() = runTest(dispatcher) {
+        val viewModel = createViewModel(
             listOf(
-                SageEvent.ShowSnackbar(
-                    message = "str-HOME_ITEM_CLICKED:Item 7",
-                    withDismissAction = false,
-                    source = "HomeViewModel",
+                fakeDefinition(
+                    "hero",
+                    0,
+                    flowOf(LCE.Loading("home.hero_1.load"), LCE.Uninitialized),
+                ),
+                fakeDefinition(
+                    "gallery",
+                    1,
+                    flowOf(LCE.Loading("home.gallery_2.load"), LCE.Uninitialized),
                 ),
             ),
-            events,
+        )
+
+        // A freshly built plan has not emitted yet: the empty state must not flash while loading.
+        assertTrue(
+            viewModel.uiStateActual.value.listItems.none { it is EmptyStateListModel },
+        )
+
+        advanceUntilIdle()
+
+        val empty = viewModel.uiStateActual.value.listItems
+            .filterIsInstance<EmptyStateListModel>()
+            .single()
+        assertEquals("str-HOME_EMPTY", empty.explanation)
+    }
+
+    @Test
+    fun `an all-module failure shows one screen-level error`() = runTest(dispatcher) {
+        val viewModel = createViewModel(
+            listOf(
+                fakeDefinition(
+                    "hero",
+                    0,
+                    flowOf(
+                        LCE.Loading("home.hero_1.load"),
+                        LCE.Error("home.hero_1.load", IllegalStateException("hero")),
+                    ),
+                ),
+                fakeDefinition(
+                    "gallery",
+                    1,
+                    flowOf(
+                        LCE.Loading("home.gallery_2.load"),
+                        LCE.Error("home.gallery_2.load", IllegalStateException("gallery")),
+                    ),
+                ),
+            ),
+        )
+
+        advanceUntilIdle()
+
+        val error = viewModel.uiStateActual.value.listItems
+            .filterIsInstance<ErrorStateListModel>()
+            .single()
+        assertEquals("str-HOME_ALL_ERROR", error.errorString)
+    }
+
+    @Test
+    fun `changing the demo outcome reloads home into the empty and error presentations`() =
+        runTest(dispatcher) {
+            val settings = FakeHomeSettingsManager()
+            val viewModel = createViewModel(
+                listOf(
+                    outcomeDefinition("hero", 0, settings),
+                    outcomeDefinition("gallery", 1, settings),
+                ),
+                settings,
+            )
+            advanceUntilIdle()
+            assertTrue(viewModel.uiStateActual.value.listItems.isNotEmpty())
+            assertTrue(
+                viewModel.uiStateActual.value.listItems.none {
+                    it is EmptyStateListModel || it is ErrorStateListModel
+                },
+            )
+
+            settings.setDemoOutcome(DemoOutcome.EMPTY)
+            advanceUntilIdle()
+
+            val empty = viewModel.uiStateActual.value.listItems
+                .filterIsInstance<EmptyStateListModel>()
+                .single()
+            assertEquals("str-HOME_EMPTY", empty.explanation)
+
+            settings.setDemoOutcome(DemoOutcome.ERROR)
+            advanceUntilIdle()
+
+            val error = viewModel.uiStateActual.value.listItems
+                .filterIsInstance<ErrorStateListModel>()
+                .single()
+            assertEquals("str-HOME_ALL_ERROR", error.errorString)
+        }
+
+    /**
+     * A module whose flow reads the demo outcome when it is collected, like the real generated
+     * repositories: rebuilding the plan is what makes the new outcome take effect.
+     */
+    private fun outcomeDefinition(
+        typeId: String,
+        priority: Int,
+        settings: FakeHomeSettingsManager,
+    ): FakeHomeModuleDefinition = FakeHomeModuleDefinition(typeId, priority) { instanceNumber, _ ->
+        FakeHomeModule(
+            id = "${typeId}_$instanceNumber",
+            priority = instanceNumber - 1,
+            flow = flow {
+                val operationName = "home.${typeId}_$instanceNumber.load"
+                emit(LCE.Loading(operationName))
+                emit(
+                    when (settings.demoOutcome.value) {
+                        DemoOutcome.CONTENT ->
+                            LCE.Content(section("$typeId:$instanceNumber", instanceNumber.toLong()))
+
+                        DemoOutcome.EMPTY -> LCE.Uninitialized
+
+                        DemoOutcome.ERROR ->
+                            LCE.Error(operationName, IllegalStateException("demo"))
+                    },
+                )
+            },
         )
     }
 
     // Touch the mapped state before the test advances the scheduler: `uiStateActual` is eager,
     // but its first collection has to be scheduled while time can still advance.
-    private fun createViewModel(modules: List<HomeModule>) = HomeViewModel(
-        modules = modules,
+    private fun createViewModel(
+        definitions: List<HomeModuleDefinition>,
+        settings: SampleSettingsManager = FakeHomeSettingsManager(),
+    ) = HomeViewModel(
+        moduleFactory = HomeModuleFactory(definitions.toSet()),
+        settingsManager = settings,
         stringProvider = FakeStringProvider(),
         analytics = FakeAnalytics(),
         dispatchers = testDispatchers(dispatcher),
@@ -138,7 +326,7 @@ class HomeViewModelTest {
         name = "Item $id",
         sourceInfo = SourceInfo("generated://home/$id"),
         imagePlaceholder = Icon.Album,
-        clickAction = HomeAction.ItemClicked("Item $id"),
+        clickAction = HomeAction.ItemClicked(ContentId("home:test:$id")),
         aspectRatio = 0.75f,
         maxWidthDp = 400f,
     )

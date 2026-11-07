@@ -1,12 +1,16 @@
 package net.sigmabeta.sage.sample.feature.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
 import net.sigmabeta.sage.appcomm.LCE
@@ -14,23 +18,31 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.feature.contentdetail.contentDetailRoute
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
  * Home's view model.
  *
- * The randomized module list is provided by [HomeModuleFactory] through the app graph. Each
- * module publishes its own [LCE] flow; the view model collects them in parallel and patches only
- * that module's slot, so rows render independently as their data arrives — no `combine` /
- * `flatMapMerge` orchestration.
+ * [HomeModuleFactory] builds one plan from the graph's registered definitions; each module
+ * publishes its own [LCE] flow, and the view model collects them in parallel, patching only that
+ * module's slot so rows render independently as their data arrives.
+ *
+ * The tab root is retained across tab switches, so the screen is not rebuilt when the "Home shows
+ * same content" preference or the demo outcome changes. The view model observes both settings and,
+ * on a real change, cancels the current plan's collectors, rebuilds the plan, and starts collecting
+ * its modules. A demo-outcome change needs the rebuild because each module's flow emits once: the
+ * repositories read the outcome when they are called, so a fresh plan is what reloads them.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
 @Inject
 class HomeViewModel(
-    private val modules: List<HomeModule>,
+    private val moduleFactory: HomeModuleFactory,
+    private val settingsManager: SampleSettingsManager,
     override val stringProvider: StringProvider,
     override val analytics: Analytics,
     override val dispatchers: SageDispatchers,
@@ -38,46 +50,58 @@ class HomeViewModel(
 ) : SampleListViewModel<HomeState>() {
     override val screenIdentifier = AnalyticsScreen.NONE
 
-    override fun initialState(): HomeState = HomeState(
-        sections = modules
-            .sortedBy { it.priority }
-            .map { HomeSectionState(it.id, it.priority, LCE.Uninitialized, it.showHeader) }
-            .toImmutableList(),
+    private var modules: List<HomeModule> = moduleFactory.create(
+        homeShowsSameContent = settingsManager.homeShowsSameContent.value,
     )
+
+    /** The plan mode the current [modules] were built for. */
+    private var showsSameContent = settingsManager.homeShowsSameContent.value
+
+    /**
+     * The demo outcome the current [modules] last observed. The plan itself does not depend on it,
+     * but rebuilding on a change re-runs every module flow, which reads the new outcome.
+     */
+    private var demoOutcome = settingsManager.demoOutcome.value
+
+    /** Collectors for the current plan; cancelled when the plan is rebuilt. */
+    private val moduleJobs = mutableListOf<Job>()
+
+    /**
+     * Bumped for every plan build. A collector from the previous plan may already have queued an
+     * update when it was cancelled; the generation check keeps that stale row out of the new plan.
+     */
+    private var planGeneration = 0
+
+    override fun initialState(): HomeState = HomeState(sections = modules.toSections())
 
     init {
         sendAction(SageAction.InitNoArgs)
+        collectModules(modules)
 
-        modules.forEach { module ->
-            module.state()
-                .onEach { lce ->
-                    updateState { state ->
-                        state.copy(
-                            sections = state.sections
-                                .map { section ->
-                                    if (section.id == module.id) {
-                                        section.copy(lce = lce)
-                                    } else {
-                                        section
-                                    }
-                                }
-                                .toImmutableList(),
-                        )
-                    }
+        viewModelScope.launch {
+            settingsManager.homeShowsSameContent.collect { showSameContent ->
+                if (showSameContent != showsSameContent) {
+                    showsSameContent = showSameContent
+                    replacePlan()
                 }
-                .runInBackground()
+            }
+        }
+
+        viewModelScope.launch {
+            settingsManager.demoOutcome.collect { outcome ->
+                if (outcome != demoOutcome) {
+                    demoOutcome = outcome
+                    replacePlan()
+                }
+            }
         }
     }
 
     override fun handleAction(action: SageAction) {
         when (action) {
             is HomeAction.ItemClicked -> emitEvent(
-                SageEvent.ShowSnackbar(
-                    message = stringProvider.getStringOneArg(
-                        HomeStringId.HOME_ITEM_CLICKED,
-                        action.title,
-                    ),
-                    withDismissAction = false,
+                SageEvent.NavigateTo(
+                    destination = contentDetailRoute(action.contentId),
                     source = "HomeViewModel",
                 ),
             )
@@ -85,4 +109,49 @@ class HomeViewModel(
             else -> Unit
         }
     }
+
+    private fun replacePlan() {
+        moduleJobs.forEach { it.cancel() }
+        moduleJobs.clear()
+
+        val newModules = moduleFactory.create(showsSameContent)
+        modules = newModules
+        // Drop the old plan's rows before the new modules start emitting, so a stale section
+        // cannot linger after a preference flip or demo-outcome change. Fresh sections are
+        // Uninitialized with hasEmitted = false, so HomeState waits instead of flashing Empty.
+        updateState { it.copy(sections = newModules.toSections()) }
+        collectModules(newModules)
+    }
+
+    private fun collectModules(modules: List<HomeModule>) {
+        val generation = ++planGeneration
+        modules.forEach { module ->
+            moduleJobs += module.state()
+                .onEach { lce ->
+                    updateState { state ->
+                        if (generation != planGeneration) {
+                            state
+                        } else {
+                            state.copy(
+                                sections = state.sections
+                                    .map { section ->
+                                        if (section.id == module.id) {
+                                            section.copy(lce = lce, hasEmitted = true)
+                                        } else {
+                                            section
+                                        }
+                                    }
+                                    .toImmutableList(),
+                            )
+                        }
+                    }
+                }
+                .runInBackground()
+        }
+    }
 }
+
+private fun List<HomeModule>.toSections(): ImmutableList<HomeSectionState> =
+    sortedBy { it.priority }
+        .map { HomeSectionState(it.id, it.priority, LCE.Uninitialized, it.showHeader) }
+        .toImmutableList()

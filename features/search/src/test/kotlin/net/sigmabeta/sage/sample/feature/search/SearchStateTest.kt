@@ -7,8 +7,11 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
+import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -26,8 +29,8 @@ class SearchStateTest {
     )
 
     @Test
-    fun `blank and short queries show the prompt instead of results`() {
-        listOf("", "  ", "ab").forEach { query ->
+    fun `no submitted query shows the prompt even while text is being edited`() {
+        listOf("", "  ", "ab", "chrono").forEach { query ->
             val rows = SearchState(
                 query = query,
                 listResults = LCE.Content(listResults),
@@ -50,6 +53,7 @@ class SearchStateTest {
     fun `list and grid results render as two headed sections`() {
         val rows = SearchState(
             query = "chrono",
+            submittedQuery = "chrono",
             listResults = LCE.Content(listResults),
             gridResults = LCE.Content(gridResults),
         ).toListItems(strings)
@@ -88,26 +92,67 @@ class SearchStateTest {
     }
 
     @Test
-    fun `result clicks carry the originating result`() {
+    fun `result clicks carry namespaced content ids for their section`() {
         val rows = SearchState(
             query = "chrono",
+            submittedQuery = "chrono",
             listResults = LCE.Content(listResults),
             gridResults = LCE.Content(gridResults),
         ).toListItems(strings)
 
-        val listIds = rows.filterIsInstance<ImageNameCaptionListModel>()
-            .map { (it.clickAction as SearchAction.ResultClicked).result.id }
-        val gridIds = rows.filterIsInstance<GridImageListModel>()
-            .map { (it.clickAction as SearchAction.ResultClicked).result.id }
+        val listIds = resultContentIds(rows.filterIsInstance<ImageNameCaptionListModel>())
+        val gridIds = resultContentIds(rows.filterIsInstance<GridImageListModel>())
 
-        assertEquals(listOf(11L, 22L), listIds)
-        assertEquals(listOf(11L, 22L), gridIds)
+        assertEquals(
+            listOf(
+                searchContentId("chrono", SearchResultKind.LIST, 11L),
+                searchContentId("chrono", SearchResultKind.LIST, 22L),
+            ),
+            listIds,
+        )
+        assertEquals(
+            listOf(
+                searchContentId("chrono", SearchResultKind.GRID, 11L),
+                searchContentId("chrono", SearchResultKind.GRID, 22L),
+            ),
+            gridIds,
+        )
+        // Both sections number their results from 1, so equal numeric ids must still route apart.
+        assertEquals(listResults.map { it.id }, gridResults.map { it.id })
+        assertNotEquals(listIds[0], gridIds[0])
+    }
+
+    @Test
+    fun `a query reproduces the same result routes`() {
+        fun listRoutes(query: String): List<String> = SearchState(
+            query = query,
+            submittedQuery = query,
+            listResults = LCE.Content(listResults),
+            gridResults = LCE.Content(emptyList()),
+        ).toListItems(strings)
+            .filterIsInstance<ImageNameCaptionListModel>()
+            .map { (it.clickAction as SearchAction.ResultClicked).contentId.value }
+
+        assertEquals(listRoutes("chrono"), listRoutes("  CHRONO  "))
+        assertTrue(listRoutes("chrono").all { it.startsWith("search:list:") })
+        assertTrue(listRoutes("chrono").all { it.endsWith(":11") || it.endsWith(":22") })
+        assertNotEquals(listRoutes("chrono"), listRoutes("ff7"))
+    }
+
+    private fun resultContentIds(rows: List<*>): List<ContentId> = rows.map { row ->
+        val clickAction = when (row) {
+            is ImageNameCaptionListModel -> row.clickAction
+            is GridImageListModel -> row.clickAction
+            else -> error("not a result row: $row")
+        }
+        (clickAction as SearchAction.ResultClicked).contentId
     }
 
     @Test
     fun `empty list results hide the list section`() {
         val rows = SearchState(
             query = "chrono",
+            submittedQuery = "chrono",
             listResults = LCE.Content(emptyList()),
             gridResults = LCE.Content(gridResults),
         ).toListItems(strings)
@@ -124,6 +169,7 @@ class SearchStateTest {
     fun `both empty result sets show the no-results state`() {
         val rows = SearchState(
             query = "nothing",
+            submittedQuery = "nothing",
             listResults = LCE.Content(emptyList()),
             gridResults = LCE.Content(emptyList()),
         ).toListItems(strings)
@@ -136,6 +182,7 @@ class SearchStateTest {
     fun `loading results render headed loading rows for both queries`() {
         val rows = SearchState(
             query = "chrono",
+            submittedQuery = "chrono",
             listResults = LCE.Loading(SEARCH_LIST_OPERATION_NAME),
             gridResults = LCE.Loading(SEARCH_GRID_OPERATION_NAME),
         ).toListItems(strings)
@@ -162,8 +209,8 @@ class SearchStateTest {
     }
 
     @Test
-    fun `an uninitialized long query shows loading rather than no results`() {
-        val rows = SearchState(query = "chrono").toListItems(strings)
+    fun `an uninitialized submitted query shows loading rather than no results`() {
+        val rows = SearchState(submittedQuery = "chrono").toListItems(strings)
 
         assertTrue(rows.filterIsInstance<LoadingItemListModel>().isNotEmpty())
         assertTrue(rows.none { it is EmptyStateListModel })
@@ -173,6 +220,7 @@ class SearchStateTest {
     fun `an error in one query leaves the other section visible`() {
         val rows = SearchState(
             query = "chrono",
+            submittedQuery = "chrono",
             listResults = LCE.Error(SEARCH_LIST_OPERATION_NAME, IllegalStateException("boom")),
             gridResults = LCE.Content(gridResults),
         ).toListItems(strings)
@@ -184,23 +232,118 @@ class SearchStateTest {
     }
 
     @Test
-    fun `the same query seeds the same artwork for both sections`() {
-        fun urls(query: String): List<String> = SearchState(
-            query = query,
+    fun `errors in both queries keep both headers and render one error per section`() {
+        val rows = SearchState(
+            query = "chrono",
+            submittedQuery = "chrono",
+            listResults = LCE.Error(SEARCH_LIST_OPERATION_NAME, IllegalStateException("list boom")),
+            gridResults = LCE.Error(SEARCH_GRID_OPERATION_NAME, IllegalStateException("grid boom")),
+        ).toListItems(strings)
+
+        assertEquals(
+            listOf("str-SEARCH_SECTION_LIST", "str-SEARCH_SECTION_GRID"),
+            rows.filterIsInstance<SectionHeaderListModel>().map { it.title },
+        )
+        assertEquals(
+            listOf(SEARCH_LIST_OPERATION_NAME, SEARCH_GRID_OPERATION_NAME),
+            rows.filterIsInstance<ErrorStateListModel>().map { it.failedOperationName },
+        )
+        assertTrue(rows.none { it is ImageNameCaptionListModel || it is GridImageListModel })
+    }
+
+    @Test
+    fun `blank submitted query renders history rows newest first`() {
+        val rows = SearchState(history = listOf("chrono", "ff7")).toListItems(strings)
+
+        val historyRows = rows.filterIsInstance<SearchHistoryListModel>()
+        assertEquals(listOf("chrono", "ff7"), historyRows.map { it.name })
+        assertEquals(
+            listOf(
+                SearchAction.HistoryClicked("chrono"),
+                SearchAction.HistoryClicked("ff7"),
+            ),
+            historyRows.map { it.clickAction },
+        )
+        assertEquals(
+            listOf(
+                SearchAction.HistoryRemoved("chrono"),
+                SearchAction.HistoryRemoved("ff7"),
+            ),
+            historyRows.map { it.removeAction },
+        )
+    }
+
+    @Test
+    fun `fewer than five history rows append the resting prompt`() {
+        (0..4).forEach { count ->
+            val rows = SearchState(history = List(count) { "query-$it" }).toListItems(strings)
+
+            assertEquals(count, rows.filterIsInstance<SearchHistoryListModel>().size)
+            val prompt = rows.filterIsInstance<EmptyStateListModel>().single()
+            assertEquals("str-SEARCH_PROMPT", prompt.explanation)
+        }
+    }
+
+    @Test
+    fun `five or more history rows show only the history`() {
+        val rows = SearchState(history = List(5) { "query-$it" }).toListItems(strings)
+
+        assertEquals(5, rows.filterIsInstance<SearchHistoryListModel>().size)
+        assertTrue(rows.none { it is EmptyStateListModel })
+    }
+
+    @Test
+    fun `a submitted query hides history rows`() {
+        val rows = SearchState(
+            query = "chrono",
+            submittedQuery = "chrono",
             listResults = LCE.Content(listResults),
             gridResults = LCE.Content(gridResults),
+            history = listOf("ff7"),
         ).toListItems(strings)
-            .filter { it is ImageNameCaptionListModel || it is GridImageListModel }
-            .map {
-                when (it) {
-                    is ImageNameCaptionListModel -> it.sourceInfo.info as String
-                    is GridImageListModel -> it.sourceInfo.info as String
-                    else -> error("unreachable")
-                }
-            }
+
+        assertTrue(rows.none { it is SearchHistoryListModel })
+    }
+
+    @Test
+    fun `editing the field without submitting keeps history visible`() {
+        val rows = SearchState(
+            query = "chro",
+            history = listOf("ff7"),
+        ).toListItems(strings)
+
+        assertEquals(listOf("ff7"), rows.filterIsInstance<SearchHistoryListModel>().map { it.name })
+    }
+
+    @Test
+    fun `the same submitted query seeds the same artwork for both sections`() {
+        fun urls(query: String): List<String> = seededUrls(submittedQuery = query, query = query)
 
         assertEquals(urls("Chrono"), urls("  chrono  "))
     }
+
+    @Test
+    fun `artwork stays seeded by the submitted query while the field is edited`() {
+        val settled = seededUrls(submittedQuery = "chrono", query = "chrono")
+        val edited = seededUrls(submittedQuery = "chrono", query = "chronologue")
+
+        assertEquals(settled, edited)
+    }
+
+    private fun seededUrls(submittedQuery: String, query: String): List<String> = SearchState(
+        query = query,
+        submittedQuery = submittedQuery,
+        listResults = LCE.Content(listResults),
+        gridResults = LCE.Content(gridResults),
+    ).toListItems(strings)
+        .filter { it is ImageNameCaptionListModel || it is GridImageListModel }
+        .map {
+            when (it) {
+                is ImageNameCaptionListModel -> it.sourceInfo.info as String
+                is GridImageListModel -> it.sourceInfo.info as String
+                else -> error("unreachable")
+            }
+        }
 
     private fun listUrl(query: String, id: Long): String =
         "generated://search/${searchSeedFor(query, SearchResultKind.LIST)}/$id?width=128&height=128"

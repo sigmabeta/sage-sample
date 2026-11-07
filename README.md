@@ -2,8 +2,9 @@
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
 Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), six pure-JVM feature
-modules over shared `:core` modules (a module-driven Home that randomizes 2–10 hero and
-generated-image rows per visit, Browse, a Content detail screen over seeded generated content,
+modules over shared `:core` modules (a module-driven Home that shows a stable plan by default and
+can randomize 2–10 hero and generated-image rows, Browse, a Content detail screen over seeded
+generated content,
 List Items — as text-only, generated-image, and 50-item generated-image grid variants —
 Search, and a Settings screen with persisted preferences), and SAGE itself as a Git submodule
 consumed through a Gradle composite build.
@@ -110,9 +111,12 @@ apps/android/               Android application
   ui/navigation/
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
     SampleScreens.kt        one Voyager Screen per destination
-    SampleNavHost.kt        the back stack and top-level switch semantics
+    SampleTabs.kt           per-tab retained Navigator, active-tab holder, shared Back local
+    SampleNavHost.kt        TabNavigator shell: tab switch, pushed screens, Back application
     SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
     SampleNavAction.kt      pure SageEvent -> ShowTopLevel / Push / Pop policy
+    SampleBackAction.kt     pure tab + canPop -> Pop / ShowTab / Outer policy
+    SampleSystemBack.kt     platform Back seam (Android BackHandler; desktop no-op)
     SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
     SampleTopBar.kt         title/back from the active screen's SAGE title state
     SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
@@ -155,8 +159,9 @@ features/home/             pure-JVM feature module (no Android dependencies)
   HomeState.kt             ListState: one section slot per home module
   HomeViewModel.kt         Metro-contributed ViewModel: fans module flows into their slots
   HomeModule.kt            pluggable row contract + resolved section payload
-  HomeModuleFactory.kt     per-screen randomized 2–10 instance plan
-  HomeModuleBindings.kt    provides the randomized List<HomeModule>
+  HomeModuleDefinition.kt  registered row type: typeId, priority, instance factory
+  HomeModuleFactory.kt     builds the stable or randomized 2–10 instance plan
+  HomeModuleBindings.kt    Metro set of HomeModuleDefinitions (`@Binds @IntoSet`)
   HomeStringId.kt          SageStringId keys; the app maps them to R.string
   modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
   DemoHomeRepository.kt    seeded catalog + generated:// artwork
@@ -253,19 +258,26 @@ platform-agnostic; `SampleBindings` is the only place that knows about `R.string
 
 Home is module-driven, the way Chipbox's home screen is. `HomeModule` is the pluggable row
 contract: a stable id, a priority, an optional section header, and a
-`Flow<LCE<HomeModuleSection>>`. `HomeModuleFactory` builds a fresh randomized plan for each
-screen — between 2 and 10 instances of the two module types, both always represented, in random
-order. `HomeModuleBindings` provides that `List<HomeModule>` to the graph, and `HomeViewModel`
-collects every instance in parallel and patches only that module's slot in `HomeState`.
+`Flow<LCE<HomeModuleSection>>`. Row types register as `HomeModuleDefinition`s; `HomeModuleBindings`
+contributes them through Metro's `@Multibinds Set` + `@Binds @IntoSet`, so adding a row is one
+binding line rather than a factory switch. `HomeModuleFactory` builds the plan for each screen:
+the stable plan (the default) renders one instance of every registered definition in priority
+order, while disabling "Home shows same content" produces the demo's randomized plan — between 2
+and 10 instances, every definition represented, repeated types assigned unique ids and data-id
+ranges. `HomeViewModel` collects every instance in parallel and patches only that module's slot in
+`HomeState`; it also observes the preference and rebuilds the plan in place when it changes, so
+the retained Home tab does not need an app restart.
+
 `HomeState` gives each slot SAGE's standard loading and error rows and wraps multi-item rows in a
 `HorizontalScrollerListModel`; a single-item row (the daily hero) keeps the full width. Each
 instance gets a numbered section title and its own data-id range, so repeated module types
 coexist without tripping SAGE's duplicate-id check. Each instance also passes its id to the
 repository and its artwork URLs, so two instances of the same module render different titles and
 generated art while re-visiting one instance reproduces its content. The Settings screen's
-"Home shows same content" toggle swaps the plan's random source for a fixed seed, so every visit
-reproduces the same rows. The sample ships two modules: `BigImageModule` picks one item per UTC
-day from the instance's generated catalog and renders it as a width-capped `GridImageListModel`,
+"Home shows same content" toggle switches between that stable plan and the randomized one; Home
+observes the setting and swaps the plan without being recreated. The sample ships two modules:
+`BigImageModule` picks one item per UTC day from the instance's generated catalog and renders it
+as a width-capped `GridImageListModel`,
 and `GridImagesModule` asks the repository for a bounded list and renders `GridImageListModel`
 cells.
 
@@ -310,33 +322,45 @@ into `LocalComponentStringProvider`, so the renderers never touch `R.string`.
 
 ### Navigation
 
-Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigator`:
+Navigation uses Voyager's `TabNavigator` (from SAGE's catalog). `SampleNavHost` owns the tabbed
+shell:
 
 - **Destinations** are in `SampleDestination`, which implements SAGE's `RouteDescriptor`.
-- **Home, Browse and Search** are top-level: a `NavigationBar` on compact windows and a
-  `NavigationRail` at 600 dp and wider. Selecting one resets the stack to `[home, target]`, so
-  back from Browse or Search returns Home.
-- **Settings** is pushed from the hamburger.
+- **Home, Browse and Search are tabs** (`SampleTabs.kt`), each owning a retained inner
+  `Navigator` and a stable root screen. The `NavigationBar` on compact windows and the
+  `NavigationRail` at 600 dp and wider highlight `tabNavigator.current`, so a pushed screen
+  keeps its owning tab selected. Switching tabs pops the outgoing tab to its root (`popAll`),
+  discarding that tab's pushed screens, while the tab you return to keeps its root view model
+  and UI state (including the Search query and scroll position).
+- **Back is one policy** (`backActionFor`): a pushed screen pops inside the active tab, Search
+  at its root returns Home, and Home/Browse roots fall through to the host (Android finishes
+  the activity; desktop has nothing above the shell). The top-bar arrow, Android system Back,
+  and `SageEvent.NavigateBack` all run it. Desktop key and mouse Back inputs use the same
+  seam (`SampleSystemBack`).
+- **Settings** is pushed from the hamburger onto the active tab.
 - **List Items, List Items with Images, Grid of Images, and Content Detail** are pushed from
-  Browse. All four are non-top-level routes, so the back arrow returns to Browse rather than
-  resetting the stack. Grid of Images declares `ColumnType.Regular(160)`, so the shared screen
-  renders it with SAGE's `GridScreen` rather than `ListScreen`; Content Detail declares
-  `ColumnType.Staggered(320)`, so it keeps the single-column list on a compact window and becomes
-  SAGE's staggered grid when the window fits more than one column.
+  Browse onto the active tab. All four are non-top-level routes, so the back arrow returns to the
+  screen they came from rather than resetting the stack. Grid of Images declares
+  `ColumnType.Regular(160)`, so the shared screen renders it with SAGE's `GridScreen` rather than
+  `ListScreen`; Content Detail declares `ColumnType.Staggered(320)`, so it keeps the
+  single-column list on a compact window and becomes SAGE's staggered grid when the window fits
+  more than one column.
 - **Feature navigation is translated, not re-implemented.** Features emit SAGE
   `SageEvent`s (`NavigateTo`, `NavigateSingleTopLevel`, `NavigateBack`) through
-  `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known route to `ShowTopLevel`
-  when it is a top-level destination and to `Push` when it is not (Settings included), so a
-  feature can reach Settings the same way the hamburger does. `NavigateBack` pops, and
-  unknown routes or event types are ignored.
-- **The top bar comes from the active screen.** The screen reports its SAGE
+  `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known top-level route to
+  `ShowTopLevel` (select that tab, clearing the outgoing tab's stack) and any other route to
+  `Push` onto the active tab (Settings included), so a feature can reach Settings the same way
+  the hamburger does. `NavigateBack` runs the shared Back policy, and unknown routes or event
+  types are ignored.
+- **The top bar comes from the active route.** The screen reports its SAGE
   `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState` uses the reported
   `title` and `shouldShowBack` (falling back to the destination label and `isTopLevel` until
   the screen reports). `shouldShowBack = false` renders the hamburger (opens Settings);
   otherwise the back arrow pops. Screens may hide the bar with the app-owned
   `SampleChromeController` (Search does, from a `LaunchedEffect`); the scaffold animates it away,
-  and `SampleNavHost` resets `SampleScreenChrome.Default` on every destination change.
-  Navigation-tab labels and icons stay app-owned in `SampleDestination`.
+  and `SampleNavHost` resets `SampleScreenChrome.Default` whenever the active route (tab plus the
+  active tab's top screen) changes. Navigation-tab labels and icons stay app-owned in
+  `SampleDestination`.
 - **Width classes** are SAGE's: 600 dp (compact → medium) and 840 dp (medium → expanded).
   `SampleNavHost` computes the window's class once and provides it via `LocalSampleWidthClass`,
   so the nav suite (bottom bar vs rail) and list/grid layout agree. A screen's
@@ -347,9 +371,10 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
 - **Each screen resolves its own view model** with `metroViewModel<...>()`. Voyager gives every
   screen its own `ViewModelStoreOwner`, so a view model is retained while its screen stays in the
   back stack (even while another screen covers it) and is cleared when the screen is popped or
-  removed; popping and re-pushing a screen builds a fresh one. Metro contributes only the factory
-  (`@ContributesIntoMap` + `@ViewModelKey`); the instance lives in the Voyager store, which is why
-  screen view models are not `@SingleIn`.
+  removed; popping and re-pushing a screen builds a fresh one. `TabNavigator` keeps each tab's
+  inner navigator, so a tab root additionally survives switching away and back. Metro contributes
+  only the factory (`@ContributesIntoMap` + `@ViewModelKey`); the instance lives in the Voyager
+  store, which is why screen view models are not `@SingleIn`.
 
 ## Desktop app
 
@@ -368,7 +393,9 @@ SAGE's `common` UI modules and Voyager directly; the app-owned port lives in `ap
   any screen's view model.
 - **View model stores:** Voyager supplies per-screen `ViewModelStoreOwner`s only on Android.
   `WithPerScreenViewModelStore` hangs a store off a Voyager `ScreenModel`, so a screen keeps its
-  view model while it stays in the back stack and clears it when popped.
+  view model while it stays in the back stack and clears it when popped. Each tab's inner navigator
+  is retained by `TabNavigator`, so a tab root's store survives switching tabs here exactly as it
+  does on Android.
 - **Dispatchers and storage:** `JvmSampleBindings` provides `SageDispatchers` with
   `Dispatchers.Main` backed by `kotlinx-coroutines-swing` (the AWT event queue), plus the JVM
   `Hatchet`, analytics, `AppInfo`, and a properties-file `Storage` implementation.
@@ -388,5 +415,5 @@ The Metro graph is `JvmSampleAppGraph`; `Main.kt` builds it once and installs it
    send `SageAction.InitNoArgs` from `init`.
 4. Map the string ids in `SampleBindings`; no graph accessor is needed for the view model.
 5. To make it reachable, add a `SampleDestination`, a `SampleScreen` (resolving it with
-   `metroViewModel`), and a `screenFor` branch in `SampleNavHost` — plus a nav label in
-   `strings.xml` if it becomes a top-level tab.
+   `metroViewModel`), and a `screenFor` branch in `SampleTabs.kt` — plus a nav label in
+   `strings.xml` and a `SampleTab` if it becomes a top-level tab.

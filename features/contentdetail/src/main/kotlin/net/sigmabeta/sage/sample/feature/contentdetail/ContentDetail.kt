@@ -11,7 +11,7 @@ import net.sigmabeta.sage.ui.Icon
  * [DemoContentDetailRepository] builds it.
  */
 data class ContentDetail(
-    val id: Long,
+    val id: ContentId,
     val title: String,
     val details: List<ContentDetailField>,
     val actions: List<ContentAction>,

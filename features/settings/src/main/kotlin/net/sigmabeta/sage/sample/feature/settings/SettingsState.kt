@@ -1,15 +1,20 @@
 package net.sigmabeta.sage.sample.feature.settings
 
 import kotlinx.collections.immutable.toImmutableList
+import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
-import net.sigmabeta.sage.components.CheckableListModel
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.LoadingType
+import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
+import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -26,7 +31,10 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.DEFAULT,
     val fontChoice: FontChoice = FontChoice.DEFAULT,
     val simulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
+    val demoOutcome: DemoOutcome = DemoOutcome.DEFAULT,
     val homeShowsSameContent: Boolean = DEFAULT_HOME_SHOWS_SAME_CONTENT,
+    /** Progress of the "Reset demo data" action; the row shows inline progress while loading. */
+    val resetStatus: LCE<Unit> = LCE.Uninitialized,
     val appVersion: String? = null,
     val buildDate: String? = null,
     /** `settingId` of the expanded dropdown, or null when all are collapsed. */
@@ -43,7 +51,9 @@ data class SettingsState(
         fontDropdown(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_SIMULATION),
         simulateDelayDropdown(stringProvider),
+        demoOutcomeDropdown(stringProvider),
         homeShowsSameContentToggle(stringProvider),
+        resetDemoDataRow(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_ABOUT),
         labelValue(
             stringProvider,
@@ -108,15 +118,51 @@ data class SettingsState(
         )
     }
 
+    private fun demoOutcomeDropdown(stringProvider: StringProvider): ListModel {
+        val settingId = SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
+        return DropdownSettingListModel.ofLabels(
+            settingId = settingId,
+            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME),
+            selectedPosition = demoOutcome.ordinal,
+            labels = DemoOutcome.entries
+                .map { stringProvider.getString(it.labelId()) }
+                .toImmutableList(),
+            expanded = expandedDropdownId == settingId,
+            onExpandClicked = SettingsAction.DropdownExpandClicked(settingId),
+            onNewOptionSelected = { index ->
+                SettingsAction.DemoOutcomeSelected(DemoOutcome.entries[index])
+            },
+        )
+    }
+
     private fun homeShowsSameContentToggle(stringProvider: StringProvider): ListModel {
         val settingId = SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.name
-        return CheckableListModel(
+        return NameCaptionCheckboxListModel(
             settingId = settingId,
             name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT),
+            caption = stringProvider.getString(
+                SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
+            ),
             checked = homeShowsSameContent,
             clickAction = SettingsAction.HomeShowsSameContentToggled,
         )
     }
+
+    private fun resetDemoDataRow(stringProvider: StringProvider): ListModel =
+        when (resetStatus) {
+            is LCE.Loading -> LoadingItemListModel(
+                loadingType = LoadingType.TEXT_CAPTION,
+                loadOperationName = resetStatus.operationName,
+                loadPositionOffset = 0,
+            )
+
+            else -> NameCaptionListModel(
+                dataId = SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.name.hashCode().toLong(),
+                name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA),
+                caption = stringProvider.getString(SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA),
+                clickAction = SettingsAction.ResetDemoDataClicked,
+            )
+        }
 
     private fun ThemeMode.labelId(): SettingsStringId = when (this) {
         ThemeMode.LIGHT -> SettingsStringId.SETTINGS_THEME_LIGHT
@@ -134,6 +180,12 @@ data class SettingsState(
         SimulateDelay.ONE_SECOND -> SettingsStringId.SETTINGS_DELAY_ONE_SECOND
         SimulateDelay.TWO_SECONDS -> SettingsStringId.SETTINGS_DELAY_TWO_SECONDS
         SimulateDelay.FIVE_SECONDS -> SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS
+    }
+
+    private fun DemoOutcome.labelId(): SettingsStringId = when (this) {
+        DemoOutcome.CONTENT -> SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT
+        DemoOutcome.EMPTY -> SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY
+        DemoOutcome.ERROR -> SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR
     }
 
     private fun sectionHeader(
