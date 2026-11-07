@@ -11,6 +11,7 @@ import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -39,6 +40,7 @@ class SettingsViewModelTest {
     fun `initial state mirrors the persisted values and app info`() = runTest(dispatcher) {
         val settings = FakeSettingsManager(
             initialThemeMode = ThemeMode.DARK,
+            initialFontChoice = FontChoice.INTER,
             initialSimulateDelay = SimulateDelay.ONE_SECOND,
         )
         val viewModel = createViewModel(settings = settings, appInfo = testAppInfo(versionName = "9.9.9"))
@@ -46,6 +48,7 @@ class SettingsViewModelTest {
         val items = viewModel.uiStateActual.value.listItems
 
         assertEquals(ThemeMode.DARK.ordinal, themeDropdown(items).selectedPosition)
+        assertEquals(FontChoice.INTER.ordinal, fontDropdown(items).selectedPosition)
         assertEquals(SimulateDelay.ONE_SECOND.ordinal, delayDropdown(items).selectedPosition)
         assertEquals("9.9.9", items.filterIsInstance<LabelValueListModel>()[0].value)
     }
@@ -65,6 +68,23 @@ class SettingsViewModelTest {
         assertEquals(listOf(ThemeMode.LIGHT), settings.setThemeModeCalls)
         assertEquals(ThemeMode.LIGHT.ordinal, themeDropdown(viewModel.uiStateActual.value.listItems).selectedPosition)
         assertFalse(themeDropdown(viewModel.uiStateActual.value.listItems).expanded)
+    }
+
+    @Test
+    fun `selecting a font writes through and collapses the dropdown`() = runTest(dispatcher) {
+        val settings = FakeSettingsManager()
+        val viewModel = createViewModel(settings = settings)
+
+        viewModel.sendAction(SettingsAction.DropdownExpandClicked(FONT_SETTING_ID))
+        advanceUntilIdle()
+        assertTrue(fontDropdown(viewModel.uiStateActual.value.listItems).expanded)
+
+        viewModel.sendAction(SettingsAction.FontChoiceSelected(FontChoice.INTER))
+        advanceUntilIdle()
+
+        assertEquals(listOf(FontChoice.INTER), settings.setFontChoiceCalls)
+        assertEquals(FontChoice.INTER.ordinal, fontDropdown(viewModel.uiStateActual.value.listItems).selectedPosition)
+        assertFalse(fontDropdown(viewModel.uiStateActual.value.listItems).expanded)
     }
 
     @Test
@@ -124,12 +144,17 @@ class SettingsViewModelTest {
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_THEME.toString() }
 
+    private fun fontDropdown(items: List<ListModel>): DropdownSettingListModel =
+        items.filterIsInstance<DropdownSettingListModel>()
+            .single { it.name == SettingsStringId.SETTINGS_LABEL_FONT.toString() }
+
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
 
     private companion object {
         val THEME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_THEME.name
+        val FONT_SETTING_ID = SettingsStringId.SETTINGS_LABEL_FONT.name
         val DELAY_SETTING_ID = SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
     }
 }

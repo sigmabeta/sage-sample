@@ -5,6 +5,7 @@ import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
 import org.junit.Assert.assertEquals
@@ -20,6 +21,7 @@ class SettingsStateTest {
             listOf(
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_APPEARANCE.toString()),
                 themeDropdown(items),
+                fontDropdown(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_SIMULATION.toString()),
                 delayDropdown(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_ABOUT.toString()),
@@ -46,6 +48,22 @@ class SettingsStateTest {
     }
 
     @Test
+    fun `font dropdown lists every choice in enum order and selects the current one`() {
+        val dropdown = fontDropdown(
+            SettingsState(fontChoice = FontChoice.INTER).toListItems(FakeStringProvider),
+        )
+
+        assertEquals(
+            listOf(
+                SettingsStringId.SETTINGS_FONT_STANDARD.toString(),
+                SettingsStringId.SETTINGS_FONT_INTER.toString(),
+            ),
+            dropdown.options.map { it.first },
+        )
+        assertEquals(FontChoice.INTER.ordinal, dropdown.selectedPosition)
+    }
+
+    @Test
     fun `delay dropdown lists every duration in enum order and selects the current one`() {
         val dropdown = delayDropdown(
             SettingsState(simulateDelay = SimulateDelay.TWO_SECONDS).toListItems(FakeStringProvider),
@@ -66,11 +84,16 @@ class SettingsStateTest {
     @Test
     fun `option rows carry the typed selection action`() {
         val theme = themeDropdown(SettingsState().toListItems(FakeStringProvider))
+        val font = fontDropdown(SettingsState().toListItems(FakeStringProvider))
         val delay = delayDropdown(SettingsState().toListItems(FakeStringProvider))
 
         assertEquals(
             ThemeMode.entries.map { SettingsAction.ThemeModeSelected(it) },
             theme.options.map { it.second.clickAction() },
+        )
+        assertEquals(
+            FontChoice.entries.map { SettingsAction.FontChoiceSelected(it) },
+            font.options.map { it.second.clickAction() },
         )
         assertEquals(
             SimulateDelay.entries.map { SettingsAction.SimulateDelaySelected(it) },
@@ -84,6 +107,7 @@ class SettingsStateTest {
         val items = SettingsState(expandedDropdownId = settingId).toListItems(FakeStringProvider)
 
         assertTrue(themeDropdown(items).expanded)
+        assertTrue(!fontDropdown(items).expanded)
         assertTrue(!delayDropdown(items).expanded)
     }
 
@@ -103,6 +127,10 @@ class SettingsStateTest {
     private fun themeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_THEME.toString() }
+
+    private fun fontDropdown(items: List<ListModel>): DropdownSettingListModel =
+        items.filterIsInstance<DropdownSettingListModel>()
+            .single { it.name == SettingsStringId.SETTINGS_LABEL_FONT.toString() }
 
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()

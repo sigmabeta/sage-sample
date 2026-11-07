@@ -30,6 +30,11 @@ class StorageSampleSettingsManager(
         .map { ThemeMode.fromStorageValue(it) }
         .stateIn(scope, SharingStarted.Eagerly, ThemeMode.DEFAULT)
 
+    override val fontChoice: StateFlow<FontChoice> = storage
+        .savedStringFlow(KEY_FONT_CHOICE)
+        .map { FontChoice.fromStorageValue(it) }
+        .stateIn(scope, SharingStarted.Eagerly, FontChoice.DEFAULT)
+
     override val simulateDelay: StateFlow<SimulateDelay> = storage
         .savedStringFlow(KEY_SIMULATE_DELAY)
         .map { SimulateDelay.fromStorageValue(it) }
@@ -37,11 +42,15 @@ class StorageSampleSettingsManager(
 
     override fun setThemeMode(mode: ThemeMode) = storage.saveString(KEY_THEME_MODE, mode.name)
 
+    override fun setFontChoice(choice: FontChoice) =
+        storage.saveString(KEY_FONT_CHOICE, choice.name)
+
     override fun setSimulateDelay(delay: SimulateDelay) =
         storage.saveString(KEY_SIMULATE_DELAY, delay.name)
 
     private companion object {
         const val KEY_THEME_MODE = "setting.appearance.theme"
+        const val KEY_FONT_CHOICE = "setting.appearance.font"
         const val KEY_SIMULATE_DELAY = "setting.debug.simulate_delay"
     }
 }

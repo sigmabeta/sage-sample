@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.components.SubsectionHeaderListModel
@@ -19,8 +18,7 @@ fun SubsectionHeader(
     modifier: Modifier,
 ) {
     val title = remember(model.title) { model.title.uppercase() }
-    val baseStyle = MaterialTheme.typography.bodyMedium
-    val style = remember(baseStyle) { baseStyle.copy(fontFamily = FontFamily.SansSerif) }
+    val style = MaterialTheme.typography.bodyMedium
 
     Column(
         modifier = modifier

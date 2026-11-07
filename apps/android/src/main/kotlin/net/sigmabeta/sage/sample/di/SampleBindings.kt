@@ -102,6 +102,9 @@ object SampleBindings {
         SettingsStringId.SETTINGS_THEME_LIGHT -> R.string.settings_theme_light
         SettingsStringId.SETTINGS_THEME_DARK -> R.string.settings_theme_dark
         SettingsStringId.SETTINGS_THEME_SYSTEM -> R.string.settings_theme_system
+        SettingsStringId.SETTINGS_LABEL_FONT -> R.string.settings_label_font
+        SettingsStringId.SETTINGS_FONT_STANDARD -> R.string.settings_font_standard
+        SettingsStringId.SETTINGS_FONT_INTER -> R.string.settings_font_inter
         SettingsStringId.SETTINGS_SECTION_SIMULATION -> R.string.settings_section_simulation
         SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY -> R.string.settings_label_simulate_delay
         SettingsStringId.SETTINGS_DELAY_NONE -> R.string.settings_delay_none
@@ -134,8 +137,8 @@ object SampleBindings {
     fun provideAnalytics(hatchet: Hatchet): Analytics = NoopAnalytics(hatchet)
 
     /**
-     * SAGE's key-value storage seam. The settings manager persists the theme and simulated-delay
-     * choices through it; Android implements it with Preferences DataStore.
+     * SAGE's key-value storage seam. The settings manager persists the theme, font and
+     * simulated-delay choices through it; Android implements it with Preferences DataStore.
      */
     @Provides
     @SingleIn(AppScope::class)

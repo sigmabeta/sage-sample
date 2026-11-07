@@ -8,6 +8,7 @@ import net.sigmabeta.sage.analytics.AnalyticsScreenId
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
+import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -34,20 +35,29 @@ internal object FakeAnalytics : Analytics {
 /** In-memory settings with the same defaults as the Storage-backed implementation. */
 internal class FakeSettingsManager(
     initialThemeMode: ThemeMode = ThemeMode.DEFAULT,
+    initialFontChoice: FontChoice = FontChoice.DEFAULT,
     initialSimulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
 ) : SampleSettingsManager {
     private val theme = MutableStateFlow(initialThemeMode)
+    private val font = MutableStateFlow(initialFontChoice)
     private val delay = MutableStateFlow(initialSimulateDelay)
 
     val setThemeModeCalls: MutableList<ThemeMode> = mutableListOf()
+    val setFontChoiceCalls: MutableList<FontChoice> = mutableListOf()
     val setSimulateDelayCalls: MutableList<SimulateDelay> = mutableListOf()
 
     override val themeMode: StateFlow<ThemeMode> = theme.asStateFlow()
+    override val fontChoice: StateFlow<FontChoice> = font.asStateFlow()
     override val simulateDelay: StateFlow<SimulateDelay> = delay.asStateFlow()
 
     override fun setThemeMode(mode: ThemeMode) {
         setThemeModeCalls += mode
         theme.value = mode
+    }
+
+    override fun setFontChoice(choice: FontChoice) {
+        setFontChoiceCalls += choice
+        font.value = choice
     }
 
     override fun setSimulateDelay(delay: SimulateDelay) {

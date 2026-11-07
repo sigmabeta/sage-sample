@@ -56,6 +56,11 @@ class SettingsViewModel(
             }
         }
         viewModelScope.launch {
+            settingsManager.fontChoice.collect { choice ->
+                updateState { it.copy(fontChoice = choice) }
+            }
+        }
+        viewModelScope.launch {
             settingsManager.simulateDelay.collect { delay ->
                 updateState { it.copy(simulateDelay = delay) }
             }
@@ -73,6 +78,11 @@ class SettingsViewModel(
 
             is SettingsAction.ThemeModeSelected -> {
                 settingsManager.setThemeMode(action.mode)
+                collapseDropdown()
+            }
+
+            is SettingsAction.FontChoiceSelected -> {
+                settingsManager.setFontChoice(action.choice)
                 collapseDropdown()
             }
 

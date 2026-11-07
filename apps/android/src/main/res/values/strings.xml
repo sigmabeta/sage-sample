@@ -36,6 +36,9 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_system">System</string>
+    <string name="settings_label_font">Font</string>
+    <string name="settings_font_standard">Standard</string>
+    <string name="settings_font_inter">Inter</string>
 
     <string name="settings_section_simulation">Simulation</string>
     <string name="settings_label_simulate_delay">Simulate delay</string>

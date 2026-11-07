@@ -55,8 +55,9 @@ object JvmSampleBindings {
     )
 
     /**
-     * SAGE's key-value storage seam. The settings manager persists the theme and simulated-delay
-     * choices through it; the desktop app keeps them in a properties file under the user's home.
+     * SAGE's key-value storage seam. The settings manager persists the theme, font and
+     * simulated-delay choices through it; the desktop app keeps them in a properties file under the
+     * user's home.
      */
     @Provides
     @SingleIn(AppScope::class)

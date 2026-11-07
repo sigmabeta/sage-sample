@@ -42,6 +42,9 @@ object SampleStrings {
     const val SETTINGS_THEME_LIGHT = "Light"
     const val SETTINGS_THEME_DARK = "Dark"
     const val SETTINGS_THEME_SYSTEM = "System"
+    const val SETTINGS_LABEL_FONT = "Font"
+    const val SETTINGS_FONT_STANDARD = "Standard"
+    const val SETTINGS_FONT_INTER = "Inter"
 
     const val SETTINGS_SECTION_SIMULATION = "Simulation"
     const val SETTINGS_LABEL_SIMULATE_DELAY = "Simulate delay"

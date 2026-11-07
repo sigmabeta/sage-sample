@@ -33,6 +33,20 @@ class SettingsModelsTest {
     }
 
     @Test
+    fun `font choice parses every stored name`() {
+        assertEquals(FontChoice.STANDARD, FontChoice.fromStorageValue("STANDARD"))
+        assertEquals(FontChoice.INTER, FontChoice.fromStorageValue("INTER"))
+    }
+
+    @Test
+    fun `font choice falls back to standard for missing or unknown values`() {
+        assertEquals(FontChoice.STANDARD, FontChoice.fromStorageValue(null))
+        assertEquals(FontChoice.STANDARD, FontChoice.fromStorageValue(""))
+        assertEquals(FontChoice.STANDARD, FontChoice.fromStorageValue("BOGUS"))
+        assertEquals(FontChoice.STANDARD, FontChoice.DEFAULT)
+    }
+
+    @Test
     fun `simulate delay parses every stored name and keeps its millis`() {
         assertEquals(SimulateDelay.NONE, SimulateDelay.fromStorageValue("NONE"))
         assertEquals(SimulateDelay.ONE_SECOND, SimulateDelay.fromStorageValue("ONE_SECOND"))

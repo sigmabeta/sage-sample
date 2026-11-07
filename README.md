@@ -102,7 +102,8 @@ apps/android/               Android application
   di/SampleBindings.kt      app-side implementations of SAGE seams
   MainActivity.kt           installs LocalMetroViewModelFactory, hosts the Compose UI
   storage/PreferencesStorage.kt  DataStore-backed SAGE Storage (settings persistence)
-  ui/SampleApp.kt           settings-driven theme + navigation host
+  res/font/inter_*.otf      bundled Inter weights for the Settings font picker
+  ui/SampleApp.kt           settings-driven theme + font + navigation host
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/navigation/
     SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
@@ -122,7 +123,8 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   di/JvmSampleBindings.kt   JVM implementations of SAGE seams (strings, logging, dispatchers, storage)
   di/JvmMetroViewModelFactory.kt  the factory behind metroViewModel() on desktop
   storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
-  ui/SampleApp.kt           settings-driven theme + navigation host
+  resources/fonts/inter_*.otf  bundled Inter weights for the Settings font picker
+  ui/SampleApp.kt           settings-driven theme + font + navigation host
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
   ui/navigation/            same destinations, chrome and back stack as :apps:android
@@ -132,6 +134,7 @@ core/bitmaps/               KMP Compose module shared by both apps
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
 core/ui/components/api/     KMP Compose renderer suite shared by both apps
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
+  SampleTypography.kt       shared Material 3 type scale, parameterised by the chosen font
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
   SearchContent.kt          Chipbox-style search: adaptive grid with the field and status scrim
@@ -140,6 +143,7 @@ core/ui/components/api/     KMP Compose renderer suite shared by both apps
   previews/                 shared sizing constants + Android @Preview harnesses
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
+  FontChoice.kt             standard platform family or bundled Inter
   SimulateDelay.kt          none / 1s / 2s / 5s duration for every background load
   SampleSettingsManager.kt  StateFlow preferences over SAGE's Storage seam
   SampleDelayManager.kt     duration-aware extension of SAGE's DelayManager
@@ -154,7 +158,7 @@ features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
 features/search/            query + two deterministic generated result sets (list rows, grid)
-features/settings/          theme + simulate-delay dropdowns, app version and build date
+features/settings/          theme, font + simulate-delay dropdowns, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene
 CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
 detekt-config.yml           ruleset read by the SAGE base plugins
@@ -316,9 +320,12 @@ SAGE's `common` UI modules and Voyager directly; the app-owned port lives in `ap
 - **Text:** there are no Android resources. `SampleStrings` holds the same values as
   `apps/android/src/main/res/values/strings.xml`, and `SampleStringProvider` maps feature `SageStringId`s
   to them — the desktop twin of `SampleBindings`.
-- **Theme:** both composition roots wrap `MaterialTheme` with `lightColorScheme` /
-  `darkColorScheme`, selected by the persisted `ThemeMode` (light, dark, or follow the system).
-  The choice lives in `SampleSettingsManager`, outside any screen's view model.
+- **Theme and font:** both composition roots wrap `MaterialTheme` with `lightColorScheme` /
+  `darkColorScheme`, selected by the persisted `ThemeMode` (light, dark, or follow the system),
+  and `sampleTypography(fontFamily)` from the shared component module. `FontChoice` selects
+  `FontFamily.Default` or Inter; each app loads its own copies of the Inter OTFs (Android
+  `res/font`, desktop classpath `fonts/`). Both choices live in `SampleSettingsManager`, outside
+  any screen's view model.
 - **View model stores:** Voyager supplies per-screen `ViewModelStoreOwner`s only on Android.
   `WithPerScreenViewModelStore` hangs a store off a Voyager `ScreenModel`, so a screen keeps its
   view model while it stays in the back stack and clears it when popped.

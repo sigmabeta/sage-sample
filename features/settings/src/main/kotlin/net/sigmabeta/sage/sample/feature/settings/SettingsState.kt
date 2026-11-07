@@ -8,6 +8,7 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
+import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
 import net.sigmabeta.sage.ui.StringProvider
@@ -15,12 +16,13 @@ import net.sigmabeta.sage.ui.StringProvider
 /**
  * Settings' content, declared as a SAGE [ListState].
  *
- * The two dropdowns are closed sets: their option order mirrors the enum's `entries`, so the
- * picked index maps straight back to an enum value. At most one dropdown is expanded at a time,
- * matching the list's single interaction focus.
+ * The dropdowns are closed sets: their option order mirrors the enum's `entries`, so the picked
+ * index maps straight back to an enum value. At most one dropdown is expanded at a time, matching
+ * the list's single interaction focus.
  */
 data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.DEFAULT,
+    val fontChoice: FontChoice = FontChoice.DEFAULT,
     val simulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
     val appVersion: String? = null,
     val buildDate: String? = null,
@@ -35,6 +37,7 @@ data class SettingsState(
     override fun toListItems(stringProvider: StringProvider): List<ListModel> = listOf(
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_APPEARANCE),
         themeDropdown(stringProvider),
+        fontDropdown(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_SIMULATION),
         simulateDelayDropdown(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_ABOUT),
@@ -67,6 +70,23 @@ data class SettingsState(
         )
     }
 
+    private fun fontDropdown(stringProvider: StringProvider): ListModel {
+        val settingId = SettingsStringId.SETTINGS_LABEL_FONT.name
+        return DropdownSettingListModel.ofLabels(
+            settingId = settingId,
+            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_FONT),
+            selectedPosition = fontChoice.ordinal,
+            labels = FontChoice.entries
+                .map { stringProvider.getString(it.labelId()) }
+                .toImmutableList(),
+            expanded = expandedDropdownId == settingId,
+            onExpandClicked = SettingsAction.DropdownExpandClicked(settingId),
+            onNewOptionSelected = { index ->
+                SettingsAction.FontChoiceSelected(FontChoice.entries[index])
+            },
+        )
+    }
+
     private fun simulateDelayDropdown(stringProvider: StringProvider): ListModel {
         val settingId = SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
         return DropdownSettingListModel.ofLabels(
@@ -88,6 +108,11 @@ data class SettingsState(
         ThemeMode.LIGHT -> SettingsStringId.SETTINGS_THEME_LIGHT
         ThemeMode.DARK -> SettingsStringId.SETTINGS_THEME_DARK
         ThemeMode.SYSTEM -> SettingsStringId.SETTINGS_THEME_SYSTEM
+    }
+
+    private fun FontChoice.labelId(): SettingsStringId = when (this) {
+        FontChoice.STANDARD -> SettingsStringId.SETTINGS_FONT_STANDARD
+        FontChoice.INTER -> SettingsStringId.SETTINGS_FONT_INTER
     }
 
     private fun SimulateDelay.labelId(): SettingsStringId = when (this) {

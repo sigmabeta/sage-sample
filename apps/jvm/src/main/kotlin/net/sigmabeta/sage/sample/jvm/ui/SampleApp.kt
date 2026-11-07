@@ -2,24 +2,31 @@ package net.sigmabeta.sage.sample.jvm.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
 import net.sigmabeta.sage.sample.jvm.ui.navigation.SampleNavHost
+import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.ui.components.api.sampleTypography
 
 /**
  * Composition root. The theme wraps the navigation host; everything below it is a destination.
  *
- * [settingsManager] is app-scoped and persisted, so a theme chosen on the Settings screen
+ * [settingsManager] is app-scoped and persisted, so a theme or font chosen on the Settings screen
  * recomposes this root and applies immediately.
  */
 @Composable
 fun SampleApp(settingsManager: SampleSettingsManager) {
     val themeMode by settingsManager.themeMode.collectAsState()
+    val fontChoice by settingsManager.fontChoice.collectAsState()
+    val fontFamily = remember(fontChoice) { fontFamilyFor(fontChoice) }
 
     MaterialTheme(
         colorScheme = if (themeMode.isDark(isSystemInDarkTheme())) {
@@ -27,8 +34,24 @@ fun SampleApp(settingsManager: SampleSettingsManager) {
         } else {
             lightColorScheme()
         },
-        typography = Typography(),
+        typography = sampleTypography(fontFamily),
     ) {
         SampleNavHost()
     }
+}
+
+/**
+ * The Compose family for [choice].
+ *
+ * Desktop loads the bundled OTF files from the classpath (`src/main/resources/fonts`) rather than
+ * an Android `R.font` resource; the three weights otherwise match the Android mapping.
+ */
+private fun fontFamilyFor(choice: FontChoice): FontFamily = when (choice) {
+    FontChoice.STANDARD -> FontFamily.Default
+
+    FontChoice.INTER -> FontFamily(
+        Font("fonts/inter_regular.otf", FontWeight.Normal),
+        Font("fonts/inter_medium.otf", FontWeight.Medium),
+        Font("fonts/inter_bold.otf", FontWeight.Bold),
+    )
 }
