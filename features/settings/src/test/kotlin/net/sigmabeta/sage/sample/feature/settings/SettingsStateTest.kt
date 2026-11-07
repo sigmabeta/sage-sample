@@ -1,10 +1,14 @@
 package net.sigmabeta.sage.sample.feature.settings
 
+import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
-import net.sigmabeta.sage.components.CheckableListModel
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.LoadingType
+import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
+import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
@@ -28,6 +32,7 @@ class SettingsStateTest {
                 delayDropdown(items),
                 demoOutcomeDropdown(items),
                 homeShowsSameContentToggle(items),
+                resetDemoDataRow(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_ABOUT.toString()),
                 appVersionRow(items),
                 buildDateRow(items),
@@ -139,15 +144,76 @@ class SettingsStateTest {
     }
 
     @Test
-    fun `home shows same content toggle reflects the setting and carries the toggle action`() {
+    fun `home shows same content toggle is captioned and carries the toggle action`() {
         val on = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
         assertEquals(true, on.checked)
+        assertEquals(
+            SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString(),
+            on.name,
+        )
+        assertEquals(
+            SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT.toString(),
+            on.caption,
+        )
         assertEquals(SettingsAction.HomeShowsSameContentToggled, on.clickAction)
 
         val off = homeShowsSameContentToggle(
             SettingsState(homeShowsSameContent = false).toListItems(FakeStringProvider),
         )
         assertEquals(false, off.checked)
+    }
+
+    @Test
+    fun `reset demo data row has a stable id, captioned text and the reset action`() {
+        val row = resetDemoDataRow(SettingsState().toListItems(FakeStringProvider))
+
+        assertEquals(
+            SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.name.hashCode().toLong(),
+            row.dataId,
+        )
+        assertEquals(
+            SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString(),
+            row.name,
+        )
+        assertEquals(
+            SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA.toString(),
+            row.caption,
+        )
+        assertEquals(SettingsAction.ResetDemoDataClicked, row.clickAction)
+    }
+
+    @Test
+    fun `a pending reset replaces the action row with inline progress`() {
+        val operationName = SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString()
+        val items = SettingsState(resetStatus = LCE.Loading(operationName))
+            .toListItems(FakeStringProvider)
+
+        val loading = items.filterIsInstance<LoadingItemListModel>().single()
+        assertEquals(LoadingType.TEXT_CAPTION, loading.loadingType)
+        assertEquals(operationName, loading.loadOperationName)
+        assertTrue(
+            items.none {
+                it is NameCaptionListModel &&
+                    it.name == SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString()
+            },
+        )
+    }
+
+    @Test
+    fun `a finished reset leaves the action row actionable`() {
+        listOf(
+            LCE.Uninitialized,
+            LCE.Content(Unit),
+            LCE.Error(SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString(), IllegalStateException()),
+        ).forEach { status ->
+            val items = SettingsState(resetStatus = status).toListItems(FakeStringProvider)
+
+            assertEquals(
+                SettingsAction.ResetDemoDataClicked,
+                resetDemoDataRow(items).clickAction,
+            )
+            assertTrue(items.none { it is LoadingItemListModel })
+        }
     }
 
     @Test
@@ -179,11 +245,15 @@ class SettingsStateTest {
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
 
-    private fun homeShowsSameContentToggle(items: List<ListModel>): CheckableListModel =
-        items.filterIsInstance<CheckableListModel>()
+    private fun homeShowsSameContentToggle(items: List<ListModel>): NameCaptionCheckboxListModel =
+        items.filterIsInstance<NameCaptionCheckboxListModel>()
             .single {
                 it.name == SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
             }
+
+    private fun resetDemoDataRow(items: List<ListModel>): NameCaptionListModel =
+        items.filterIsInstance<NameCaptionListModel>()
+            .single { it.name == SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
 
     private fun appVersionRow(items: List<ListModel>): LabelValueListModel =
         items.filterIsInstance<LabelValueListModel>()
