@@ -5,7 +5,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.first
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
 import net.sigmabeta.sage.appcomm.LCE
@@ -14,27 +14,34 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
-import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
  * Grid of Images' view model.
  *
- * It loads through [GridOfImagesRepository] and publishes each [LCE] through [updateState].
- * Collection runs in `viewModelScope` via [runInBackground], so it stops when the screen's
- * ViewModel is cleared and waits for the duration selected on the Settings screen.
+ * It loads through [GridOfImagesRepository] one page at a time. Paging behaviour lives in
+ * [PagedListItemsViewModel]; this class supplies the repository call and the state copy, then
+ * keeps the screen's own cell action.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
 @Inject
 class GridOfImagesViewModel(
-    override val stringProvider: StringProvider,
-    override val analytics: Analytics,
-    override val dispatchers: SageDispatchers,
-    override val delayManager: SampleDelayManager,
+    stringProvider: StringProvider,
+    analytics: Analytics,
+    dispatchers: SageDispatchers,
+    delayManager: SampleDelayManager,
     private val repository: GridOfImagesRepository,
-) : SampleListViewModel<GridOfImagesState>() {
+) : PagedListItemsViewModel<GridOfImagesState>(
+    stringProvider = stringProvider,
+    analytics = analytics,
+    dispatchers = dispatchers,
+    delayManager = delayManager,
+    operationName = GRID_OF_IMAGES_OPERATION_NAME,
+) {
     override val screenIdentifier = AnalyticsScreen.NONE
+
+    override val pageSize = GRID_OF_IMAGES_PAGE_SIZE
 
     override fun initialState(): GridOfImagesState = GridOfImagesState()
 
@@ -43,9 +50,9 @@ class GridOfImagesViewModel(
     }
 
     override fun handleAction(action: SageAction) {
-        when (action) {
-            is SageAction.InitNoArgs -> load()
+        if (handlePagingAction(action)) return
 
+        when (action) {
             is GridOfImagesAction.ItemClicked -> emitEvent(
                 SageEvent.ShowSnackbar(
                     message = stringProvider.getStringOneArg(
@@ -61,15 +68,29 @@ class GridOfImagesViewModel(
         }
     }
 
-    private fun load() {
-        updateState {
-            GridOfImagesState(LCE.Loading(GRID_OF_IMAGES_OPERATION_NAME))
-        }
+    override suspend fun fetchPage(
+        offset: Int,
+        limit: Int,
+    ): LCE<List<SampleItem>> = repository.load(offset = offset, limit = limit).first()
 
-        repository.load()
-            .onEach { content ->
-                updateState { GridOfImagesState(content) }
-            }
-            .runInBackground()
-    }
+    override fun contentOf(state: GridOfImagesState): LCE<List<SampleItem>> = state.content
+
+    override fun windowStartOf(state: GridOfImagesState): Int = state.windowStart
+
+    override fun hasMoreAfterOf(state: GridOfImagesState): Boolean = state.hasMoreAfter
+
+    override fun withPaging(
+        state: GridOfImagesState,
+        content: LCE<List<SampleItem>>,
+        windowStart: Int,
+        hasMoreAfter: Boolean,
+        loadingMore: Boolean,
+        loadingPrevious: Boolean,
+    ): GridOfImagesState = state.copy(
+        content = content,
+        windowStart = windowStart,
+        hasMoreAfter = hasMoreAfter,
+        loadingMore = loadingMore,
+        loadingPrevious = loadingPrevious,
+    )
 }

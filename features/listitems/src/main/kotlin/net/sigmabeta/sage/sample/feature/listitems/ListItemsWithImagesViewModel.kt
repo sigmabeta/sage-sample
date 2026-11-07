@@ -5,7 +5,7 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.first
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
 import net.sigmabeta.sage.appcomm.LCE
@@ -14,28 +14,35 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
-import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
  * List Items with Images' view model.
  *
- * It loads through the same [SampleItemRepository] as List Items, so both screens show the same
- * generated rows; only the rendered model type differs (image + name + caption instead of name +
- * caption). Collection runs in `viewModelScope` via [runInBackground], so it stops when the
- * screen's ViewModel is cleared and waits for the duration selected on the Settings screen.
+ * It loads through the same [SampleItemRepository] as List Items, but opens a window and fetches
+ * one page at a time instead of the whole generated set. Paging behaviour lives in
+ * [PagedListItemsViewModel]; this class supplies the repository call and the state copy, then
+ * keeps the screen's own click action.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
 @Inject
 class ListItemsWithImagesViewModel(
-    override val stringProvider: StringProvider,
-    override val analytics: Analytics,
-    override val dispatchers: SageDispatchers,
-    override val delayManager: SampleDelayManager,
+    stringProvider: StringProvider,
+    analytics: Analytics,
+    dispatchers: SageDispatchers,
+    delayManager: SampleDelayManager,
     private val repository: SampleItemRepository,
-) : SampleListViewModel<ListItemsWithImagesState>() {
+) : PagedListItemsViewModel<ListItemsWithImagesState>(
+    stringProvider = stringProvider,
+    analytics = analytics,
+    dispatchers = dispatchers,
+    delayManager = delayManager,
+    operationName = LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
+) {
     override val screenIdentifier = AnalyticsScreen.NONE
+
+    override val pageSize = LIST_ITEMS_WITH_IMAGES_PAGE_SIZE
 
     override fun initialState(): ListItemsWithImagesState = ListItemsWithImagesState()
 
@@ -44,9 +51,9 @@ class ListItemsWithImagesViewModel(
     }
 
     override fun handleAction(action: SageAction) {
-        when (action) {
-            is SageAction.InitNoArgs -> load()
+        if (handlePagingAction(action)) return
 
+        when (action) {
             is ListItemsWithImagesAction.ItemClicked -> emitEvent(
                 SageEvent.ShowSnackbar(
                     message = stringProvider.getStringOneArg(
@@ -62,17 +69,29 @@ class ListItemsWithImagesViewModel(
         }
     }
 
-    private fun load() {
-        updateState {
-            ListItemsWithImagesState(
-                LCE.Loading(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME),
-            )
-        }
+    override suspend fun fetchPage(
+        offset: Int,
+        limit: Int,
+    ): LCE<List<SampleItem>> = repository.load(offset = offset, limit = limit).first()
 
-        repository.load()
-            .onEach { content ->
-                updateState { ListItemsWithImagesState(content) }
-            }
-            .runInBackground()
-    }
+    override fun contentOf(state: ListItemsWithImagesState): LCE<List<SampleItem>> = state.content
+
+    override fun windowStartOf(state: ListItemsWithImagesState): Int = state.windowStart
+
+    override fun hasMoreAfterOf(state: ListItemsWithImagesState): Boolean = state.hasMoreAfter
+
+    override fun withPaging(
+        state: ListItemsWithImagesState,
+        content: LCE<List<SampleItem>>,
+        windowStart: Int,
+        hasMoreAfter: Boolean,
+        loadingMore: Boolean,
+        loadingPrevious: Boolean,
+    ): ListItemsWithImagesState = state.copy(
+        content = content,
+        windowStart = windowStart,
+        hasMoreAfter = hasMoreAfter,
+        loadingMore = loadingMore,
+        loadingPrevious = loadingPrevious,
+    )
 }
