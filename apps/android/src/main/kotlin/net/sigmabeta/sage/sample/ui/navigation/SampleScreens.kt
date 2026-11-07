@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.core.screen.ScreenKey
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
@@ -19,6 +20,7 @@ import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
 import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailViewModel
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.feature.home.HomeViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
@@ -122,12 +124,33 @@ data object GridOfImagesScreen : SampleScreen {
     }
 }
 
-data object ContentDetailScreen : SampleScreen {
+/**
+ * Content detail for one [ContentId], or the explicit not-found state when the route carried no
+ * usable ID.
+ *
+ * A data class whose [key] embeds the full ID: Voyager keys its per-screen ViewModelStore by
+ * `Screen.key`, so each ID gets its own ViewModel (and its own load) instead of sharing stale
+ * state with the previously opened item. The ID reaches the ViewModel through an init action, not
+ * a graph binding, because the ViewModel itself is graph-constructed.
+ */
+data class ContentDetailScreen(val contentId: ContentId?) : SampleScreen {
     override val destination = SampleDestination.CONTENT_DETAIL
+
+    override val key: ScreenKey = "ContentDetail:${contentId?.value ?: NOT_FOUND_KEY}"
 
     @Composable
     override fun Content() {
-        SampleListScreen(metroViewModel<ContentDetailViewModel>())
+        val viewModel: ContentDetailViewModel = metroViewModel()
+
+        LaunchedEffect(contentId) {
+            viewModel.sendAction(SageAction.InitWithString(contentId?.value.orEmpty()))
+        }
+
+        SampleListScreen(viewModel)
+    }
+
+    private companion object {
+        const val NOT_FOUND_KEY = "none"
     }
 }
 

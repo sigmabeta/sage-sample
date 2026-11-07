@@ -81,6 +81,7 @@ object SampleBindings {
         ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED -> R.string.content_detail_section_related
         ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS -> R.string.content_detail_section_items
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED -> R.string.content_detail_item_clicked
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND -> R.string.content_detail_not_found
     }
 
     private fun listItemsResource(id: ListItemsStringId): Int = when (id) {

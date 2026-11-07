@@ -25,6 +25,7 @@
     <string name="content_detail_section_related">Related</string>
     <string name="content_detail_section_items">Items</string>
     <string name="content_detail_item_clicked">%1$s clicked</string>
+    <string name="content_detail_not_found">This content isn\'t available.</string>
 
     <!-- Search. -->
     <string name="search_hint">Search</string>

@@ -65,9 +65,15 @@ class BrowseViewModelTest {
 
         val navigation = events.filterIsInstance<SageEvent.NavigateTo>()
         assertEquals(
-            listOf("list-items", "list-items-with-images", "grid-of-images", "content-detail"),
+            listOf(
+                "list-items",
+                "list-items-with-images",
+                "grid-of-images",
+                "content-detail/browse:featured",
+            ),
             navigation.map { it.destination },
         )
+        assertEquals("content-detail/browse:featured", navigation.last().destination)
         assertTrue(navigation.all { it.source == "BrowseViewModel" })
     }
 

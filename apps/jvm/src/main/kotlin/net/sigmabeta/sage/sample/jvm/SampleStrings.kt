@@ -30,6 +30,7 @@ object SampleStrings {
     const val CONTENT_DETAIL_SECTION_RELATED = "Related"
     const val CONTENT_DETAIL_SECTION_ITEMS = "Items"
     const val CONTENT_DETAIL_ITEM_CLICKED = "%s clicked"
+    const val CONTENT_DETAIL_NOT_FOUND = "This content isn't available."
 
     const val SEARCH_HINT = "Search"
     const val SEARCH_CLEAR_DESCRIPTION = "Clear search"

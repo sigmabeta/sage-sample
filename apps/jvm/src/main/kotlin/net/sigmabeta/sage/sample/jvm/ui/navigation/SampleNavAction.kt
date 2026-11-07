@@ -1,6 +1,8 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
 
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
+import net.sigmabeta.sage.sample.feature.contentdetail.contentDetailIdFromRoute
 
 /**
  * What a feature's navigation intent means for the app's single back stack.
@@ -12,8 +14,16 @@ sealed interface SampleNavAction {
     /** Select the destination's tab, clearing the outgoing tab's stack — Chipbox's tab switch. */
     data class ShowTopLevel(val destination: SampleDestination) : SampleNavAction
 
-    /** Push onto the active tab's inner Navigator, the same way the hamburger opens Settings. */
-    data class Push(val destination: SampleDestination) : SampleNavAction
+    /**
+     * Push onto the active tab's inner Navigator, the same way the hamburger opens Settings.
+     *
+     * [contentId] is set only for the parameterized Content detail destination; a `null` value
+     * there means the route had no usable ID and the screen renders its not-found state.
+     */
+    data class Push(
+        val destination: SampleDestination,
+        val contentId: ContentId? = null,
+    ) : SampleNavAction
 
     /** Back: apply the shared [backActionFor] policy rather than popping a navigator directly. */
     data object Pop : SampleNavAction
@@ -39,6 +49,13 @@ private fun navActionForRoute(route: String): SampleNavAction? {
     return if (destination.isTopLevel) {
         SampleNavAction.ShowTopLevel(destination)
     } else {
-        SampleNavAction.Push(destination)
+        SampleNavAction.Push(
+            destination = destination,
+            contentId = if (destination == SampleDestination.CONTENT_DETAIL) {
+                contentDetailIdFromRoute(route)
+            } else {
+                null
+            },
+        )
     }
 }
