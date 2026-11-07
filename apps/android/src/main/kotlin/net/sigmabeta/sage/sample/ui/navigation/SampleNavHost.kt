@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinx.coroutines.CoroutineScope
@@ -97,6 +98,9 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         LocalSampleWidthClass provides widthClass,
         LocalSampleActiveTabNavigator provides activeTabNavigator,
         LocalSampleBackHandler provides shellNavigation,
+        // The activity/process lifecycle: backgrounding a still-composed screen pauses it and
+        // returning to the foreground resumes it.
+        LocalScreenLifecycleOwner provides LocalLifecycleOwner.current,
     ) {
         // Voyager handles Back while the active tab can pop; at a tab root this outer handler is
         // the one that receives it, so Search-root Back can still reach the shared policy.

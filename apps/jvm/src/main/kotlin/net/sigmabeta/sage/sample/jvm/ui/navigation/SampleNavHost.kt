@@ -76,6 +76,9 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         SampleTitleBarSink { reported -> titleBar = reported }
     }
     val widthClass = currentWidthClass()
+    // Desktop has no activity lifecycle; window focus is the foreground signal, so a screen that
+    // stays composed across a focus change still gets the same Pause/Resume pair as Android.
+    val screenLifecycleOwner = rememberWindowFocusLifecycleOwner()
     val navEffects = remember(activeNavigator, shellNavigation, snackbarHostState) {
         SampleNavEffects { event ->
             handleEffect(event, shellNavigation, snackbarHostState, coroutineScope)
@@ -99,6 +102,7 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         LocalSampleWidthClass provides widthClass,
         LocalSampleActiveTabNavigator provides activeTabNavigator,
         LocalSampleBackHandler provides shellNavigation,
+        LocalScreenLifecycleOwner provides screenLifecycleOwner,
     ) {
         // Desktop Back input is a window-level seam; onBack is the same policy handler the top-bar
         // arrow and `SageEvent.NavigateBack` use.
