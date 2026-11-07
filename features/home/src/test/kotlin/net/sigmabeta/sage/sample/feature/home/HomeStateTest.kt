@@ -104,6 +104,16 @@ class HomeStateTest {
     }
 
     @Test
+    fun `a plan with no modules shows the empty state instead of a blank screen`() {
+        val rows = HomeState().toListItems(strings)
+
+        assertEquals(
+            "str-HOME_EMPTY",
+            rows.filterIsInstance<EmptyStateListModel>().single().explanation,
+        )
+    }
+
+    @Test
     fun `loading sections render placeholders instead of the empty state`() {
         val rows = stateWithSections(stableSections(LCE.Loading("home.module.load")))
             .toListItems(strings)
