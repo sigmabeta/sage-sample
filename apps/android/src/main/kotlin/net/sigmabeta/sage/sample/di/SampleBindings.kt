@@ -65,6 +65,8 @@ object SampleBindings {
         HomeStringId.HOME_SECTION_BIG_IMAGE -> R.string.home_section_big_image
         HomeStringId.HOME_SECTION_GRID_IMAGES -> R.string.home_section_grid_images
         HomeStringId.HOME_ITEM_CLICKED -> R.string.home_item_clicked
+        HomeStringId.HOME_EMPTY -> R.string.home_empty
+        HomeStringId.HOME_ALL_ERROR -> R.string.home_all_error
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {

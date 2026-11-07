@@ -126,11 +126,12 @@ internal fun fakeDefinition(
     )
 }
 
-/** In-memory settings; only [homeShowsSameContent] changes in Home tests. */
+/** In-memory settings; only the Home-relevant preferences change in Home tests. */
 internal class FakeHomeSettingsManager(
     initialHomeShowsSameContent: Boolean = true,
 ) : SampleSettingsManager {
     private val homeSameContent = MutableStateFlow(initialHomeShowsSameContent)
+    private val outcome = MutableStateFlow(DemoOutcome.DEFAULT)
 
     override val themeMode: StateFlow<ThemeMode> = MutableStateFlow(ThemeMode.DEFAULT).asStateFlow()
 
@@ -140,8 +141,7 @@ internal class FakeHomeSettingsManager(
     override val simulateDelay: StateFlow<SimulateDelay> =
         MutableStateFlow(SimulateDelay.DEFAULT).asStateFlow()
 
-    override val demoOutcome: StateFlow<DemoOutcome> =
-        MutableStateFlow(DemoOutcome.DEFAULT).asStateFlow()
+    override val demoOutcome: StateFlow<DemoOutcome> = outcome.asStateFlow()
 
     override val homeShowsSameContent: StateFlow<Boolean> = homeSameContent.asStateFlow()
 
@@ -151,7 +151,9 @@ internal class FakeHomeSettingsManager(
 
     override fun setSimulateDelay(delay: SimulateDelay) = Unit
 
-    override fun setDemoOutcome(outcome: DemoOutcome) = Unit
+    override fun setDemoOutcome(outcome: DemoOutcome) {
+        this.outcome.value = outcome
+    }
 
     override fun setHomeShowsSameContent(showSameContent: Boolean) {
         homeSameContent.value = showSameContent

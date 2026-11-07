@@ -13,6 +13,10 @@ object SampleStrings {
     const val HOME_SECTION_BIG_IMAGE = "Big image %d"
     const val HOME_SECTION_GRID_IMAGES = "Grid images %d"
     const val HOME_ITEM_CLICKED = "%s clicked"
+    const val HOME_EMPTY =
+        "No Home content is available. Change the demo outcome in Settings to load content."
+    const val HOME_ALL_ERROR =
+        "Home content could not be loaded. Change the demo outcome in Settings to try again."
 
     const val NAV_HOME = "Home"
     const val NAV_BROWSE = "Browse"

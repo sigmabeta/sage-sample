@@ -26,6 +26,8 @@ object SampleStringProvider : StringProvider {
         HomeStringId.HOME_SECTION_BIG_IMAGE to SampleStrings.HOME_SECTION_BIG_IMAGE,
         HomeStringId.HOME_SECTION_GRID_IMAGES to SampleStrings.HOME_SECTION_GRID_IMAGES,
         HomeStringId.HOME_ITEM_CLICKED to SampleStrings.HOME_ITEM_CLICKED,
+        HomeStringId.HOME_EMPTY to SampleStrings.HOME_EMPTY,
+        HomeStringId.HOME_ALL_ERROR to SampleStrings.HOME_ALL_ERROR,
         BrowseStringId.BROWSE_TITLE to SampleStrings.NAV_BROWSE,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS to SampleStrings.NAV_LIST_ITEMS,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
