@@ -2,8 +2,8 @@ plugins {
     // A feature module is pure JVM: its view model depends only on SAGE's common (multiplatform)
     // modules and the sample's ViewModel base, so it stays free of Android types.
     alias(libs.plugins.sage.jvm)
-    // Metro compiler plugin, so the view model's `@Inject` constructor and its contribution into
-    // the ViewModel map are processed at compile time.
+    // Metro compiler plugin, so the view model's `@Inject` constructor, the module set, and its
+    // contribution into the ViewModel map are all processed at compile time.
     alias(libs.plugins.sage.di)
 }
 
@@ -19,8 +19,13 @@ dependencies {
     api(libs.sage.common.ui.components)
     api(libs.sage.common.ui.strings)
 
-    // The feature is plain JVM, so its view model tests run on plain JUnit with
-    // kotlinx-coroutines-test for the scheduler.
+    // ImmutableList backs each module's section items, which HomeState wraps for rendering.
+    implementation(libs.kotlinx.collections.immutable)
+
+    // `GeneratedImageFetcher.urlFor` is the single source of truth for `generated://` request
+    // URLs. The feature only builds the URL; the apps' Coil loaders do the rendering.
+    implementation(projects.core.bitmaps)
+
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
 }

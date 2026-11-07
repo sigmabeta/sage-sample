@@ -9,13 +9,10 @@ package net.sigmabeta.sage.sample.jvm
  */
 object SampleStrings {
     const val APP_NAME = "SAGE Sample"
-    const val WELCOME_TITLE = "SAGE Sample"
-    const val WELCOME_ABOUT_HEADER = "About"
-    const val WELCOME_ABOUT_BODY_COMPOSITE_BUILD =
-        "SAGE is consumed as a Gradle composite build from the sage/ submodule."
-    const val WELCOME_ABOUT_BODY_LIST_STATE =
-        "Each feature is a pure JVM module that produces a ListState rendered by SAGE's ListScreen."
-    const val WELCOME_OPEN_BROWSE = "Open Browse"
+    const val HOME_TITLE = "SAGE Sample"
+    const val HOME_SECTION_BIG_IMAGE = "Big image %d"
+    const val HOME_SECTION_GRID_IMAGES = "Grid images %d"
+    const val HOME_ITEM_CLICKED = "%s clicked"
 
     const val NAV_HOME = "Home"
     const val NAV_BROWSE = "Browse"
@@ -52,6 +49,7 @@ object SampleStrings {
     const val SETTINGS_DELAY_ONE_SECOND = "1 second"
     const val SETTINGS_DELAY_TWO_SECONDS = "2 seconds"
     const val SETTINGS_DELAY_FIVE_SECONDS = "5 seconds"
+    const val SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT = "Home shows same content"
 
     const val SETTINGS_SECTION_ABOUT = "About"
     const val SETTINGS_LABEL_APP_VERSION = "App version"

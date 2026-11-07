@@ -16,4 +16,5 @@ sealed class SettingsAction : SageAction() {
     data class ThemeModeSelected(val mode: ThemeMode) : SettingsAction()
     data class FontChoiceSelected(val choice: FontChoice) : SettingsAction()
     data class SimulateDelaySelected(val delay: SimulateDelay) : SettingsAction()
+    data object HomeShowsSameContentToggled : SettingsAction()
 }

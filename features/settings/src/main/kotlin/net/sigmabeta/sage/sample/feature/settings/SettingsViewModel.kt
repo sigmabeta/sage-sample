@@ -65,6 +65,11 @@ class SettingsViewModel(
                 updateState { it.copy(simulateDelay = delay) }
             }
         }
+        viewModelScope.launch {
+            settingsManager.homeShowsSameContent.collect { showSameContent ->
+                updateState { it.copy(homeShowsSameContent = showSameContent) }
+            }
+        }
     }
 
     override fun handleAction(action: SageAction) {
@@ -90,6 +95,10 @@ class SettingsViewModel(
                 settingsManager.setSimulateDelay(action.delay)
                 collapseDropdown()
             }
+
+            SettingsAction.HomeShowsSameContentToggled -> settingsManager.setHomeShowsSameContent(
+                !settingsManager.homeShowsSameContent.value,
+            )
 
             else -> Unit
         }

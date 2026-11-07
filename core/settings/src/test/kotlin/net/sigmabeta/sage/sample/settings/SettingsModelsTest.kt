@@ -66,4 +66,14 @@ class SettingsModelsTest {
         assertEquals(SimulateDelay.NONE, SimulateDelay.fromStorageValue("BOGUS"))
         assertEquals(SimulateDelay.NONE, SimulateDelay.DEFAULT)
     }
+
+    @Test
+    fun `home shows same content parses persisted booleans and defaults to off`() {
+        assertTrue(homeShowsSameContentFromStorage("true"))
+        assertFalse(homeShowsSameContentFromStorage("false"))
+        assertFalse(homeShowsSameContentFromStorage(null))
+        assertFalse(homeShowsSameContentFromStorage(""))
+        assertFalse(homeShowsSameContentFromStorage("BOGUS"))
+        assertFalse(DEFAULT_HOME_SHOWS_SAME_CONTENT)
+    }
 }

@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import net.sigmabeta.sage.components.CheckableListModel
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
@@ -42,6 +43,7 @@ class SettingsViewModelTest {
             initialThemeMode = ThemeMode.DARK,
             initialFontChoice = FontChoice.INTER,
             initialSimulateDelay = SimulateDelay.ONE_SECOND,
+            initialHomeShowsSameContent = true,
         )
         val viewModel = createViewModel(settings = settings, appInfo = testAppInfo(versionName = "9.9.9"))
 
@@ -50,6 +52,7 @@ class SettingsViewModelTest {
         assertEquals(ThemeMode.DARK.ordinal, themeDropdown(items).selectedPosition)
         assertEquals(FontChoice.INTER.ordinal, fontDropdown(items).selectedPosition)
         assertEquals(SimulateDelay.ONE_SECOND.ordinal, delayDropdown(items).selectedPosition)
+        assertEquals(true, homeShowsSameContentToggle(items).checked)
         assertEquals("9.9.9", items.filterIsInstance<LabelValueListModel>()[0].value)
     }
 
@@ -104,6 +107,20 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `toggling home shows same content writes through`() = runTest(dispatcher) {
+        val settings = FakeSettingsManager()
+        val viewModel = createViewModel(settings = settings)
+
+        assertFalse(homeShowsSameContentToggle(viewModel.uiStateActual.value.listItems).checked!!)
+
+        viewModel.sendAction(SettingsAction.HomeShowsSameContentToggled)
+        advanceUntilIdle()
+
+        assertEquals(listOf(true), settings.setHomeShowsSameContentCalls)
+        assertTrue(homeShowsSameContentToggle(viewModel.uiStateActual.value.listItems).checked!!)
+    }
+
+    @Test
     fun `expanding another dropdown replaces the open one and re-tapping closes it`() = runTest(dispatcher) {
         val viewModel = createViewModel(settings = FakeSettingsManager())
 
@@ -151,6 +168,12 @@ class SettingsViewModelTest {
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
+
+    private fun homeShowsSameContentToggle(items: List<ListModel>): CheckableListModel =
+        items.filterIsInstance<CheckableListModel>()
+            .single {
+                it.name == SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
+            }
 
     private companion object {
         val THEME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_THEME.name

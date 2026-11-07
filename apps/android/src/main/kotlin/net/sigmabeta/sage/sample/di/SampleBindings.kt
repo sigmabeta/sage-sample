@@ -16,10 +16,10 @@ import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.BuildConfig
 import net.sigmabeta.sage.sample.R
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.home.HomeStringId
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
-import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
 import net.sigmabeta.sage.sample.storage.PreferencesStorage
 import net.sigmabeta.sage.sample.storage.settingsDataStore
 import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
@@ -48,7 +48,7 @@ object SampleBindings {
     fun provideStringProvider(context: Context): StringProvider =
         AndroidStringProvider(context.resources) { id ->
             when (id) {
-                is WelcomeStringId -> welcomeResource(id)
+                is HomeStringId -> homeResource(id)
                 is BrowseStringId -> browseResource(id)
                 is ListItemsStringId -> listItemsResource(id)
                 is SearchStringId -> searchResource(id)
@@ -58,13 +58,11 @@ object SampleBindings {
             }
         }
 
-    private fun welcomeResource(id: WelcomeStringId): Int = when (id) {
-        WelcomeStringId.APP_NAME -> R.string.app_name
-        WelcomeStringId.WELCOME_TITLE -> R.string.welcome_title
-        WelcomeStringId.WELCOME_ABOUT_HEADER -> R.string.welcome_about_header
-        WelcomeStringId.WELCOME_ABOUT_BODY_COMPOSITE_BUILD -> R.string.welcome_about_body_composite_build
-        WelcomeStringId.WELCOME_ABOUT_BODY_LIST_STATE -> R.string.welcome_about_body_list_state
-        WelcomeStringId.WELCOME_OPEN_BROWSE -> R.string.welcome_open_browse
+    private fun homeResource(id: HomeStringId): Int = when (id) {
+        HomeStringId.HOME_TITLE -> R.string.home_title
+        HomeStringId.HOME_SECTION_BIG_IMAGE -> R.string.home_section_big_image
+        HomeStringId.HOME_SECTION_GRID_IMAGES -> R.string.home_section_grid_images
+        HomeStringId.HOME_ITEM_CLICKED -> R.string.home_item_clicked
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {
@@ -111,6 +109,7 @@ object SampleBindings {
         SettingsStringId.SETTINGS_DELAY_ONE_SECOND -> R.string.settings_delay_one_second
         SettingsStringId.SETTINGS_DELAY_TWO_SECONDS -> R.string.settings_delay_two_seconds
         SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS -> R.string.settings_delay_five_seconds
+        SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT -> R.string.settings_label_home_shows_same_content
         SettingsStringId.SETTINGS_SECTION_ABOUT -> R.string.settings_section_about
         SettingsStringId.SETTINGS_LABEL_APP_VERSION -> R.string.settings_label_app_version
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE -> R.string.settings_label_build_date

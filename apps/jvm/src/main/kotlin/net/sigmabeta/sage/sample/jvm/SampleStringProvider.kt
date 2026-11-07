@@ -1,10 +1,10 @@
 package net.sigmabeta.sage.sample.jvm
 
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.home.HomeStringId
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
-import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
 import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
@@ -21,12 +21,10 @@ import net.sigmabeta.sage.ui.StringProvider
  */
 object SampleStringProvider : StringProvider {
     private val strings: Map<SageStringId, String> = mapOf(
-        WelcomeStringId.APP_NAME to SampleStrings.APP_NAME,
-        WelcomeStringId.WELCOME_TITLE to SampleStrings.WELCOME_TITLE,
-        WelcomeStringId.WELCOME_ABOUT_HEADER to SampleStrings.WELCOME_ABOUT_HEADER,
-        WelcomeStringId.WELCOME_ABOUT_BODY_COMPOSITE_BUILD to SampleStrings.WELCOME_ABOUT_BODY_COMPOSITE_BUILD,
-        WelcomeStringId.WELCOME_ABOUT_BODY_LIST_STATE to SampleStrings.WELCOME_ABOUT_BODY_LIST_STATE,
-        WelcomeStringId.WELCOME_OPEN_BROWSE to SampleStrings.WELCOME_OPEN_BROWSE,
+        HomeStringId.HOME_TITLE to SampleStrings.HOME_TITLE,
+        HomeStringId.HOME_SECTION_BIG_IMAGE to SampleStrings.HOME_SECTION_BIG_IMAGE,
+        HomeStringId.HOME_SECTION_GRID_IMAGES to SampleStrings.HOME_SECTION_GRID_IMAGES,
+        HomeStringId.HOME_ITEM_CLICKED to SampleStrings.HOME_ITEM_CLICKED,
         BrowseStringId.BROWSE_TITLE to SampleStrings.NAV_BROWSE,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS to SampleStrings.NAV_LIST_ITEMS,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
@@ -61,6 +59,8 @@ object SampleStringProvider : StringProvider {
         SettingsStringId.SETTINGS_DELAY_ONE_SECOND to SampleStrings.SETTINGS_DELAY_ONE_SECOND,
         SettingsStringId.SETTINGS_DELAY_TWO_SECONDS to SampleStrings.SETTINGS_DELAY_TWO_SECONDS,
         SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS to SampleStrings.SETTINGS_DELAY_FIVE_SECONDS,
+        SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT to
+            SampleStrings.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
         SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,
         SettingsStringId.SETTINGS_LABEL_APP_VERSION to SampleStrings.SETTINGS_LABEL_APP_VERSION,
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE to SampleStrings.SETTINGS_LABEL_BUILD_DATE,

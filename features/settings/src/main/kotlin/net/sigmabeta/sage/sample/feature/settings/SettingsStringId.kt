@@ -5,7 +5,7 @@ import net.sigmabeta.sage.ui.SageStringId
 /**
  * Every string the Settings feature renders.
  *
- * As with [net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId], the app module owns the
+ * As with [net.sigmabeta.sage.sample.feature.home.HomeStringId], the app module owns the
  * id → `R.string` mapping; this module never touches Android resources.
  */
 enum class SettingsStringId : SageStringId {
@@ -26,6 +26,7 @@ enum class SettingsStringId : SageStringId {
     SETTINGS_DELAY_ONE_SECOND,
     SETTINGS_DELAY_TWO_SECONDS,
     SETTINGS_DELAY_FIVE_SECONDS,
+    SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
 
     SETTINGS_SECTION_ABOUT,
     SETTINGS_LABEL_APP_VERSION,

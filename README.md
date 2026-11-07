@@ -2,9 +2,10 @@
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
 Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), five pure-JVM feature
-modules over shared `:core` modules (Welcome, Browse, List Items — as text-only, generated-image,
-and 50-item generated-image grid variants — Search, and a Settings screen with persisted
-preferences), and SAGE itself as a Git submodule consumed through a Gradle composite build.
+modules over shared `:core` modules (a module-driven Home that randomizes 2–10 hero and
+generated-image rows per visit, Browse, List Items — as text-only, generated-image, and 50-item
+generated-image grid variants — Search, and a Settings screen with persisted preferences), and
+SAGE itself as a Git submodule consumed through a Gradle composite build.
 
 ## Requirements
 
@@ -149,16 +150,21 @@ core/settings/              pure-JVM preference vocabulary shared by both apps
   SampleDelayManager.kt     duration-aware extension of SAGE's DelayManager
 core/viewmodel/             pure-JVM ViewModel base shared by every feature
   SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, delayed background seam
-features/welcome/           pure-JVM feature module (no Android dependencies)
-  WelcomeState.kt           ListState: what the screen contains
-  WelcomeViewModel.kt       Metro-contributed ViewModel: state, actions, analytics
-  WelcomeStringId.kt        SageStringId keys; the app maps them to R.string
+features/home/             pure-JVM feature module (no Android dependencies)
+  HomeState.kt             ListState: one section slot per home module
+  HomeViewModel.kt         Metro-contributed ViewModel: fans module flows into their slots
+  HomeModule.kt            pluggable row contract + resolved section payload
+  HomeModuleFactory.kt     per-screen randomized 2–10 instance plan
+  HomeModuleBindings.kt    provides the randomized List<HomeModule>
+  HomeStringId.kt          SageStringId keys; the app maps them to R.string
+  modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
+  DemoHomeRepository.kt    seeded catalog + generated:// artwork
 features/browse/            same shape; static destination rows (no loading/content)
 features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
 features/search/            query + two deterministic generated result sets (list rows, grid)
-features/settings/          theme, font + simulate-delay dropdowns, app version and build date
+features/settings/          theme, font, simulate-delay and same-content rows, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene
 CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
 detekt-config.yml           ruleset read by the SAGE base plugins
@@ -224,13 +230,13 @@ is processed at compile time. `SampleMetroViewModelFactory` is the contributed
 
 SAGE splits a screen in two:
 
-1. The feature owns the state machine. `WelcomeState : ListState` declares a title and a list of
-   `ListModel`s; `WelcomeViewModel : SampleListViewModel<WelcomeState>` owns actions and analytics.
+1. The feature owns the state machine. `HomeState : ListState` declares a title and a list of
+   `ListModel`s; `HomeViewModel : SampleListViewModel<HomeState>` owns actions and analytics.
    `SampleListViewModel` (`:core:viewmodel`) is an `androidx.lifecycle.ViewModel` base with
    `uiStateActual` mapped from `ListState` — SAGE's plain `ListViewModelBrain` (and the graph
    accessor per screen) is a Dagger-era shell that Metro does not need.
 2. The app owns rendering. `SampleScreens` resolves the view model with
-   `metroViewModel<WelcomeViewModel>()`, observes `uiStateActual`, reports its title
+   `metroViewModel<HomeViewModel>()`, observes `uiStateActual`, reports its title
    through `LocalSampleTitleBarSink`, and passes the state to SAGE's `ListScreen` — or to
    `GridScreen` when `screenLayoutFor` sees more than one column. It supplies the shared
    `ListModel.Content` renderer (`:core:ui:components:api`) to draw each model. Unknown model
@@ -241,6 +247,24 @@ SAGE splits a screen in two:
 
 Text goes through `StringProvider` and a feature-owned `SageStringId` enum, so feature modules stay
 platform-agnostic; `SampleBindings` is the only place that knows about `R.string`.
+
+Home is module-driven, the way Chipbox's home screen is. `HomeModule` is the pluggable row
+contract: a stable id, a priority, an optional section header, and a
+`Flow<LCE<HomeModuleSection>>`. `HomeModuleFactory` builds a fresh randomized plan for each
+screen — between 2 and 10 instances of the two module types, both always represented, in random
+order. `HomeModuleBindings` provides that `List<HomeModule>` to the graph, and `HomeViewModel`
+collects every instance in parallel and patches only that module's slot in `HomeState`.
+`HomeState` gives each slot SAGE's standard loading and error rows and wraps multi-item rows in a
+`HorizontalScrollerListModel`; a single-item row (the daily hero) keeps the full width. Each
+instance gets a numbered section title and its own data-id range, so repeated module types
+coexist without tripping SAGE's duplicate-id check. Each instance also passes its id to the
+repository and its artwork URLs, so two instances of the same module render different titles and
+generated art while re-visiting one instance reproduces its content. The Settings screen's
+"Home shows same content" toggle swaps the plan's random source for a fixed seed, so every visit
+reproduces the same rows. The sample ships two modules: `BigImageModule` picks one item per UTC
+day from the instance's generated catalog and renders it as a width-capped `GridImageListModel`,
+and `GridImagesModule` asks the repository for a bounded list and renders `GridImageListModel`
+cells.
 
 The List Items screens share one seeded generator. The text-only variant maps each `SampleItem`
 to `NameCaptionListModel`; the image variant maps the same data to `ImageNameCaptionListModel`

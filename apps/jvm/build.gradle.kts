@@ -35,10 +35,10 @@ dependencies {
     implementation(projects.core.ui.components.api)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
+    implementation(projects.features.home)
     implementation(projects.features.listitems)
     implementation(projects.features.search)
     implementation(projects.features.settings)
-    implementation(projects.features.welcome)
 
     // Metro's ViewModel map (`ViewModelGraph`) and the Compose resolver (`metroViewModel()`).
     implementation(libs.metrox.viewmodel)

@@ -31,10 +31,10 @@ class SampleTopBarStateTest {
 
     @Test
     fun `a reported title replaces the destination label`() {
-        val titleBar = TitleBarModel(title = "Welcome to SAGE", shouldShowBack = false)
+        val titleBar = TitleBarModel(title = "SAGE Sample", shouldShowBack = false)
 
         assertEquals(
-            SampleTopBarState(title = "Welcome to SAGE", leading = SampleTopBarLeading.MENU),
+            SampleTopBarState(title = "SAGE Sample", leading = SampleTopBarLeading.MENU),
             topBarState(titleBar, destinationLabel = "Home", isTopLevel = true),
         )
     }

@@ -1,10 +1,10 @@
 package net.sigmabeta.sage.sample.jvm
 
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.home.HomeStringId
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.settings.SettingsStringId
-import net.sigmabeta.sage.sample.feature.welcome.WelcomeStringId
 import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.ui.SageStringId
 import org.junit.Assert.assertFalse
@@ -20,7 +20,7 @@ import org.junit.Test
 class SampleStringProviderTest {
     @Test
     fun `every feature string id has a desktop mapping`() {
-        val ids: List<SageStringId> = WelcomeStringId.entries +
+        val ids: List<SageStringId> = HomeStringId.entries +
             BrowseStringId.entries +
             ListItemsStringId.entries +
             SearchStringId.entries +

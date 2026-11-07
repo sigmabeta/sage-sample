@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.feature.settings
 
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.components.CheckableListModel
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
@@ -24,6 +25,7 @@ class SettingsStateTest {
                 fontDropdown(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_SIMULATION.toString()),
                 delayDropdown(items),
+                homeShowsSameContentToggle(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_ABOUT.toString()),
                 appVersionRow(items),
                 buildDateRow(items),
@@ -112,6 +114,18 @@ class SettingsStateTest {
     }
 
     @Test
+    fun `home shows same content toggle reflects the setting and carries the toggle action`() {
+        val off = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
+        assertEquals(false, off.checked)
+        assertEquals(SettingsAction.HomeShowsSameContentToggled, off.clickAction)
+
+        val on = homeShowsSameContentToggle(
+            SettingsState(homeShowsSameContent = true).toListItems(FakeStringProvider),
+        )
+        assertEquals(true, on.checked)
+    }
+
+    @Test
     fun `about rows render the app version and build date`() {
         val items = SettingsState(
             appVersion = "1.2.3",
@@ -135,6 +149,12 @@ class SettingsStateTest {
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
+
+    private fun homeShowsSameContentToggle(items: List<ListModel>): CheckableListModel =
+        items.filterIsInstance<CheckableListModel>()
+            .single {
+                it.name == SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
+            }
 
     private fun appVersionRow(items: List<ListModel>): LabelValueListModel =
         items.filterIsInstance<LabelValueListModel>()

@@ -17,13 +17,13 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
+import net.sigmabeta.sage.sample.feature.home.HomeViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
-import net.sigmabeta.sage.sample.feature.welcome.WelcomeViewModel
 import net.sigmabeta.sage.sample.ui.components.api.Content
 import net.sigmabeta.sage.sample.ui.components.api.SearchContent
 import net.sigmabeta.sage.sample.ui.components.api.text
@@ -46,7 +46,7 @@ data object HomeScreen : SampleScreen {
 
     @Composable
     override fun Content() {
-        SampleListScreen(metroViewModel<WelcomeViewModel>())
+        SampleListScreen(metroViewModel<HomeViewModel>())
     }
 }
 

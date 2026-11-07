@@ -2,12 +2,14 @@ package net.sigmabeta.sage.sample.feature.settings
 
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.components.CheckableListModel
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
+import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -24,6 +26,7 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.DEFAULT,
     val fontChoice: FontChoice = FontChoice.DEFAULT,
     val simulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
+    val homeShowsSameContent: Boolean = DEFAULT_HOME_SHOWS_SAME_CONTENT,
     val appVersion: String? = null,
     val buildDate: String? = null,
     /** `settingId` of the expanded dropdown, or null when all are collapsed. */
@@ -40,6 +43,7 @@ data class SettingsState(
         fontDropdown(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_SIMULATION),
         simulateDelayDropdown(stringProvider),
+        homeShowsSameContentToggle(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_ABOUT),
         labelValue(
             stringProvider,
@@ -101,6 +105,16 @@ data class SettingsState(
             onNewOptionSelected = { index ->
                 SettingsAction.SimulateDelaySelected(SimulateDelay.entries[index])
             },
+        )
+    }
+
+    private fun homeShowsSameContentToggle(stringProvider: StringProvider): ListModel {
+        val settingId = SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.name
+        return CheckableListModel(
+            settingId = settingId,
+            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT),
+            checked = homeShowsSameContent,
+            clickAction = SettingsAction.HomeShowsSameContentToggled,
         )
     }
 
