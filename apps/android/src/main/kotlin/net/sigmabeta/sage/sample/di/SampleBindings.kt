@@ -16,6 +16,7 @@ import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.BuildConfig
 import net.sigmabeta.sage.sample.R
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailStringId
 import net.sigmabeta.sage.sample.feature.home.HomeStringId
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
@@ -50,6 +51,7 @@ object SampleBindings {
             when (id) {
                 is HomeStringId -> homeResource(id)
                 is BrowseStringId -> browseResource(id)
+                is ContentDetailStringId -> contentDetailResource(id)
                 is ListItemsStringId -> listItemsResource(id)
                 is SearchStringId -> searchResource(id)
                 is SettingsStringId -> settingsResource(id)
@@ -70,6 +72,15 @@ object SampleBindings {
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS -> R.string.nav_list_items
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES -> R.string.nav_list_items_with_images
         BrowseStringId.BROWSE_OPEN_GRID_OF_IMAGES -> R.string.nav_grid_of_images
+        BrowseStringId.BROWSE_OPEN_CONTENT_DETAIL -> R.string.nav_content_detail
+    }
+
+    private fun contentDetailResource(id: ContentDetailStringId): Int = when (id) {
+        ContentDetailStringId.CONTENT_DETAIL_TITLE -> R.string.nav_content_detail
+        ContentDetailStringId.CONTENT_DETAIL_SECTION_DETAILS -> R.string.content_detail_section_details
+        ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED -> R.string.content_detail_section_related
+        ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS -> R.string.content_detail_section_items
+        ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED -> R.string.content_detail_item_clicked
     }
 
     private fun listItemsResource(id: ListItemsStringId): Int = when (id) {

@@ -1,11 +1,12 @@
 # SAGE Sample
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
-Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), five pure-JVM feature
+Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), six pure-JVM feature
 modules over shared `:core` modules (a module-driven Home that randomizes 2–10 hero and
-generated-image rows per visit, Browse, List Items — as text-only, generated-image, and 50-item
-generated-image grid variants — Search, and a Settings screen with persisted preferences), and
-SAGE itself as a Git submodule consumed through a Gradle composite build.
+generated-image rows per visit, Browse, a Content detail screen over seeded generated content,
+List Items — as text-only, generated-image, and 50-item generated-image grid variants —
+Search, and a Settings screen with persisted preferences), and SAGE itself as a Git submodule
+consumed through a Gradle composite build.
 
 ## Requirements
 
@@ -160,6 +161,8 @@ features/home/             pure-JVM feature module (no Android dependencies)
   modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
   DemoHomeRepository.kt    seeded catalog + generated:// artwork
 features/browse/            same shape; static destination rows (no loading/content)
+features/contentdetail/     detail layout: hero art, generated CTAs and label/value rows, related
+                            scroller and image/name/caption items over one predetermined-seed item
 features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
@@ -273,6 +276,17 @@ for 50 items and maps them to `GridImageListModel` cells at a 160 dp column widt
 `ImageNameCaptionListItem` and `GridImage` renderers load those URLs through Coil, so the artwork
 comes from `:core:bitmaps`' fetcher rather than bundled bitmap assets.
 
+Content Detail is a generic detail layout driven entirely by generated content. `ContentDetailState`
+renders a hero image, a column of CTA rows whose text and icons both come from the seed, a block
+of generated label/value rows, a horizontally scrolling "Related" row of `WideItemListModel`s, and
+an "Items" list of `ImageNameCaptionListModel` rows. One `LCE<ContentDetail>` drives every section
+through its own loading shape (`BIG_IMAGE`, no placeholder for the CTAs/details, `WIDE_ITEM` in a
+scroller, `TEXT_CAPTION_IMAGE` for the items), and an error replaces the screen with a single
+error row. `DemoContentDetailRepository` builds the item from a fixed seed
+(`CONTENT_DETAIL_SEED`), so the content is random-looking but identical on every visit — the
+"randomized content, predetermined seed" contract. The only fixed text on the screen is section
+chrome and the click snackbar; titles, labels, CTA text, names and captions are generated.
+
 Search keeps the same feature-state / app-rendering split, with a Chipbox-style search shell: the
 shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim
 and a back action in the bar. Because the field replaces the top bar, `SearchScreen` sets
@@ -303,10 +317,12 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
   `NavigationRail` at 600 dp and wider. Selecting one resets the stack to `[home, target]`, so
   back from Browse or Search returns Home.
 - **Settings** is pushed from the hamburger.
-- **List Items, List Items with Images, and Grid of Images** are pushed from Browse. All three
-  are non-top-level routes, so the back arrow returns to Browse rather than resetting the stack.
-  Grid of Images declares `ColumnType.Regular(160)`, so the shared screen renders it with SAGE's
-  `GridScreen` rather than `ListScreen`.
+- **List Items, List Items with Images, Grid of Images, and Content Detail** are pushed from
+  Browse. All four are non-top-level routes, so the back arrow returns to Browse rather than
+  resetting the stack. Grid of Images declares `ColumnType.Regular(160)`, so the shared screen
+  renders it with SAGE's `GridScreen` rather than `ListScreen`; Content Detail declares
+  `ColumnType.Staggered(320)`, so it keeps the single-column list on a compact window and becomes
+  SAGE's staggered grid when the window fits more than one column.
 - **Feature navigation is translated, not re-implemented.** Features emit SAGE
   `SageEvent`s (`NavigateTo`, `NavigateSingleTopLevel`, `NavigateBack`) through
   `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known route to `ShowTopLevel`

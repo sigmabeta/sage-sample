@@ -20,10 +20,16 @@ object SampleStrings {
     const val NAV_LIST_ITEMS = "List Items"
     const val NAV_LIST_ITEMS_WITH_IMAGES = "List Items with Images"
     const val NAV_GRID_OF_IMAGES = "Grid of images"
+    const val NAV_CONTENT_DETAIL = "Content detail"
     const val LIST_ITEMS_ITEM_CLICKED = "Clicked %s"
     const val NAV_SETTINGS = "Settings"
     const val CD_OPEN_SETTINGS = "Open settings"
     const val CD_NAVIGATE_BACK = "Back"
+
+    const val CONTENT_DETAIL_SECTION_DETAILS = "Details"
+    const val CONTENT_DETAIL_SECTION_RELATED = "Related"
+    const val CONTENT_DETAIL_SECTION_ITEMS = "Items"
+    const val CONTENT_DETAIL_ITEM_CLICKED = "%s clicked"
 
     const val SEARCH_HINT = "Search"
     const val SEARCH_CLEAR_DESCRIPTION = "Clear search"

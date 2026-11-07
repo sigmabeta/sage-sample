@@ -13,4 +13,5 @@ sealed class BrowseAction : SageAction() {
     data object OpenListItems : BrowseAction()
     data object OpenListItemsWithImages : BrowseAction()
     data object OpenGridOfImages : BrowseAction()
+    data object OpenContentDetail : BrowseAction()
 }

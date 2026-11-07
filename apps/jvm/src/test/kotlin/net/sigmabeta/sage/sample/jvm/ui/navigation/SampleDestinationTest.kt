@@ -36,6 +36,14 @@ class SampleDestinationTest {
     }
 
     @Test
+    fun `fromRoute maps the content detail route to its destination`() {
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail"),
+        )
+    }
+
+    @Test
     fun `fromRoute returns null for an unknown route`() {
         assertNull(SampleDestination.fromRoute("no-such-destination"))
     }

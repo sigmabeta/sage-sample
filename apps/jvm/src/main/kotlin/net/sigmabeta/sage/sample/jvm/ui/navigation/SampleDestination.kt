@@ -38,6 +38,12 @@ enum class SampleDestination(
         Icon.Browse,
         isTopLevel = false,
     ),
+    CONTENT_DETAIL(
+        "content-detail",
+        SampleStrings.NAV_CONTENT_DETAIL,
+        Icon.Description,
+        isTopLevel = false,
+    ),
     SETTINGS("settings", SampleStrings.NAV_SETTINGS, Icon.Person, isTopLevel = false),
     ;
 

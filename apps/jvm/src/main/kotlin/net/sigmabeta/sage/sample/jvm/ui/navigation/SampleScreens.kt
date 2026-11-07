@@ -17,6 +17,7 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailViewModel
 import net.sigmabeta.sage.sample.feature.home.HomeViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
@@ -117,6 +118,15 @@ data object GridOfImagesScreen : SampleScreen {
     @Composable
     override fun Content() {
         SampleListScreen(metroViewModel<GridOfImagesViewModel>())
+    }
+}
+
+data object ContentDetailScreen : SampleScreen {
+    override val destination = SampleDestination.CONTENT_DETAIL
+
+    @Composable
+    override fun Content() {
+        SampleListScreen(metroViewModel<ContentDetailViewModel>())
     }
 }
 

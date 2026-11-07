@@ -9,9 +9,10 @@ import net.sigmabeta.sage.ui.StringProvider
 /**
  * Browse's content, declared as a SAGE [ListState].
  *
- * Browse is a static destination list: it exists to open the List Items screens and has no
- * asynchronous content of its own. Keeping it load-free means the destinations render
- * immediately, with no loading placeholder or inactive demo rows to wait through or skip past.
+ * Browse is a static destination list: it exists to open the List Items and Content detail
+ * screens and has no asynchronous content of its own. Keeping it load-free means the destinations
+ * render immediately, with no loading placeholder or inactive demo rows to wait through or skip
+ * past.
  */
 data object BrowseState : ListState() {
     override fun title(stringProvider: StringProvider) =
@@ -25,6 +26,7 @@ data object BrowseState : ListState() {
             openListItemsRow(stringProvider),
             openListItemsWithImagesRow(stringProvider),
             openGridOfImagesRow(stringProvider),
+            openContentDetailRow(stringProvider),
         )
 
     /** The app-side List Items destination, reached through [BrowseAction.OpenListItems]. */
@@ -51,6 +53,14 @@ data object BrowseState : ListState() {
             dataId = OPEN_GRID_OF_IMAGES_DATA_ID,
         )
 
+    /** The Chipbox-style detail screen over generated content. */
+    private fun openContentDetailRow(stringProvider: StringProvider): ListModel =
+        SingleTextListModel(
+            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_CONTENT_DETAIL),
+            clickAction = BrowseAction.OpenContentDetail,
+            dataId = OPEN_CONTENT_DETAIL_DATA_ID,
+        )
+
     /** Stable model id for the List Items row; it is part of the screen's contract. */
     const val OPEN_LIST_ITEMS_DATA_ID = 100L
 
@@ -59,4 +69,7 @@ data object BrowseState : ListState() {
 
     /** Stable model id for the Grid of Images row. */
     const val OPEN_GRID_OF_IMAGES_DATA_ID = 102L
+
+    /** Stable model id for the Content detail row. */
+    const val OPEN_CONTENT_DETAIL_DATA_ID = 103L
 }

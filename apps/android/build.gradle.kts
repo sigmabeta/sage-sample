@@ -70,6 +70,7 @@ dependencies {
     implementation(projects.core.ui.components.api)
     implementation(projects.core.viewmodel)
     implementation(projects.features.browse)
+    implementation(projects.features.contentdetail)
     implementation(projects.features.home)
     implementation(projects.features.listitems)
     implementation(projects.features.search)

@@ -10,10 +10,10 @@ class BrowseStateTest {
     private val strings = FakeStringProvider()
 
     @Test
-    fun `browse lists only its three destination rows`() {
+    fun `browse lists only its four destination rows`() {
         val rows = BrowseState.toListItems(strings)
 
-        assertEquals(3, rows.size)
+        assertEquals(4, rows.size)
         assertTrue(rows.all { it is SingleTextListModel })
     }
 
@@ -42,6 +42,15 @@ class BrowseStateTest {
         assertEquals("str-BROWSE_OPEN_GRID_OF_IMAGES", openRow.name)
         assertTrue(openRow.clickAction is BrowseAction.OpenGridOfImages)
         assertEquals(BrowseState.OPEN_GRID_OF_IMAGES_DATA_ID, openRow.dataId)
+    }
+
+    @Test
+    fun `the content detail row opens its destination`() {
+        val openRow = BrowseState.toListItems(strings)[3] as SingleTextListModel
+
+        assertEquals("str-BROWSE_OPEN_CONTENT_DETAIL", openRow.name)
+        assertTrue(openRow.clickAction is BrowseAction.OpenContentDetail)
+        assertEquals(BrowseState.OPEN_CONTENT_DETAIL_DATA_ID, openRow.dataId)
     }
 
     @Test

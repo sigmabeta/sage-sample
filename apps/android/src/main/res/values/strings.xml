@@ -14,10 +14,17 @@
     <string name="nav_list_items">List Items</string>
     <string name="nav_list_items_with_images">List Items with Images</string>
     <string name="nav_grid_of_images">Grid of images</string>
+    <string name="nav_content_detail">Content detail</string>
     <string name="nav_settings">Settings</string>
     <string name="list_items_item_clicked">Clicked %1$s</string>
     <string name="cd_open_settings">Open settings</string>
     <string name="cd_navigate_back">Back</string>
+
+    <!-- Content detail. The screen's content text is generated; these are its section chrome. -->
+    <string name="content_detail_section_details">Details</string>
+    <string name="content_detail_section_related">Related</string>
+    <string name="content_detail_section_items">Items</string>
+    <string name="content_detail_item_clicked">%1$s clicked</string>
 
     <!-- Search. -->
     <string name="search_hint">Search</string>

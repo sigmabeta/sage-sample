@@ -44,6 +44,7 @@ include(
     ":core:ui:components:api",
     ":core:viewmodel",
     ":features:browse",
+    ":features:contentdetail",
     ":features:home",
     ":features:listitems",
     ":features:search",

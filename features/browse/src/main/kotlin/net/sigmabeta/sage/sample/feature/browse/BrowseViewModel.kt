@@ -67,6 +67,14 @@ class BrowseViewModel(
                 ),
             )
 
+            is BrowseAction.OpenContentDetail -> emitEvent(
+                SageEvent.NavigateTo(
+                    // Same route contract, guarded by SampleDestinationTest.
+                    destination = "content-detail",
+                    source = "BrowseViewModel",
+                ),
+            )
+
             else -> Unit
         }
     }

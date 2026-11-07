@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.jvm
 
 import net.sigmabeta.sage.sample.feature.browse.BrowseStringId
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailStringId
 import net.sigmabeta.sage.sample.feature.home.HomeStringId
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsStringId
 import net.sigmabeta.sage.sample.feature.search.SearchStringId
@@ -29,6 +30,16 @@ object SampleStringProvider : StringProvider {
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS to SampleStrings.NAV_LIST_ITEMS,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
         BrowseStringId.BROWSE_OPEN_GRID_OF_IMAGES to SampleStrings.NAV_GRID_OF_IMAGES,
+        BrowseStringId.BROWSE_OPEN_CONTENT_DETAIL to SampleStrings.NAV_CONTENT_DETAIL,
+        ContentDetailStringId.CONTENT_DETAIL_TITLE to SampleStrings.NAV_CONTENT_DETAIL,
+        ContentDetailStringId.CONTENT_DETAIL_SECTION_DETAILS to
+            SampleStrings.CONTENT_DETAIL_SECTION_DETAILS,
+        ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED to
+            SampleStrings.CONTENT_DETAIL_SECTION_RELATED,
+        ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS to
+            SampleStrings.CONTENT_DETAIL_SECTION_ITEMS,
+        ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED to
+            SampleStrings.CONTENT_DETAIL_ITEM_CLICKED,
         ListItemsStringId.LIST_ITEMS_TITLE to SampleStrings.NAV_LIST_ITEMS,
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_TITLE to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,

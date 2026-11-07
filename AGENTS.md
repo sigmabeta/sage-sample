@@ -7,7 +7,7 @@ agent-only guardrails and pointers; prefer a pointer over repeating the README.
 ## What this repo is
 
 The canonical reference for building an app on [SAGE](sage/): one Android app (`:apps:android`), one
-Compose Desktop app (`:apps:jvm`), four pure-JVM feature modules over `:core:viewmodel`, and SAGE
+Compose Desktop app (`:apps:jvm`), six pure-JVM feature modules over `:core:viewmodel`, and SAGE
 itself as a Git submodule consumed through a Gradle composite build. Patterns added here are
 copied by real SAGE apps, so prefer the conventional SAGE way over a local shortcut.
 

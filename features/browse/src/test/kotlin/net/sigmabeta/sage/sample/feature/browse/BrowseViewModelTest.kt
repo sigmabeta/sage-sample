@@ -43,7 +43,7 @@ class BrowseViewModelTest {
 
         val rows = viewModel.uiStateActual.value.listItems
 
-        assertEquals(3, rows.size)
+        assertEquals(4, rows.size)
         assertTrue(rows.all { it is SingleTextListModel })
         assertTrue(rows.none { it is LoadingItemListModel })
     }
@@ -60,11 +60,12 @@ class BrowseViewModelTest {
         viewModel.sendAction(BrowseAction.OpenListItems)
         viewModel.sendAction(BrowseAction.OpenListItemsWithImages)
         viewModel.sendAction(BrowseAction.OpenGridOfImages)
+        viewModel.sendAction(BrowseAction.OpenContentDetail)
         advanceUntilIdle()
 
         val navigation = events.filterIsInstance<SageEvent.NavigateTo>()
         assertEquals(
-            listOf("list-items", "list-items-with-images", "grid-of-images"),
+            listOf("list-items", "list-items-with-images", "grid-of-images", "content-detail"),
             navigation.map { it.destination },
         )
         assertTrue(navigation.all { it.source == "BrowseViewModel" })
