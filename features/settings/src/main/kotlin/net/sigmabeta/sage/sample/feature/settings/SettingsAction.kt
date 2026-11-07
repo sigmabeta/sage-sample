@@ -19,4 +19,5 @@ sealed class SettingsAction : SageAction() {
     data class SimulateDelaySelected(val delay: SimulateDelay) : SettingsAction()
     data class DemoOutcomeSelected(val outcome: DemoOutcome) : SettingsAction()
     data object HomeShowsSameContentToggled : SettingsAction()
+    data object ResetDemoDataClicked : SettingsAction()
 }

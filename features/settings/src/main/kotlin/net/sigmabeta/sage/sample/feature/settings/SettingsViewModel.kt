@@ -6,13 +6,18 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
+import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.settings.DemoDataResetter
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
@@ -38,6 +43,7 @@ class SettingsViewModel(
     override val dispatchers: SageDispatchers,
     override val delayManager: SampleDelayManager,
     private val settingsManager: SampleSettingsManager,
+    private val demoDataResetter: DemoDataResetter,
     private val appInfo: AppInfo,
 ) : SampleListViewModel<SettingsState>() {
     override val screenIdentifier = AnalyticsScreen.SETTINGS
@@ -110,9 +116,62 @@ class SettingsViewModel(
                 !settingsManager.homeShowsSameContent.value,
             )
 
+            SettingsAction.ResetDemoDataClicked -> resetDemoData()
+
             else -> Unit
         }
     }
+
+    /**
+     * Runs the multi-step demo reset off the main thread, replacing the row with inline progress
+     * until it finishes.
+     *
+     * The `LCE.Loading` guard is set synchronously on the main dispatcher, so a second tap that
+     * arrives before the background job starts is ignored rather than starting a parallel reset.
+     */
+    @Suppress("TooGenericExceptionCaught")
+    private fun resetDemoData() {
+        val operationName = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA)
+        if (internalUiState.value.resetStatus is LCE.Loading) {
+            return
+        }
+        internalUiState.value = internalUiState.value.copy(
+            resetStatus = LCE.Loading(operationName),
+        )
+
+        viewModelScope.launch(dispatchers.disk) {
+            val outcome = try {
+                demoDataResetter.reset()
+                ResetOutcome(LCE.Content(Unit), SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS)
+            } catch (ex: CancellationException) {
+                // The screen is going away; a failure snackbar would be noise.
+                throw ex
+            } catch (ex: Throwable) {
+                ResetOutcome(
+                    LCE.Error(operationName, ex),
+                    SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE,
+                )
+            }
+
+            // Back on the main dispatcher so the state update and the snackbar are ordered and
+            // other main-confined state edits cannot interleave between them.
+            withContext(dispatchers.main) {
+                internalUiState.value = internalUiState.value.copy(resetStatus = outcome.status)
+                emitEvent(
+                    SageEvent.ShowSnackbar(
+                        message = stringProvider.getString(outcome.snackbarId),
+                        withDismissAction = false,
+                        source = "SettingsViewModel",
+                    ),
+                )
+            }
+        }
+    }
+
+    private data class ResetOutcome(
+        val status: LCE<Unit>,
+        val snackbarId: SettingsStringId,
+    )
 
     private fun collapseDropdown() = updateState { it.copy(expandedDropdownId = null) }
 }

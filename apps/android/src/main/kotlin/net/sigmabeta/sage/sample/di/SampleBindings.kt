@@ -65,6 +65,8 @@ object SampleBindings {
         HomeStringId.HOME_SECTION_BIG_IMAGE -> R.string.home_section_big_image
         HomeStringId.HOME_SECTION_GRID_IMAGES -> R.string.home_section_grid_images
         HomeStringId.HOME_ITEM_CLICKED -> R.string.home_item_clicked
+        HomeStringId.HOME_EMPTY -> R.string.home_empty
+        HomeStringId.HOME_ALL_ERROR -> R.string.home_all_error
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {
@@ -81,6 +83,7 @@ object SampleBindings {
         ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED -> R.string.content_detail_section_related
         ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS -> R.string.content_detail_section_items
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED -> R.string.content_detail_item_clicked
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND -> R.string.content_detail_not_found
     }
 
     private fun listItemsResource(id: ListItemsStringId): Int = when (id) {
@@ -131,6 +134,11 @@ object SampleBindings {
         SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY -> R.string.settings_demo_outcome_empty
         SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR -> R.string.settings_demo_outcome_error
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT -> R.string.settings_label_home_shows_same_content
+        SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT -> R.string.settings_caption_home_shows_same_content
+        SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA -> R.string.settings_label_reset_demo_data
+        SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA -> R.string.settings_caption_reset_demo_data
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS -> R.string.settings_reset_demo_data_success
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE -> R.string.settings_reset_demo_data_failure
         SettingsStringId.SETTINGS_SECTION_ABOUT -> R.string.settings_section_about
         SettingsStringId.SETTINGS_LABEL_APP_VERSION -> R.string.settings_label_app_version
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE -> R.string.settings_label_build_date

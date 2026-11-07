@@ -13,6 +13,10 @@ object SampleStrings {
     const val HOME_SECTION_BIG_IMAGE = "Big image %d"
     const val HOME_SECTION_GRID_IMAGES = "Grid images %d"
     const val HOME_ITEM_CLICKED = "%s clicked"
+    const val HOME_EMPTY =
+        "No Home content is available. Change the demo outcome in Settings to load content."
+    const val HOME_ALL_ERROR =
+        "Home content could not be loaded. Change the demo outcome in Settings to try again."
 
     const val NAV_HOME = "Home"
     const val NAV_BROWSE = "Browse"
@@ -36,6 +40,7 @@ object SampleStrings {
     const val CONTENT_DETAIL_SECTION_RELATED = "Related"
     const val CONTENT_DETAIL_SECTION_ITEMS = "Items"
     const val CONTENT_DETAIL_ITEM_CLICKED = "%s clicked"
+    const val CONTENT_DETAIL_NOT_FOUND = "This content isn't available."
 
     const val SEARCH_HINT = "Search"
     const val SEARCH_CLEAR_DESCRIPTION = "Clear search"
@@ -66,6 +71,13 @@ object SampleStrings {
     const val SETTINGS_DEMO_OUTCOME_EMPTY = "Empty"
     const val SETTINGS_DEMO_OUTCOME_ERROR = "Error"
     const val SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT = "Home shows same content"
+    const val SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT =
+        "Render Home from one stable plan of modules on every visit."
+    const val SETTINGS_LABEL_RESET_DEMO_DATA = "Reset demo data"
+    const val SETTINGS_CAPTION_RESET_DEMO_DATA =
+        "Clear recent searches and restore the default demo outcome and Home content."
+    const val SETTINGS_RESET_DEMO_DATA_SUCCESS = "Demo data reset"
+    const val SETTINGS_RESET_DEMO_DATA_FAILURE = "Couldn’t reset demo data. Try again."
 
     const val SETTINGS_SECTION_ABOUT = "About"
     const val SETTINGS_LABEL_APP_VERSION = "App version"

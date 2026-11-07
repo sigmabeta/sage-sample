@@ -16,6 +16,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.components.EmptyStateListModel
+import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
@@ -163,6 +165,67 @@ class HomeViewModelTest {
             assertTrue(headers.isNotEmpty())
             assertTrue(headers.none { it.endsWith(":1") })
         }
+
+    @Test
+    fun `empty modules settle to one screen-level empty state`() = runTest(dispatcher) {
+        val viewModel = createViewModel(
+            listOf(
+                fakeDefinition(
+                    "hero",
+                    0,
+                    flowOf(LCE.Loading("home.hero_1.load"), LCE.Uninitialized),
+                ),
+                fakeDefinition(
+                    "gallery",
+                    1,
+                    flowOf(LCE.Loading("home.gallery_2.load"), LCE.Uninitialized),
+                ),
+            ),
+        )
+
+        // A freshly built plan has not emitted yet: the empty state must not flash while loading.
+        assertTrue(
+            viewModel.uiStateActual.value.listItems.none { it is EmptyStateListModel },
+        )
+
+        advanceUntilIdle()
+
+        val empty = viewModel.uiStateActual.value.listItems
+            .filterIsInstance<EmptyStateListModel>()
+            .single()
+        assertEquals("str-HOME_EMPTY", empty.explanation)
+    }
+
+    @Test
+    fun `an all-module failure shows one screen-level error`() = runTest(dispatcher) {
+        val viewModel = createViewModel(
+            listOf(
+                fakeDefinition(
+                    "hero",
+                    0,
+                    flowOf(
+                        LCE.Loading("home.hero_1.load"),
+                        LCE.Error("home.hero_1.load", IllegalStateException("hero")),
+                    ),
+                ),
+                fakeDefinition(
+                    "gallery",
+                    1,
+                    flowOf(
+                        LCE.Loading("home.gallery_2.load"),
+                        LCE.Error("home.gallery_2.load", IllegalStateException("gallery")),
+                    ),
+                ),
+            ),
+        )
+
+        advanceUntilIdle()
+
+        val error = viewModel.uiStateActual.value.listItems
+            .filterIsInstance<ErrorStateListModel>()
+            .single()
+        assertEquals("str-HOME_ALL_ERROR", error.errorString)
+    }
 
     // Touch the mapped state before the test advances the scheduler: `uiStateActual` is eager,
     // but its first collection has to be scheduled while time can still advance.

@@ -26,6 +26,8 @@ object SampleStringProvider : StringProvider {
         HomeStringId.HOME_SECTION_BIG_IMAGE to SampleStrings.HOME_SECTION_BIG_IMAGE,
         HomeStringId.HOME_SECTION_GRID_IMAGES to SampleStrings.HOME_SECTION_GRID_IMAGES,
         HomeStringId.HOME_ITEM_CLICKED to SampleStrings.HOME_ITEM_CLICKED,
+        HomeStringId.HOME_EMPTY to SampleStrings.HOME_EMPTY,
+        HomeStringId.HOME_ALL_ERROR to SampleStrings.HOME_ALL_ERROR,
         BrowseStringId.BROWSE_TITLE to SampleStrings.NAV_BROWSE,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS to SampleStrings.NAV_LIST_ITEMS,
         BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
@@ -40,6 +42,7 @@ object SampleStringProvider : StringProvider {
             SampleStrings.CONTENT_DETAIL_SECTION_ITEMS,
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED to
             SampleStrings.CONTENT_DETAIL_ITEM_CLICKED,
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND to SampleStrings.CONTENT_DETAIL_NOT_FOUND,
         ListItemsStringId.LIST_ITEMS_TITLE to SampleStrings.NAV_LIST_ITEMS,
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
         ListItemsStringId.LIST_ITEMS_EMPTY to SampleStrings.LIST_ITEMS_EMPTY,
@@ -85,6 +88,16 @@ object SampleStringProvider : StringProvider {
         SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR to SampleStrings.SETTINGS_DEMO_OUTCOME_ERROR,
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT to
             SampleStrings.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
+        SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT to
+            SampleStrings.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
+        SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA to
+            SampleStrings.SETTINGS_LABEL_RESET_DEMO_DATA,
+        SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA to
+            SampleStrings.SETTINGS_CAPTION_RESET_DEMO_DATA,
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS to
+            SampleStrings.SETTINGS_RESET_DEMO_DATA_SUCCESS,
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE to
+            SampleStrings.SETTINGS_RESET_DEMO_DATA_FAILURE,
         SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,
         SettingsStringId.SETTINGS_LABEL_APP_VERSION to SampleStrings.SETTINGS_LABEL_APP_VERSION,
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE to SampleStrings.SETTINGS_LABEL_BUILD_DATE,

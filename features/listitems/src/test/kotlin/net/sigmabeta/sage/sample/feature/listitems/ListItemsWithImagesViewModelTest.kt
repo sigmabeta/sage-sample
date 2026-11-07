@@ -107,7 +107,7 @@ class ListItemsWithImagesViewModelTest {
     }
 
     @Test
-    fun `clicking an item emits a snackbar naming it`() = runTest {
+    fun `clicking an item opens the detail for its own stable id`() = runTest {
         val viewModel = createViewModel()
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -122,9 +122,10 @@ class ListItemsWithImagesViewModelTest {
         viewModel.sendAction(ListItemsWithImagesAction.ItemClicked(item))
         advanceUntilIdle()
 
-        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals("str-LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED:Sleve McDichael", snackbar.message)
-        assertEquals("ListItemsWithImagesViewModel", snackbar.source)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/list-items-with-images:7", navigation.destination)
+        assertEquals("ListItemsWithImagesViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     @Test
