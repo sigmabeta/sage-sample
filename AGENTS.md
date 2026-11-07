@@ -38,10 +38,15 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   resolves with `metroViewModel<...>()`. Do not add per-screen graph accessors and do not go
   back to SAGE's `ListViewModelBrain`/`BrainProvider`.
 - **A screen ViewModel lives in its Voyager screen's store**, not the app graph: no `@SingleIn`
-  on a screen VM. Popping and re-pushing builds a fresh one.
+  on a screen VM. Popping and re-pushing builds a fresh one; a tab root survives tab switches
+  because each tab owns a retained inner `Navigator` (`TabNavigator`).
 - **Features emit `SageEvent`s; the app owns navigation.** `SampleNavEffects` →
-  `navActionFor` decides `ShowTopLevel` (reset to `[Home, target]`), `Push` (Settings), or
-  `Pop`. Don't navigate from a feature module.
+  `navActionFor` decides `ShowTopLevel` (select that tab, clearing the outgoing tab's stack),
+  `Push` (onto the active tab), or `Pop` (the shared Back policy). Don't navigate from a feature
+  module.
+- **Back is one policy:** `backActionFor(tab, canPop)` is shared by the top-bar arrow, Android
+  system Back, and `SageEvent.NavigateBack`. A pushed screen pops inside the active tab; Search
+  root returns Home; Home/Browse roots fall through to the host.
 - **Chrome comes from the active screen's `ListStateActual.title`** (`title` +
   `shouldShowBack`), with the destination as the pre-report fallback. Navigation-tab labels and
   icons stay app-owned.

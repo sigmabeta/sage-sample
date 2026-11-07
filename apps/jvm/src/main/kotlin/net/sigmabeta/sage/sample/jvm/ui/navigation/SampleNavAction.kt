@@ -9,23 +9,23 @@ import net.sigmabeta.sage.appcomm.SageEvent
  * contract is testable without a `Navigator` or Compose.
  */
 sealed interface SampleNavAction {
-    /** Reset the stack to `[Home, destination]`, the tab-switch semantics. */
+    /** Select the destination's tab, clearing the outgoing tab's stack — Chipbox's tab switch. */
     data class ShowTopLevel(val destination: SampleDestination) : SampleNavAction
 
-    /** Push the destination once, the same way the hamburger opens Settings. */
+    /** Push onto the active tab's inner Navigator, the same way the hamburger opens Settings. */
     data class Push(val destination: SampleDestination) : SampleNavAction
 
-    /** Pop the current screen. */
+    /** Back: apply the shared [backActionFor] policy rather than popping a navigator directly. */
     data object Pop : SampleNavAction
 }
 
 /**
- * Translates a feature [SageEvent] into a back-stack operation.
+ * Translates a feature [SageEvent] into a navigation operation.
  *
- * Routes resolve through [SampleDestination.fromRoute]. A top-level destination resets the stack
- * (`ShowTopLevel`); every other destination is pushed, so a feature can reach Settings without
- * discarding the screen the user came from. Events the app does not translate, and unknown routes,
- * return `null` and are ignored rather than crashing a screen.
+ * Routes resolve through [SampleDestination.fromRoute]. A top-level destination selects its tab
+ * (`ShowTopLevel`); every other destination is pushed onto the active tab, so a feature can reach
+ * Settings without discarding the screen the user came from. Events the app does not translate,
+ * and unknown routes, return `null` and are ignored rather than crashing a screen.
  */
 fun navActionFor(event: SageEvent): SampleNavAction? = when (event) {
     is SageEvent.NavigateTo -> navActionForRoute(event.destination)

@@ -22,7 +22,12 @@ class MainActivity : ComponentActivity() {
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
                 LocalComponentStringProvider provides graph.stringProvider,
             ) {
-                SampleApp(settingsManager = graph.settingsManager)
+                // Back at a tab root leaves the tabbed shell: finish the activity, which is the
+                // platform's default Back behaviour.
+                SampleApp(
+                    settingsManager = graph.settingsManager,
+                    onOuterBack = { finish() },
+                )
             }
         }
     }

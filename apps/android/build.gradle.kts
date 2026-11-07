@@ -121,8 +121,10 @@ dependencies {
     implementation(libs.coil.kt.meta)
     implementation(libs.coil.kt.compose)
 
-    // Voyager owns the navigation back stack; SAGE's catalog pins the version.
+    // Voyager owns the navigation back stack; SAGE's catalog pins the version. The tab navigator
+    // gives each top-level tab its own retained inner Navigator.
     implementation(libs.voyager.navigator)
+    implementation(libs.voyager.tab.navigator)
     implementation(libs.voyager.transitions)
 
     implementation(libs.kotlinx.collections.immutable)
