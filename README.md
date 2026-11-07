@@ -179,6 +179,12 @@ detekt-config.yml           ruleset read by the SAGE base plugins
 sage/                       SAGE submodule (composite build)
 ```
 
+## Module reference
+
+[`docs/modules/`](docs/modules/README.md) has one page per Gradle module — its job, build plugins,
+dependencies and why they are there, key types, runtime wiring, and tests. Use it when you need
+module detail; this README is the cross-cutting architecture.
+
 ## How the wiring works
 
 ### Composite build

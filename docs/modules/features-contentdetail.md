@@ -1,0 +1,83 @@
+# `:features:contentdetail`
+
+A generic detail screen driven entirely by generated content: hero art, generated call-to-action
+rows, label/value rows, a horizontally scrolling related row, and image/name/caption items. It also
+owns the **content route codec** shared by every feature that links to a detail.
+
+```kotlin
+plugins {
+    alias(libs.plugins.sage.jvm)
+    alias(libs.plugins.sage.di)
+}
+```
+
+## The route codec (`ContentDetailRoute.kt`)
+
+This is the module's most widely consumed piece — Browse, Home, List Items, List Items with Images,
+Grid of Images and Search all navigate through it.
+
+- `ContentId` — `@JvmInline value class` whose constructor validates `[A-Za-z0-9_.:-]`; a value always
+  fits in a route.
+- `contentDetailRoute(id)` → `content-detail/<id>`.
+- `contentDetailIdFromRoute(route)` → `ContentId?`. A route under the prefix with a bad payload still
+  opens the screen (not-found state), rather than being ignored.
+- `isKnownContentId(id)` — whether the demo repository can generate content for the ID's namespace
+  (`home`, `browse`, `search`, `list-items`, `list-items-with-images`, `grid-of-images`,
+  `content-detail`).
+- `DEFAULT_CONTENT_ID = ContentId("browse:featured")` and `CONTENT_DETAIL_ROUTE = "content-detail"`
+  (shared with `SampleDestination`).
+
+## Screen state
+
+`ContentDetailState` is a `ListState` over `LCE<ContentDetail?>`, with
+`ColumnType.Staggered(320, false)` — single column when compact, SAGE's staggered `GridScreen` when
+the window fits more than one column.
+
+Each section maps the same `LCE` through its own loading shape:
+
+| Section | Loading type / content |
+|---|---|
+| Hero | `BIG_IMAGE`; `HeroImageListModel` |
+| CTAs | no placeholder; `CtaListModel` per generated action |
+| Details | no placeholder; header + `LabelValueListModel` rows (blank fields omitted) |
+| Related | `WIDE_ITEM`, horizontally scrollable; header + `HorizontalScrollerListModel` of `WideItemListModel` |
+| Items | `TEXT_CAPTION_IMAGE`; header + `ImageNameCaptionListModel` rows |
+
+An `LCE.Content(null)` payload is the explicit **not-found** state and renders one localized
+`EmptyStateListModel`. An `LCE.Error` replaces the whole screen with one error row.
+
+## Data
+
+`ContentDetailRepository.load(contentId): Flow<LCE<ContentDetail?>>`.
+`DemoContentDetailRepository` generates from an FNV-1a 64-bit seed of the ID, so the same ID
+reproduces the same content on every visit; unknown IDs return `null`.
+
+Artwork URLs are built with `GeneratedImageFetcher.urlFor` and namespaced seeds
+(`content-detail/hero/…`, `content-detail/related/…`, `content-detail/item/…`).
+
+## View model
+
+`ContentDetailViewModel : SampleListViewModel<ContentDetailState>`:
+
+- `InitNoArgs` is only the screen-view report.
+- The screen sends `SageAction.InitWithString(contentId)`; a missing/invalid ID publishes not-found
+  without touching the repository.
+- A second init cancels the previous load, so a late emission from an old ID cannot overwrite the
+  new screen.
+- `HeroClicked`/`CtaClicked` show a snackbar (no destination); `RelatedClicked`/`ItemClicked` push
+  another detail, so Back returns through the chain.
+
+## Dependencies
+
+| Dependency | Why |
+|---|---|
+| `:core:viewmodel` (`api`) | Base class |
+| `:core:bitmaps` | `GeneratedImageFetcher.urlFor` |
+| `metrox-viewmodel` (`api`) | `@ViewModelKey` |
+| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` (`StringGenerator`) | State/models, actions, analytics, seeded fake data |
+
+## Tests
+
+`ContentDetailRouteTest` (validation, encoding/decoding, known namespaces), `ContentDetailStateTest`
+(each section and loading/error/not-found shape), `ContentDetailViewModelTest` (init/cancel,
+navigation chain, snackbars), `DemoContentDetailRepositoryTest` (determinism, unknown IDs).

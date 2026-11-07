@@ -1,0 +1,1 @@
+../../docs/modules/core-settings.md
