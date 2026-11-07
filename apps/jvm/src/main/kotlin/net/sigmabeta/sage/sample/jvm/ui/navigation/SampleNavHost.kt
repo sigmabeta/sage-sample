@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.SnackbarHostState
@@ -11,120 +12,190 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
+import cafe.adriel.voyager.navigator.tab.CurrentTab
+import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.WidthClass
-import net.sigmabeta.sage.sample.jvm.ui.WithPerScreenViewModelStore
 import kotlin.math.roundToInt
 
 /**
- * Owns the app's single Voyager back stack and hands the current screen to [SampleNavScaffold].
+ * The app shell: a Voyager [TabNavigator] whose top-level tabs are Home, Browse and Search.
  *
- * Unlike Android, the desktop target has no system back gesture: the top bar's back arrow calls
- * [Navigator.pop] directly, and tab selection resets the stack through [showTopLevel].
+ * Each tab owns its retained inner [cafe.adriel.voyager.navigator.Navigator] (see [SampleTab]), so
+ * switching away leaves that tab's root view model and UI state in place. Selecting a tab pops the
+ * outgoing tab to its root,
+ * discarding any pushed screen; re-tapping the current tab does the same. Feature navigation lands
+ * through [LocalSampleNavEffects]: a top-level route selects a tab, a pushed route stays on the
+ * active tab, and `NavigateBack` runs the same [backActionFor] policy as the top-bar arrow and
+ * platform Back. `ShowSnackbar` is rendered by the scaffold's host instead.
  *
- * This is also where feature navigation intents land: [LocalSampleNavEffects] translates a
- * one-shot [SageEvent] through [navActionFor] into the same back-stack operations the scaffold's
- * own controls use — a top-level route resets the stack, any other route is pushed. `ShowSnackbar`
- * is rendered by the scaffold's host instead. The chrome is hoisted here too: [LocalSampleTitleBarSink]
- * collects the active screen's SAGE title state into [topBarState], with the destination label and
- * top-level flag as the pre-report fallback, and [LocalSampleWidthClass] is computed once from the
- * window width.
+ * [onOuterBack] is the policy's `Outer` branch: desktop has nothing above the shell. Chrome, title
+ * reporting and width class are hoisted here once for every tab and pushed screen.
  */
 @Composable
-fun SampleNavHost() {
-    Navigator(screen = HomeScreen) { navigator ->
-        val current = navigator.lastItem as SampleScreen
-        val snackbarHostState = remember { SnackbarHostState() }
-        val coroutineScope = rememberCoroutineScope()
-        val navEffects = remember(navigator, snackbarHostState, coroutineScope) {
-            SampleNavEffects { event ->
-                handleEffect(event, navigator, snackbarHostState, coroutineScope)
-            }
-        }
-        val chromeController = remember { SampleChromeController() }
+fun SampleNavHost(onOuterBack: () -> Unit = {}) {
+    TabNavigator(tab = HomeTab) { tabNavigator ->
+        SampleTabbedShell(tabNavigator = tabNavigator, onOuterBack = onOuterBack)
+    }
+}
 
-        // Chipbox's chrome contract: every destination starts with the default shell chrome, and
-        // a screen may hide a bar from its own LaunchedEffect. Resetting here (before the screen
-        // composes) means Search does not have to restore the top bar when it leaves.
-        LaunchedEffect(current) {
-            chromeController.set(SampleScreenChrome.Default)
-        }
+@Composable
+private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Unit) {
+    val activeTabNavigator = remember { SampleActiveTabNavigator() }
+    val shellNavigation = rememberShellNavigation(tabNavigator, activeTabNavigator, onOuterBack)
+    val activeNavigator = activeTabNavigator.navigator
 
-        // A new destination starts without a reported title: `remember(current)` drops the previous
-        // screen's value so a transition cannot pin a stale title.
-        var titleBar by remember(current) { mutableStateOf<TitleBarModel?>(null) }
-        val titleBarSink = remember(current) {
-            SampleTitleBarSink { reported -> titleBar = reported }
-        }
-        val widthClass = currentWidthClass()
+    // `activeScreen` is the top of the active tab's stack; before the first tab registers its
+    // Navigator (one frame), fall back to the tab's own root so chrome never reads a null screen.
+    val currentTab = tabNavigator.current as SampleTab
+    val activeScreen = (activeNavigator?.lastItem as? SampleScreen) ?: currentTab.root
 
-        val topBar = topBarState(
-            titleBar = titleBar,
-            destinationLabel = current.destination.label,
-            isTopLevel = current.destination.isTopLevel,
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val chromeController = remember { SampleChromeController() }
+
+    // A new tab or pushed screen starts with the default shell chrome; a screen may hide the top
+    // bar from its own LaunchedEffect (Search does). Keying on tab + inner top screen also covers
+    // a push/pop within the active tab.
+    LaunchedEffect("${currentTab.key}/${activeScreen.key}") {
+        chromeController.set(SampleScreenChrome.Default)
+    }
+
+    var titleBar by remember(activeScreen) { mutableStateOf<TitleBarModel?>(null) }
+    val titleBarSink = remember(activeScreen) {
+        SampleTitleBarSink { reported -> titleBar = reported }
+    }
+    val widthClass = currentWidthClass()
+    val navEffects = remember(activeNavigator, shellNavigation, snackbarHostState) {
+        SampleNavEffects { event ->
+            handleEffect(event, shellNavigation, snackbarHostState, coroutineScope)
+        }
+    }
+
+    val topBar = topBarState(
+        titleBar = titleBar,
+        destinationLabel = activeScreen.destination.label,
+        isTopLevel = activeScreen.destination.isTopLevel,
+    )
+
+    CompositionLocalProvider(
+        LocalSampleChromeController provides chromeController,
+        LocalSampleNavEffects provides navEffects,
+        LocalSampleTitleBarSink provides titleBarSink,
+        LocalSampleWidthClass provides widthClass,
+        LocalSampleActiveTabNavigator provides activeTabNavigator,
+        LocalSampleBackHandler provides shellNavigation,
+    ) {
+        // Desktop Back input is a window-level seam (ticket 02); the no-op keeps the shell's shape
+        // identical to Android, where the same call installs the system Back handler.
+        SampleSystemBack(
+            enabled = activeNavigator?.canPop != true,
+            onBack = shellNavigation::back,
         )
 
-        CompositionLocalProvider(
-            LocalSampleChromeController provides chromeController,
-            LocalSampleNavEffects provides navEffects,
-            LocalSampleTitleBarSink provides titleBarSink,
-            LocalSampleWidthClass provides widthClass,
-        ) {
-            SampleNavScaffold(
-                destination = current.destination,
-                widthClass = widthClass,
-                chrome = chromeController.state,
-                topBar = topBar,
-                snackbarHostState = snackbarHostState,
-                onSelectDestination = { destination -> navigator.showTopLevel(destination) },
-                onOpenSettings = { navigator.pushDestination(SampleDestination.SETTINGS) },
-                onBack = { navigator.pop() },
-            ) { innerPadding ->
-                SlideTransition(
-                    navigator = navigator,
-                    modifier = Modifier.padding(innerPadding).fillMaxSize(),
-                ) { screen ->
-                    // Voyager only provides per-screen ViewModelStores on Android, so the desktop
-                    // app wraps each screen itself; see WithPerScreenViewModelStore.
-                    WithPerScreenViewModelStore(screen) {
-                        screen.Content()
-                    }
-                }
+        SampleNavScaffold(
+            selectedDestination = currentTab.destination,
+            widthClass = widthClass,
+            chrome = chromeController.state,
+            topBar = topBar,
+            snackbarHostState = snackbarHostState,
+            onSelectDestination = { destination ->
+                tabFor(destination)?.let(shellNavigation::selectTab)
+            },
+            onOpenSettings = { shellNavigation.push(SampleDestination.SETTINGS) },
+            onBack = shellNavigation::back,
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                CurrentTab()
             }
         }
     }
 }
 
-/** Reads the window width in dp and maps it onto SAGE's [WidthClass]. */
 @Composable
-private fun currentWidthClass(): WidthClass {
-    val windowWidth = LocalWindowInfo.current.containerSize.width
-    val density = LocalDensity.current
-    val widthDp = with(density) { windowWidth.toDp().value }.roundToInt()
-    return widthClassFromDp(widthDp)
+private fun rememberShellNavigation(
+    tabNavigator: TabNavigator,
+    activeTabNavigator: SampleActiveTabNavigator,
+    onOuterBack: () -> Unit,
+): SampleShellNavigation {
+    // The host may pass a fresh lambda each recomposition; the navigation object outlives that and
+    // still needs the latest outer callback when Back reaches the bottom of the shell.
+    val outerBack = rememberUpdatedState(onOuterBack)
+    return remember(tabNavigator, activeTabNavigator) {
+        SampleShellNavigation(tabNavigator, activeTabNavigator) { outerBack.value() }
+    }
 }
 
 /**
- * Applies a feature's one-shot effect: a snackbar is rendered by the scaffold's host, and
- * everything else goes through [navActionFor] to the back stack.
+ * The shell's navigation operations, shared by tab taps, feature events and Back.
+ *
+ * All three mutate the same two navigators, so keeping them together is what stops the bottom bar,
+ * the top-bar arrow and platform Back from drifting apart.
+ */
+private class SampleShellNavigation(
+    private val tabNavigator: TabNavigator,
+    private val activeTabNavigator: SampleActiveTabNavigator,
+    private val onOuterBack: () -> Unit,
+) : SampleBackHandler {
+
+    override fun back() {
+        val action = backActionFor(
+            tab = (tabNavigator.current as SampleTab).destination,
+            canPop = activeTabNavigator.navigator?.canPop == true,
+        )
+        when (action) {
+            SampleBackAction.Pop -> activeTabNavigator.navigator?.pop()
+            is SampleBackAction.ShowTab -> tabFor(action.destination)?.let(::selectTab)
+            SampleBackAction.Outer -> onOuterBack()
+        }
+    }
+
+    /**
+     * Selecting a tab first clears the outgoing tab's pushed screens, then switches. Re-tapping
+     * the current tab only runs the clear, so it returns that tab to its root in place.
+     */
+    fun selectTab(target: SampleTab) {
+        activeTabNavigator.navigator?.popAll()
+        if (tabNavigator.current.key != target.key) {
+            tabNavigator.current = target
+        }
+    }
+
+    /** Pushes onto the active tab; a pushed screen belongs to the tab that was visible. */
+    fun push(destination: SampleDestination) {
+        val navigator = activeTabNavigator.navigator ?: return
+        val target = screenFor(destination)
+        if (navigator.lastItem != target) {
+            navigator.push(target)
+        }
+    }
+}
+
+/**
+ * Applies a feature's one-shot effect: a snackbar is rendered by the scaffold's host, and every
+ * other event goes through [navActionFor] to the shell's navigation operations.
  */
 private fun handleEffect(
     event: SageEvent,
-    navigator: Navigator,
+    shellNavigation: SampleShellNavigation,
     snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
 ) {
     if (event !is SageEvent.ShowSnackbar) {
-        navigator.handleEvent(event)
+        when (val action = navActionFor(event)) {
+            is SampleNavAction.ShowTopLevel -> tabFor(action.destination)?.let(shellNavigation::selectTab)
+            is SampleNavAction.Push -> shellNavigation.push(action.destination)
+            SampleNavAction.Pop -> shellNavigation.back()
+            null -> Unit
+        }
         return
     }
 
@@ -142,58 +213,11 @@ private fun handleEffect(
     }
 }
 
-/**
- * Turning a feature event into navigation is app policy; the feature only names a route.
- *
- * [navActionFor] does the translation — a top-level route resets the stack, any other route is
- * pushed — and this applies the result to Voyager. Unknown routes and event types are ignored
- * rather than crashing a screen.
- */
-private fun Navigator.handleEvent(event: SageEvent) {
-    when (val action = navActionFor(event)) {
-        is SampleNavAction.ShowTopLevel -> showTopLevel(action.destination)
-        is SampleNavAction.Push -> pushDestination(action.destination)
-        SampleNavAction.Pop -> pop()
-        null -> Unit
-    }
-}
-
-/**
- * Switching tabs resets the stack to `[home, target]` (vgls semantics), so back from Browse or
- * Search returns Home instead of leaving the app. Tapping the current tab is a no-op.
- */
-private fun Navigator.showTopLevel(destination: SampleDestination) {
-    val target = screenFor(destination)
-    if (lastItem == target) {
-        return
-    }
-
-    val screens = if (destination == SampleDestination.HOME) {
-        listOf(HomeScreen)
-    } else {
-        listOf(HomeScreen, target)
-    }
-    replaceAll(screens)
-}
-
-/**
- * Pushes a non-top-level destination once. Features reach Settings the same way the hamburger
- * does, without replacing the screen they came from.
- */
-private fun Navigator.pushDestination(destination: SampleDestination) {
-    val target = screenFor(destination)
-    if (lastItem != target) {
-        push(target)
-    }
-}
-
-private fun screenFor(destination: SampleDestination): SampleScreen = when (destination) {
-    SampleDestination.HOME -> HomeScreen
-    SampleDestination.BROWSE -> BrowseScreen
-    SampleDestination.LIST_ITEMS -> ListItemsScreen
-    SampleDestination.LIST_ITEMS_WITH_IMAGES -> ListItemsWithImagesScreen
-    SampleDestination.GRID_OF_IMAGES -> GridOfImagesScreen
-    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen
-    SampleDestination.SEARCH -> SearchScreen
-    SampleDestination.SETTINGS -> SettingsScreen
+/** Reads the window width in dp and maps it onto SAGE's [WidthClass]. */
+@Composable
+private fun currentWidthClass(): WidthClass {
+    val windowWidth = LocalWindowInfo.current.containerSize.width
+    val density = LocalDensity.current
+    val widthDp = with(density) { windowWidth.toDp().value }.roundToInt()
+    return widthClassFromDp(widthDp)
 }
