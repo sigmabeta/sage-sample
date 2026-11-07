@@ -3,7 +3,6 @@ package net.sigmabeta.sage.sample.jvm.ui.navigation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -177,9 +176,11 @@ data object SettingsScreen : SampleScreen {
  *   state asks for it) from the state's [net.sigmabeta.sage.list.ColumnType] and the window's
  *   [net.sigmabeta.sage.list.WidthClass]. A state that fits at most one column keeps the existing
  *   list presentation.
- * - **Lifecycle:** exactly one foreground pair is sent here — [SageAction.Resume] on entering
- *   composition and [SageAction.Pause] on leaving. SAGE's own title-change `Resume` is coalesced
- *   in [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
+ * - **Lifecycle:** exactly one foreground pair is sent here by [ScreenLifecycleEffect] — [SageAction.Resume]
+ *   when the active screen is visible and the window has focus, [SageAction.Pause] when it is
+ *   covered, left, or the window loses focus. Screens outside the shell (previews, isolated render
+ *   tests) get no owner and therefore no actions. SAGE's own title-change `Resume` is coalesced in
+ *   [SampleListViewModel.sendAction], so feature side effects run once per foreground entry.
  *
  * `collectAsState` is enough on desktop: the view model lives in the screen's own store (see
  * `WithPerScreenViewModelStore`), so there is no separate Android lifecycle to pause collection.
@@ -204,10 +205,7 @@ private fun SampleListScreen(
         titleBarSink.onTitleBar(state.title)
     }
 
-    DisposableEffect(viewModel) {
-        viewModel.sendAction(SageAction.Resume)
-        onDispose { viewModel.sendAction(SageAction.Pause) }
-    }
+    ScreenLifecycleEffect(viewModel)
 
     if (content != null) {
         content(state)

@@ -6,6 +6,7 @@ import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
+import net.sigmabeta.sage.list.PaginationType
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -146,5 +147,80 @@ class ListItemsWithImagesStateTest {
             assertEquals("str-LIST_ITEMS_WITH_IMAGES_TITLE", title.title)
             assertTrue(title.shouldShowBack)
         }
+    }
+
+    @Test
+    fun `the state asks SAGE for standard paging with the images loading type`() {
+        val paging = ListItemsWithImagesState().paginationType as PaginationType.Standard
+
+        assertEquals(LoadingType.TEXT_CAPTION_IMAGE, paging.loadingType)
+        assertEquals(LIST_ITEMS_WITH_IMAGES_PAGE_SIZE, paging.pageSize)
+    }
+
+    @Test
+    fun `content appends a footer loader while another page is in flight`() {
+        val rows = ListItemsWithImagesState(
+            content = LCE.Content(items),
+            loadingMore = true,
+        ).toListItems(strings)
+
+        assertEquals(
+            listOf(11L, 22L),
+            rows.filterIsInstance<ImageNameCaptionListModel>().map { it.dataId },
+        )
+        val loader = rows.last() as LoadingItemListModel
+        assertEquals("$LIST_ITEMS_WITH_IMAGES_OPERATION_NAME.load_more", loader.loadOperationName)
+        assertEquals(LoadingType.TEXT_CAPTION_IMAGE, loader.loadingType)
+        assertEquals(rows.size, rows.map { it.dataId }.distinct().size)
+    }
+
+    @Test
+    fun `prepending a page shows a header loader above the rows`() {
+        val rows = ListItemsWithImagesState(
+            content = LCE.Content(items),
+            windowStart = 10,
+            loadingPrevious = true,
+        ).toListItems(strings)
+
+        val loader = rows.first() as LoadingItemListModel
+        assertEquals("$LIST_ITEMS_WITH_IMAGES_OPERATION_NAME.load_previous", loader.loadOperationName)
+        assertEquals(
+            listOf(11L, 22L),
+            rows.filterIsInstance<ImageNameCaptionListModel>().map { it.dataId },
+        )
+    }
+
+    @Test
+    fun `no boundary loader is shown when no page is in flight`() {
+        val rows = ListItemsWithImagesState(LCE.Content(items)).toListItems(strings)
+
+        assertTrue(rows.none { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `an empty window never shows a boundary loader`() {
+        val rows = ListItemsWithImagesState(
+            content = LCE.Content(emptyList()),
+            loadingMore = true,
+            loadingPrevious = true,
+        ).toListItems(strings)
+
+        assertEquals(1, rows.size)
+        assertTrue(rows.single() is EmptyStateListModel)
+    }
+
+    @Test
+    fun `an error page never shows a boundary loader`() {
+        val rows = ListItemsWithImagesState(
+            content = LCE.Error(
+                LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
+                IllegalStateException("boom"),
+            ),
+            loadingMore = true,
+            loadingPrevious = true,
+        ).toListItems(strings)
+
+        assertEquals(1, rows.size)
+        assertTrue(rows.single() is ErrorStateListModel)
     }
 }

@@ -13,10 +13,11 @@ import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 /**
  * The sample's generated datasource for Grid of Images.
  *
- * It reuses List Items' seeded generator but asks for [GRID_OF_IMAGES_ITEM_COUNT] rows, so the
- * grid is a larger set of the same deterministic demo content. The artificial latency comes from
- * the shared `runInBackground` seam, which applies the duration selected on the Settings screen;
- * this repository does not add a delay of its own.
+ * It reuses List Items' seeded generator over the same deterministic set, but asks for
+ * [GRID_OF_IMAGES_ITEM_COUNT] cells so the grid shows more of the demo content. [load] serves an
+ * `[offset, offset + limit)` window, so the grid fetches one page at a time. The artificial latency
+ * comes from the shared `runInBackground` seam, which applies the duration selected on the Settings
+ * screen; this repository does not add a delay of its own.
  *
  * The Settings demo outcome is read when a load is requested, not cached at construction:
  * [DemoOutcome.CONTENT] returns the generated cells, [DemoOutcome.EMPTY] returns a successful
@@ -32,14 +33,18 @@ import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 class DemoGridOfImagesRepository(
     private val settingsManager: SampleSettingsManager,
 ) : GridOfImagesRepository {
-    override fun load(): Flow<LCE<List<SampleItem>>> {
+    override fun load(offset: Int, limit: Int): Flow<LCE<List<SampleItem>>> {
         val outcome = settingsManager.demoOutcome.value
 
         return flow {
             emit(
                 when (outcome) {
                     DemoOutcome.CONTENT -> LCE.Content(
-                        demoSampleItems(GRID_OF_IMAGES_ITEM_COUNT),
+                        demoSampleItemsWindow(
+                            offset = offset,
+                            limit = limit,
+                            total = GRID_OF_IMAGES_ITEM_COUNT,
+                        ),
                     )
 
                     DemoOutcome.EMPTY -> LCE.Content(emptyList())

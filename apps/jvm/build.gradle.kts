@@ -48,6 +48,8 @@ dependencies {
     // one on Android, so the app wraps each screen itself — see PerScreenViewModelStore.kt).
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.viewModelCompose)
+    // `LifecycleResumeEffect` and `LocalLifecycleOwner` for the window-focus screen lifecycle.
+    implementation(libs.androidx.lifecycle.runtimeCompose)
 
     implementation(libs.sage.common.list)
     implementation(libs.sage.common.appcomm)

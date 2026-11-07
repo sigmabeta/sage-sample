@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinx.coroutines.CoroutineScope
@@ -66,9 +67,10 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
     val chromeController = remember { SampleChromeController() }
 
     // A new tab or pushed screen starts with the default shell chrome; a screen may hide the top
-    // bar from its own LaunchedEffect (Search does). Keying on tab + inner top screen also covers
-    // a push/pop within the active tab.
-    LaunchedEffect("${currentTab.key}/${activeScreen.key}") {
+    // bar from its own LaunchedEffect (Search does). The same route key re-expands the scrolling
+    // top bar, so a push/pop within the active tab resets it just like a tab switch.
+    val activeRouteKey = routeKeyFor(currentTab.key, activeScreen.key)
+    LaunchedEffect(activeRouteKey) {
         chromeController.set(SampleScreenChrome.Default)
     }
 
@@ -96,6 +98,9 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         LocalSampleWidthClass provides widthClass,
         LocalSampleActiveTabNavigator provides activeTabNavigator,
         LocalSampleBackHandler provides shellNavigation,
+        // The activity/process lifecycle: backgrounding a still-composed screen pauses it and
+        // returning to the foreground resumes it.
+        LocalScreenLifecycleOwner provides LocalLifecycleOwner.current,
     ) {
         // Voyager handles Back while the active tab can pop; at a tab root this outer handler is
         // the one that receives it, so Search-root Back can still reach the shared policy.
@@ -109,6 +114,7 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
             widthClass = widthClass,
             chrome = chromeController.state,
             topBar = topBar,
+            activeRouteKey = activeRouteKey,
             snackbarHostState = snackbarHostState,
             onSelectDestination = { destination ->
                 tabFor(destination)?.let(shellNavigation::selectTab)

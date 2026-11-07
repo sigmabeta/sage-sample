@@ -59,6 +59,14 @@ data class SampleTopBarState(
 )
 
 /**
+ * Identity of the visible route: the active tab plus the top screen of that tab's stack.
+ *
+ * Chrome resets and the scrolling top bar's re-expand are keyed on this, so a tab switch, a deep
+ * push and a pop each look like a navigation even when two of them land on the same destination.
+ */
+fun routeKeyFor(tabKey: String, screenKey: String): String = "$tabKey/$screenKey"
+
+/**
  * Derives the top bar from the active screen's [TitleBarModel].
  *
  * The screen owns the title while it is rendered; [destinationLabel] and [isTopLevel] are only the

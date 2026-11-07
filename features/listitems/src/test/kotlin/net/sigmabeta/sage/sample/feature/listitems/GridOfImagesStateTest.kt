@@ -7,6 +7,7 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.list.ColumnType
+import net.sigmabeta.sage.list.PaginationType
 import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
@@ -158,5 +159,77 @@ class GridOfImagesStateTest {
             assertEquals("str-GRID_OF_IMAGES_TITLE", title.title)
             assertTrue(title.shouldShowBack)
         }
+    }
+
+    @Test
+    fun `the state asks SAGE for standard paging with the square loading type`() {
+        val paging = GridOfImagesState().paginationType as PaginationType.Standard
+
+        assertEquals(LoadingType.SQUARE, paging.loadingType)
+        assertEquals(GRID_OF_IMAGES_PAGE_SIZE, paging.pageSize)
+    }
+
+    @Test
+    fun `content appends a footer loader while another page is in flight`() {
+        val rows = GridOfImagesState(
+            content = LCE.Content(items),
+            loadingMore = true,
+        ).toListItems(strings)
+
+        assertEquals(
+            listOf(11L, 22L),
+            rows.filterIsInstance<GridImageListModel>().map { it.dataId },
+        )
+        val loader = rows.last() as LoadingItemListModel
+        assertEquals("$GRID_OF_IMAGES_OPERATION_NAME.load_more", loader.loadOperationName)
+        assertEquals(LoadingType.SQUARE, loader.loadingType)
+        assertEquals(rows.size, rows.map { it.dataId }.distinct().size)
+    }
+
+    @Test
+    fun `prepending a page shows a header loader above the cells`() {
+        val rows = GridOfImagesState(
+            content = LCE.Content(items),
+            windowStart = 20,
+            loadingPrevious = true,
+        ).toListItems(strings)
+
+        val loader = rows.first() as LoadingItemListModel
+        assertEquals("$GRID_OF_IMAGES_OPERATION_NAME.load_previous", loader.loadOperationName)
+        assertEquals(
+            listOf(11L, 22L),
+            rows.filterIsInstance<GridImageListModel>().map { it.dataId },
+        )
+    }
+
+    @Test
+    fun `no boundary loader is shown when no page is in flight`() {
+        val rows = GridOfImagesState(LCE.Content(items)).toListItems(strings)
+
+        assertTrue(rows.none { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `an empty window never shows a boundary loader`() {
+        val rows = GridOfImagesState(
+            content = LCE.Content(emptyList()),
+            loadingMore = true,
+            loadingPrevious = true,
+        ).toListItems(strings)
+
+        assertEquals(1, rows.size)
+        assertTrue(rows.single() is EmptyStateListModel)
+    }
+
+    @Test
+    fun `an error page never shows a boundary loader`() {
+        val rows = GridOfImagesState(
+            content = LCE.Error(GRID_OF_IMAGES_OPERATION_NAME, IllegalStateException("boom")),
+            loadingMore = true,
+            loadingPrevious = true,
+        ).toListItems(strings)
+
+        assertEquals(1, rows.size)
+        assertTrue(rows.single() is ErrorStateListModel)
     }
 }
