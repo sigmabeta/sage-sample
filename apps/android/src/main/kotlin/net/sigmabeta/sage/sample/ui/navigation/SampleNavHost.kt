@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.WidthClass
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import kotlin.math.roundToInt
 
 /**
@@ -171,10 +172,14 @@ private class SampleShellNavigation(
         }
     }
 
-    /** Pushes onto the active tab; a pushed screen belongs to the tab that was visible. */
-    fun push(destination: SampleDestination) {
+    /**
+     * Pushes onto the active tab; a pushed screen belongs to the tab that was visible.
+     *
+     * [contentId] is the decoded Content detail ID, `null` for its not-found state.
+     */
+    fun push(destination: SampleDestination, contentId: ContentId? = null) {
         val navigator = activeTabNavigator.navigator ?: return
-        val target = screenFor(destination)
+        val target = screenFor(destination, contentId)
         if (navigator.lastItem != target) {
             navigator.push(target)
         }
@@ -194,8 +199,12 @@ private fun handleEffect(
     if (event !is SageEvent.ShowSnackbar) {
         when (val action = navActionFor(event)) {
             is SampleNavAction.ShowTopLevel -> tabFor(action.destination)?.let(shellNavigation::selectTab)
-            is SampleNavAction.Push -> shellNavigation.push(action.destination)
+
+            is SampleNavAction.Push ->
+                shellNavigation.push(action.destination, action.contentId)
+
             SampleNavAction.Pop -> shellNavigation.back()
+
             null -> Unit
         }
         return

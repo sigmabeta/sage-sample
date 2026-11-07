@@ -5,30 +5,28 @@ import kotlinx.coroutines.test.runTest
 import net.sigmabeta.sage.appcomm.LCE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Content detail builds its generated item from one predetermined seed, so the screen is
- * randomized in content but identical on every visit.
+ * Content detail is addressed by [ContentId]: each known ID generates its own item, the same ID
+ * reproduces it exactly, and an ID no surface produced is an explicit not-found.
  */
 class DemoContentDetailRepositoryTest {
-    @Test
-    fun `it generates stable ids and section sizes`() = runTest {
-        val content = contentOf(DemoContentDetailRepository())
+    private val repository = DemoContentDetailRepository()
 
-        assertEquals(1L, content.id)
+    @Test
+    fun `a known id generates populated content`() = runTest {
+        val content = requireNotNull(contentOf(ContentId("list-items:7")))
+
+        assertEquals(ContentId("list-items:7"), content.id)
+        assertTrue(content.title.isNotBlank())
         assertEquals(4, content.details.size)
         assertEquals(4, content.actions.size)
         assertEquals((1L..5L).toList(), content.related.map { it.id })
         assertEquals((1L..8L).toList(), content.items.map { it.id })
-    }
-
-    @Test
-    fun `every generated field is populated`() = runTest {
-        val content = contentOf(DemoContentDetailRepository())
-
-        assertTrue(content.title.isNotBlank())
         assertTrue(content.details.all { it.label.isNotBlank() })
         assertTrue(content.details.all { it.value.isNotBlank() })
         assertTrue(content.actions.all { it.label.isNotBlank() })
@@ -38,22 +36,46 @@ class DemoContentDetailRepositoryTest {
     }
 
     @Test
-    fun `the predetermined seed makes every load identical`() = runTest {
-        val repository = DemoContentDetailRepository()
+    fun `two different ids generate different content`() = runTest {
+        val first = contentOf(ContentId("list-items:7"))
+        val second = contentOf(ContentId("list-items:8"))
 
-        assertEquals(contentOf(repository), contentOf(repository))
+        assertNotEquals(first, second)
+        assertNotEquals(first?.title, second?.title)
     }
 
     @Test
-    fun `a different seed changes the generated content`() = runTest {
-        assertNotEquals(
-            demoContentDetail(CONTENT_DETAIL_SEED),
-            demoContentDetail(CONTENT_DETAIL_SEED + 1L),
-        )
+    fun `the same id reproduces exactly`() = runTest {
+        val id = ContentId("home:big_image_1:5")
+
+        assertEquals(contentOf(id), contentOf(id))
     }
 
-    private suspend fun contentOf(repository: ContentDetailRepository): ContentDetail {
-        val emission = repository.load().toList().single()
+    @Test
+    fun `an unknown id produces the not-found result`() = runTest {
+        val emission = repository.load(ContentId("stale-link:42")).toList().single()
+
+        assertEquals(LCE.Content(null), emission)
+        assertNull((emission as LCE.Content).data)
+    }
+
+    @Test
+    fun `ids from every content surface are known`() = runTest {
+        listOf(
+            "home:big_image_1:5",
+            "browse:featured",
+            "search:list:-123456:3",
+            "list-items:7",
+            "list-items-with-images:7",
+            "grid-of-images:7",
+            "content-detail:related:4",
+        ).forEach { value ->
+            assertNotNull("$value should generate content", contentOf(ContentId(value)))
+        }
+    }
+
+    private suspend fun contentOf(id: ContentId): ContentDetail? {
+        val emission = repository.load(id).toList().single()
         assertTrue(emission is LCE.Content)
         return (emission as LCE.Content).data
     }

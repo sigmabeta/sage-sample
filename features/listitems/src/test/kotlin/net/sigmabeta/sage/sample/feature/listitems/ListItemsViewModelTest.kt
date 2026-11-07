@@ -91,7 +91,7 @@ class ListItemsViewModelTest {
     }
 
     @Test
-    fun `clicking an item emits a snackbar naming it`() = runTest {
+    fun `clicking an item opens the detail for its own stable id`() = runTest {
         val viewModel = createViewModel()
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -106,9 +106,10 @@ class ListItemsViewModelTest {
         viewModel.sendAction(ListItemsAction.ItemClicked(item))
         advanceUntilIdle()
 
-        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals("str-LIST_ITEMS_ITEM_CLICKED:Sleve McDichael", snackbar.message)
-        assertEquals("ListItemsViewModel", snackbar.source)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/list-items:7", navigation.destination)
+        assertEquals("ListItemsViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     private fun createViewModel() = ListItemsViewModel(

@@ -42,6 +42,7 @@ object SampleStringProvider : StringProvider {
             SampleStrings.CONTENT_DETAIL_SECTION_ITEMS,
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED to
             SampleStrings.CONTENT_DETAIL_ITEM_CLICKED,
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND to SampleStrings.CONTENT_DETAIL_NOT_FOUND,
         ListItemsStringId.LIST_ITEMS_TITLE to SampleStrings.NAV_LIST_ITEMS,
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
         ListItemsStringId.LIST_ITEMS_EMPTY to SampleStrings.LIST_ITEMS_EMPTY,

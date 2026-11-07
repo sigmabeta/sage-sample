@@ -56,6 +56,28 @@ class SampleDestinationTest {
     }
 
     @Test
+    fun `fromRoute treats every route under the content detail prefix as content detail`() {
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail/list-items:7"),
+        )
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail/browse:featured"),
+        )
+        assertEquals(
+            SampleDestination.CONTENT_DETAIL,
+            SampleDestination.fromRoute("content-detail/"),
+        )
+    }
+
+    @Test
+    fun `fromRoute does not match destinations that merely start with the prefix`() {
+        assertNull(SampleDestination.fromRoute("content-detailish"))
+        assertNull(SampleDestination.fromRoute("content-detail-extra"))
+    }
+
+    @Test
     fun `fromRoute returns null for an unknown route`() {
         assertNull(SampleDestination.fromRoute("no-such-destination"))
     }
