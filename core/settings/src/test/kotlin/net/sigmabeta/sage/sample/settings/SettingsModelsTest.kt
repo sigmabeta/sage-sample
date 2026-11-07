@@ -68,12 +68,27 @@ class SettingsModelsTest {
     }
 
     @Test
-    fun `home shows same content parses persisted booleans and defaults to off`() {
+    fun `demo outcome parses every stored name`() {
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("CONTENT"))
+        assertEquals(DemoOutcome.EMPTY, DemoOutcome.fromStorageValue("EMPTY"))
+        assertEquals(DemoOutcome.ERROR, DemoOutcome.fromStorageValue("ERROR"))
+    }
+
+    @Test
+    fun `demo outcome falls back to content for missing or unknown values`() {
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(null))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(""))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("BOGUS"))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.DEFAULT)
+    }
+
+    @Test
+    fun `home shows same content parses persisted booleans and defaults to on`() {
         assertTrue(homeShowsSameContentFromStorage("true"))
         assertFalse(homeShowsSameContentFromStorage("false"))
-        assertFalse(homeShowsSameContentFromStorage(null))
-        assertFalse(homeShowsSameContentFromStorage(""))
-        assertFalse(homeShowsSameContentFromStorage("BOGUS"))
-        assertFalse(DEFAULT_HOME_SHOWS_SAME_CONTENT)
+        assertTrue(homeShowsSameContentFromStorage(null))
+        assertTrue(homeShowsSameContentFromStorage(""))
+        assertTrue(homeShowsSameContentFromStorage("BOGUS"))
+        assertTrue(DEFAULT_HOME_SHOWS_SAME_CONTENT)
     }
 }

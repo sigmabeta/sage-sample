@@ -7,6 +7,7 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
+import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -187,6 +188,90 @@ class SearchStateTest {
         assertEquals(SEARCH_LIST_OPERATION_NAME, error.failedOperationName)
         assertEquals("boom", error.error.message)
         assertEquals(2, rows.filterIsInstance<GridImageListModel>().size)
+    }
+
+    @Test
+    fun `errors in both queries keep both headers and render one error per section`() {
+        val rows = SearchState(
+            query = "chrono",
+            submittedQuery = "chrono",
+            listResults = LCE.Error(SEARCH_LIST_OPERATION_NAME, IllegalStateException("list boom")),
+            gridResults = LCE.Error(SEARCH_GRID_OPERATION_NAME, IllegalStateException("grid boom")),
+        ).toListItems(strings)
+
+        assertEquals(
+            listOf("str-SEARCH_SECTION_LIST", "str-SEARCH_SECTION_GRID"),
+            rows.filterIsInstance<SectionHeaderListModel>().map { it.title },
+        )
+        assertEquals(
+            listOf(SEARCH_LIST_OPERATION_NAME, SEARCH_GRID_OPERATION_NAME),
+            rows.filterIsInstance<ErrorStateListModel>().map { it.failedOperationName },
+        )
+        assertTrue(rows.none { it is ImageNameCaptionListModel || it is GridImageListModel })
+    }
+
+    @Test
+    fun `blank submitted query renders history rows newest first`() {
+        val rows = SearchState(history = listOf("chrono", "ff7")).toListItems(strings)
+
+        val historyRows = rows.filterIsInstance<SearchHistoryListModel>()
+        assertEquals(listOf("chrono", "ff7"), historyRows.map { it.name })
+        assertEquals(
+            listOf(
+                SearchAction.HistoryClicked("chrono"),
+                SearchAction.HistoryClicked("ff7"),
+            ),
+            historyRows.map { it.clickAction },
+        )
+        assertEquals(
+            listOf(
+                SearchAction.HistoryRemoved("chrono"),
+                SearchAction.HistoryRemoved("ff7"),
+            ),
+            historyRows.map { it.removeAction },
+        )
+    }
+
+    @Test
+    fun `fewer than five history rows append the resting prompt`() {
+        (0..4).forEach { count ->
+            val rows = SearchState(history = List(count) { "query-$it" }).toListItems(strings)
+
+            assertEquals(count, rows.filterIsInstance<SearchHistoryListModel>().size)
+            val prompt = rows.filterIsInstance<EmptyStateListModel>().single()
+            assertEquals("str-SEARCH_PROMPT", prompt.explanation)
+        }
+    }
+
+    @Test
+    fun `five or more history rows show only the history`() {
+        val rows = SearchState(history = List(5) { "query-$it" }).toListItems(strings)
+
+        assertEquals(5, rows.filterIsInstance<SearchHistoryListModel>().size)
+        assertTrue(rows.none { it is EmptyStateListModel })
+    }
+
+    @Test
+    fun `a submitted query hides history rows`() {
+        val rows = SearchState(
+            query = "chrono",
+            submittedQuery = "chrono",
+            listResults = LCE.Content(listResults),
+            gridResults = LCE.Content(gridResults),
+            history = listOf("ff7"),
+        ).toListItems(strings)
+
+        assertTrue(rows.none { it is SearchHistoryListModel })
+    }
+
+    @Test
+    fun `editing the field without submitting keeps history visible`() {
+        val rows = SearchState(
+            query = "chro",
+            history = listOf("ff7"),
+        ).toListItems(strings)
+
+        assertEquals(listOf("ff7"), rows.filterIsInstance<SearchHistoryListModel>().map { it.name })
     }
 
     @Test

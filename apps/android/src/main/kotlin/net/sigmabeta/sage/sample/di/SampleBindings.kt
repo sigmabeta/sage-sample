@@ -121,6 +121,10 @@ object SampleBindings {
         SettingsStringId.SETTINGS_DELAY_ONE_SECOND -> R.string.settings_delay_one_second
         SettingsStringId.SETTINGS_DELAY_TWO_SECONDS -> R.string.settings_delay_two_seconds
         SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS -> R.string.settings_delay_five_seconds
+        SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME -> R.string.settings_label_demo_outcome
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT -> R.string.settings_demo_outcome_content
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY -> R.string.settings_demo_outcome_empty
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR -> R.string.settings_demo_outcome_error
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT -> R.string.settings_label_home_shows_same_content
         SettingsStringId.SETTINGS_SECTION_ABOUT -> R.string.settings_section_about
         SettingsStringId.SETTINGS_LABEL_APP_VERSION -> R.string.settings_label_app_version

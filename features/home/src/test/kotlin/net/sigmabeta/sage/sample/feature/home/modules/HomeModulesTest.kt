@@ -161,9 +161,12 @@ class HomeModulesTest {
     @Test
     fun `a randomized plan renders without duplicate list ids`() = runTest {
         val items = (1L..18L).map { HomeItem(id = it, title = "Item $it") }
+        val repository = FakeHomeRepository(items = items)
         val modules = HomeModuleFactory(
-            repository = FakeHomeRepository(items = items),
-            stringProvider = strings,
+            setOf(
+                BigImageModuleDefinition(repository, strings),
+                GridImagesModuleDefinition(repository, strings),
+            ),
         ).create(Random(seed = 7))
 
         val sections = modules.map { module ->

@@ -6,6 +6,7 @@ import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -25,6 +26,7 @@ class SettingsStateTest {
                 fontDropdown(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_SIMULATION.toString()),
                 delayDropdown(items),
+                demoOutcomeDropdown(items),
                 homeShowsSameContentToggle(items),
                 SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_ABOUT.toString()),
                 appVersionRow(items),
@@ -84,10 +86,28 @@ class SettingsStateTest {
     }
 
     @Test
+    fun `demo outcome dropdown lists every outcome in enum order and selects the current one`() {
+        val dropdown = demoOutcomeDropdown(
+            SettingsState(demoOutcome = DemoOutcome.ERROR).toListItems(FakeStringProvider),
+        )
+
+        assertEquals(
+            listOf(
+                SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT.toString(),
+                SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY.toString(),
+                SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR.toString(),
+            ),
+            dropdown.options.map { it.first },
+        )
+        assertEquals(DemoOutcome.ERROR.ordinal, dropdown.selectedPosition)
+    }
+
+    @Test
     fun `option rows carry the typed selection action`() {
         val theme = themeDropdown(SettingsState().toListItems(FakeStringProvider))
         val font = fontDropdown(SettingsState().toListItems(FakeStringProvider))
         val delay = delayDropdown(SettingsState().toListItems(FakeStringProvider))
+        val outcome = demoOutcomeDropdown(SettingsState().toListItems(FakeStringProvider))
 
         assertEquals(
             ThemeMode.entries.map { SettingsAction.ThemeModeSelected(it) },
@@ -101,6 +121,10 @@ class SettingsStateTest {
             SimulateDelay.entries.map { SettingsAction.SimulateDelaySelected(it) },
             delay.options.map { it.second.clickAction() },
         )
+        assertEquals(
+            DemoOutcome.entries.map { SettingsAction.DemoOutcomeSelected(it) },
+            outcome.options.map { it.second.clickAction() },
+        )
     }
 
     @Test
@@ -111,18 +135,19 @@ class SettingsStateTest {
         assertTrue(themeDropdown(items).expanded)
         assertTrue(!fontDropdown(items).expanded)
         assertTrue(!delayDropdown(items).expanded)
+        assertTrue(!demoOutcomeDropdown(items).expanded)
     }
 
     @Test
     fun `home shows same content toggle reflects the setting and carries the toggle action`() {
-        val off = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
-        assertEquals(false, off.checked)
-        assertEquals(SettingsAction.HomeShowsSameContentToggled, off.clickAction)
-
-        val on = homeShowsSameContentToggle(
-            SettingsState(homeShowsSameContent = true).toListItems(FakeStringProvider),
-        )
+        val on = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
         assertEquals(true, on.checked)
+        assertEquals(SettingsAction.HomeShowsSameContentToggled, on.clickAction)
+
+        val off = homeShowsSameContentToggle(
+            SettingsState(homeShowsSameContent = false).toListItems(FakeStringProvider),
+        )
+        assertEquals(false, off.checked)
     }
 
     @Test
@@ -149,6 +174,10 @@ class SettingsStateTest {
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
+
+    private fun demoOutcomeDropdown(items: List<ListModel>): DropdownSettingListModel =
+        items.filterIsInstance<DropdownSettingListModel>()
+            .single { it.name == SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
 
     private fun homeShowsSameContentToggle(items: List<ListModel>): CheckableListModel =
         items.filterIsInstance<CheckableListModel>()

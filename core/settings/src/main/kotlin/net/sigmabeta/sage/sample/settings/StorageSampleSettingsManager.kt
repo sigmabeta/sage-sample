@@ -45,6 +45,11 @@ class StorageSampleSettingsManager(
         .map(::homeShowsSameContentFromStorage)
         .stateIn(scope, SharingStarted.Eagerly, DEFAULT_HOME_SHOWS_SAME_CONTENT)
 
+    override val demoOutcome: StateFlow<DemoOutcome> = storage
+        .savedStringFlow(KEY_DEMO_OUTCOME)
+        .map { DemoOutcome.fromStorageValue(it) }
+        .stateIn(scope, SharingStarted.Eagerly, DemoOutcome.DEFAULT)
+
     override fun setThemeMode(mode: ThemeMode) = storage.saveString(KEY_THEME_MODE, mode.name)
 
     override fun setFontChoice(choice: FontChoice) =
@@ -56,11 +61,15 @@ class StorageSampleSettingsManager(
     override fun setHomeShowsSameContent(showSameContent: Boolean) =
         storage.saveString(KEY_HOME_SHOWS_SAME_CONTENT, showSameContent.toString())
 
+    override fun setDemoOutcome(outcome: DemoOutcome) =
+        storage.saveString(KEY_DEMO_OUTCOME, outcome.name)
+
     private companion object {
         const val KEY_THEME_MODE = "setting.appearance.theme"
         const val KEY_FONT_CHOICE = "setting.appearance.font"
         const val KEY_SIMULATE_DELAY = "setting.debug.simulate_delay"
         const val KEY_HOME_SHOWS_SAME_CONTENT = "setting.debug.home_shows_same_content"
+        const val KEY_DEMO_OUTCOME = "setting.debug.demo_outcome"
     }
 }
 
