@@ -1,9 +1,48 @@
 package net.sigmabeta.sage.sample.ui.navigation
 
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ColumnType
 import net.sigmabeta.sage.list.WidthClass
+
+/**
+ * The shell chrome a screen can request, mirroring Chipbox's `ScreenChrome`.
+ *
+ * The sample only has a top bar to hide; the nav suite is always present. [Default] is all bars
+ * visible, which is what [SampleNavHost] resets to on every destination change.
+ */
+data class SampleScreenChrome(
+    val showTopBar: Boolean = true,
+) {
+    companion object {
+        val Default = SampleScreenChrome()
+    }
+}
+
+/**
+ * Mutable chrome state shared by the active screen and the shell.
+ *
+ * A screen hides the top bar by setting this in a `LaunchedEffect`; the next destination resets it
+ * to [SampleScreenChrome.Default], so the screen does not need to restore it on disposal.
+ */
+@Stable
+class SampleChromeController {
+    var state: SampleScreenChrome by mutableStateOf(SampleScreenChrome.Default)
+        private set
+
+    fun set(chrome: SampleScreenChrome) {
+        state = chrome
+    }
+}
+
+/** Provided by [SampleNavHost] around every screen; there is no sensible default. */
+val LocalSampleChromeController = staticCompositionLocalOf<SampleChromeController> {
+    error("No SampleChromeController provided — render screens inside SampleNavHost.")
+}
 
 /**
  * Which leading affordance the shared top bar shows.

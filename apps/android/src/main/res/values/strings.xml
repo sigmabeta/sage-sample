@@ -20,8 +20,15 @@
     <string name="cd_open_settings">Open settings</string>
     <string name="cd_navigate_back">Back</string>
 
-    <!-- Placeholder body for the feature module whose content is still TODO. -->
-    <string name="search_todo">TODO: search content</string>
+    <!-- Search. -->
+    <string name="search_hint">Search</string>
+    <string name="search_clear_description">Clear search</string>
+    <string name="search_back_description">Back</string>
+    <string name="search_prompt">Type at least 3 characters to search.</string>
+    <string name="search_no_results">No results for “%1$s”.</string>
+    <string name="search_result_clicked">%1$s clicked</string>
+    <string name="search_section_list">List results</string>
+    <string name="search_section_grid">Grid results</string>
 
     <!-- Settings. Features own their text via SageStringId; this is the app's id → R.string map. -->
     <string name="settings_section_appearance">Appearance</string>

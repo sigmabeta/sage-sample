@@ -133,6 +133,8 @@ core/bitmaps/               KMP Compose module shared by both apps
 core/ui/components/api/     KMP Compose renderer suite shared by both apps
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
+  SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
+  SearchContent.kt          Chipbox-style search: adaptive grid with the field and status scrim
   subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
@@ -151,7 +153,7 @@ features/browse/            same shape; static destination rows (no loading/cont
 features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
-features/search/            same shape; placeholder content (TODO)
+features/search/            query + two deterministic generated result sets (list rows, grid)
 features/settings/          theme + simulate-delay dropdowns, app version and build date
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene
 CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
@@ -243,6 +245,21 @@ for 50 items and maps them to `GridImageListModel` cells at a 160 dp column widt
 `ImageNameCaptionListItem` and `GridImage` renderers load those URLs through Coil, so the artwork
 comes from `:core:bitmaps`' fetcher rather than bundled bitmap assets.
 
+Search keeps the same feature-state / app-rendering split, with a Chipbox-style search shell: the
+shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim
+and a back action in the bar. Because the field replaces the top bar, `SearchScreen` sets
+`SampleScreenChrome(showTopBar = false)` on the app-owned `SampleChromeController`; the scaffold
+animates the top bar away, and `SampleNavHost` resets the chrome to `Default` on every destination
+change, so Search does not restore it on disposal. The field sends SAGE's `SearchQueryEntered` and
+`SearchClearClicked`; `SearchViewModel` waits 300 ms after typing and ignores queries shorter than
+three characters, matching the other SAGE apps.
+A settled query then runs two independent repository calls. `DemoSearchRepository` seeds each
+call from the trimmed, lowercased query plus a list/grid salt, so the same query always produces
+the same rows and `generated://` artwork, while each call independently picks a random count from
+one to twenty results. The list call maps to `ImageNameCaptionListModel` rows and the grid call
+to `GridImageListModel` cells; `SearchState` renders them as two headed sections, with per-section
+loading and error rows. If both calls come back empty, the screen shows its no-results state.
+
 The renderer suite is ported from Chipbox's `:cbox:common:ui:components:api` and keeps its shape:
 one module that re-exports SAGE's `ListModel` types and owns every non-Chipbox-specific renderer,
 plus `subs/` building blocks and `@Preview` harnesses. Accessibility labels are a module-owned
@@ -272,8 +289,10 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
   `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState` uses the reported
   `title` and `shouldShowBack` (falling back to the destination label and `isTopLevel` until
   the screen reports). `shouldShowBack = false` renders the hamburger (opens Settings);
-  otherwise the back arrow pops. Navigation-tab labels and icons stay app-owned in
-  `SampleDestination`.
+  otherwise the back arrow pops. Screens may hide the bar with the app-owned
+  `SampleChromeController` (Search does, from a `LaunchedEffect`); the scaffold animates it away,
+  and `SampleNavHost` resets `SampleScreenChrome.Default` on every destination change.
+  Navigation-tab labels and icons stay app-owned in `SampleDestination`.
 - **Width classes** are SAGE's: 600 dp (compact → medium) and 840 dp (medium → expanded).
   `SampleNavHost` computes the window's class once and provides it via `LocalSampleWidthClass`,
   so the nav suite (bottom bar vs rail) and list/grid layout agree. A screen's

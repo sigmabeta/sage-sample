@@ -85,7 +85,14 @@ object SampleBindings {
 
     private fun searchResource(id: SearchStringId): Int = when (id) {
         SearchStringId.SEARCH_TITLE -> R.string.nav_search
-        SearchStringId.SEARCH_TODO -> R.string.search_todo
+        SearchStringId.SEARCH_HINT -> R.string.search_hint
+        SearchStringId.SEARCH_CLEAR_DESCRIPTION -> R.string.search_clear_description
+        SearchStringId.SEARCH_BACK_DESCRIPTION -> R.string.search_back_description
+        SearchStringId.SEARCH_PROMPT -> R.string.search_prompt
+        SearchStringId.SEARCH_NO_RESULTS -> R.string.search_no_results
+        SearchStringId.SEARCH_RESULT_CLICKED -> R.string.search_result_clicked
+        SearchStringId.SEARCH_SECTION_LIST -> R.string.search_section_list
+        SearchStringId.SEARCH_SECTION_GRID -> R.string.search_section_grid
     }
 
     private fun settingsResource(id: SettingsStringId): Int = when (id) {

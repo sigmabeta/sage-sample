@@ -6,6 +6,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,14 @@ fun SampleNavHost() {
                 handleEffect(event, navigator, snackbarHostState, coroutineScope)
             }
         }
+        val chromeController = remember { SampleChromeController() }
+
+        // Chipbox's chrome contract: every destination starts with the default shell chrome, and
+        // a screen may hide a bar from its own LaunchedEffect. Resetting here (before the screen
+        // composes) means Search does not have to restore the top bar when it leaves.
+        LaunchedEffect(current) {
+            chromeController.set(SampleScreenChrome.Default)
+        }
 
         // A new destination starts without a reported title: `remember(current)` drops the previous
         // screen's value so a transition cannot pin a stale title.
@@ -65,6 +74,7 @@ fun SampleNavHost() {
         )
 
         CompositionLocalProvider(
+            LocalSampleChromeController provides chromeController,
             LocalSampleNavEffects provides navEffects,
             LocalSampleTitleBarSink provides titleBarSink,
             LocalSampleWidthClass provides widthClass,
@@ -72,6 +82,7 @@ fun SampleNavHost() {
             SampleNavScaffold(
                 destination = current.destination,
                 widthClass = widthClass,
+                chrome = chromeController.state,
                 topBar = topBar,
                 snackbarHostState = snackbarHostState,
                 onSelectDestination = { destination -> navigator.showTopLevel(destination) },

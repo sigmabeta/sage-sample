@@ -1,7 +1,13 @@
 package net.sigmabeta.sage.sample.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -22,19 +28,24 @@ import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.ui.vector
 
 /**
- * The app's navigation chrome: shared top bar, plus the top-level destinations as a bottom bar on
- * [WidthClass.COMPACT] windows and a rail on anything wider.
+ * The app's navigation chrome: an animated shared top bar, plus the top-level destinations as a
+ * bottom bar on [WidthClass.COMPACT] windows and a rail on anything wider.
  *
- * The width class is computed once by [SampleNavHost] from the window size (see
- * [widthClassFromDp]); using SAGE's [WidthClass] keeps the nav suite and list/grid layout on the
- * same breakpoints. The rail is a sibling of the [Scaffold] rather than part of it, so it spans the
- * full window height next to the content instead of sitting below the top bar.
+ * [chrome] comes from the active screen's [SampleChromeController]. Search hides the top bar while
+ * it is visible (its overlay search field replaces it); [SampleNavHost] resets the chrome on every
+ * destination change. The Scaffold uses zero content insets, matching Chipbox: the top and bottom
+ * bars supply their own system-bar insets, and a screen that hides the top bar handles the status
+ * bar itself (as Search does). The width class is computed once by [SampleNavHost] from the window
+ * size (see [widthClassFromDp]); using SAGE's [WidthClass] keeps the nav suite and list/grid layout
+ * on the same breakpoints. The rail is a sibling of the [Scaffold] rather than part of it, so it
+ * spans the full window height next to the content instead of sitting below the top bar.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SampleNavScaffold(
     destination: SampleDestination,
     widthClass: WidthClass,
+    chrome: SampleScreenChrome,
     topBar: SampleTopBarState,
     snackbarHostState: SnackbarHostState,
     onSelectDestination: (SampleDestination) -> Unit,
@@ -62,13 +73,20 @@ fun SampleNavScaffold(
             // Take the space left over beside the rail (or the whole window when there is none).
             modifier = Modifier.weight(1f).fillMaxHeight(),
             topBar = {
-                SampleTopBar(
-                    state = topBar,
-                    onOpenSettings = onOpenSettings,
-                    onBack = onBack,
-                )
+                AnimatedVisibility(
+                    visible = chrome.showTopBar,
+                    enter = expandVertically() + fadeIn(),
+                    exit = shrinkVertically() + fadeOut(),
+                ) {
+                    SampleTopBar(
+                        state = topBar,
+                        onOpenSettings = onOpenSettings,
+                        onBack = onBack,
+                    )
+                }
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 if (!useRail) {
                     NavigationBar {

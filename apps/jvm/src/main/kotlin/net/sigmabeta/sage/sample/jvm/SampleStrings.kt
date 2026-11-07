@@ -28,7 +28,14 @@ object SampleStrings {
     const val CD_OPEN_SETTINGS = "Open settings"
     const val CD_NAVIGATE_BACK = "Back"
 
-    const val SEARCH_TODO = "TODO: search content"
+    const val SEARCH_HINT = "Search"
+    const val SEARCH_CLEAR_DESCRIPTION = "Clear search"
+    const val SEARCH_BACK_DESCRIPTION = "Back"
+    const val SEARCH_PROMPT = "Type at least 3 characters to search."
+    const val SEARCH_NO_RESULTS = "No results for “%s”."
+    const val SEARCH_RESULT_CLICKED = "%s clicked"
+    const val SEARCH_SECTION_LIST = "List results"
+    const val SEARCH_SECTION_GRID = "Grid results"
 
     const val SETTINGS_SECTION_APPEARANCE = "Appearance"
     const val SETTINGS_LABEL_THEME = "Theme"

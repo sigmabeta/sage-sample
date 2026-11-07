@@ -13,15 +13,20 @@ import cafe.adriel.voyager.core.screen.Screen
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
+import net.sigmabeta.sage.sample.feature.search.SearchStringId
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
 import net.sigmabeta.sage.sample.feature.welcome.WelcomeViewModel
 import net.sigmabeta.sage.sample.ui.components.api.Content
+import net.sigmabeta.sage.sample.ui.components.api.SearchContent
+import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.list.GridScreen
 import net.sigmabeta.sage.ui.list.ListScreen
@@ -59,7 +64,32 @@ data object SearchScreen : SampleScreen {
 
     @Composable
     override fun Content() {
-        SampleListScreen(metroViewModel<SearchViewModel>())
+        val viewModel: SearchViewModel = metroViewModel()
+        val query by viewModel.query.collectAsState()
+        val navEffects = LocalSampleNavEffects.current
+        val chromeController = LocalSampleChromeController.current
+
+        // Chipbox's search chrome: the in-screen field replaces the app top bar. The next
+        // destination resets the controller, so there is nothing to restore on disposal.
+        LaunchedEffect(Unit) {
+            chromeController.set(SampleScreenChrome(showTopBar = false))
+        }
+
+        SampleListScreen(viewModel) { state ->
+            SearchContent(
+                listItems = state.listItems,
+                query = query,
+                hint = SearchStringId.SEARCH_HINT.text(),
+                clearContentDescription = SearchStringId.SEARCH_CLEAR_DESCRIPTION.text(),
+                backContentDescription = SearchStringId.SEARCH_BACK_DESCRIPTION.text(),
+                onQueryChange = { viewModel.sendAction(SageAction.SearchQueryEntered(it)) },
+                onClear = { viewModel.sendAction(SageAction.SearchClearClicked) },
+                onBack = {
+                    navEffects.onEvent(SageEvent.NavigateBack(source = "SearchScreen"))
+                },
+                actionSink = viewModel,
+            )
+        }
     }
 }
 
@@ -104,7 +134,8 @@ data object SettingsScreen : SampleScreen {
  * [net.sigmabeta.sage.sample.ui.components.api.Content] renderer.
  *
  * Every destination goes through this, so the only per-screen decisions are which view model it
- * resolves and, in the view model, what state it produces.
+ * resolves, what state it produces, and whether it replaces the shared list presentation
+ * (Search overlays its field on the grid).
  *
  * The shared path owns three cross-cutting behaviours:
  * - **Chrome:** the screen's [net.sigmabeta.sage.list.ListStateActual.title] is reported through
@@ -121,7 +152,10 @@ data object SettingsScreen : SampleScreen {
  * `WithPerScreenViewModelStore`), so there is no separate Android lifecycle to pause collection.
  */
 @Composable
-private fun SampleListScreen(viewModel: SampleListViewModel<*>) {
+private fun SampleListScreen(
+    viewModel: SampleListViewModel<*>,
+    content: (@Composable (ListStateActual) -> Unit)? = null,
+) {
     val state by viewModel.uiStateActual.collectAsState()
     val navEffects = LocalSampleNavEffects.current
     val titleBarSink = LocalSampleTitleBarSink.current
@@ -140,6 +174,11 @@ private fun SampleListScreen(viewModel: SampleListViewModel<*>) {
     DisposableEffect(viewModel) {
         viewModel.sendAction(SageAction.Resume)
         onDispose { viewModel.sendAction(SageAction.Pause) }
+    }
+
+    if (content != null) {
+        content(state)
+        return
     }
 
     val itemContent: @Composable (

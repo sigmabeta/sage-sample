@@ -10,5 +10,12 @@ import net.sigmabeta.sage.ui.SageStringId
  */
 enum class SearchStringId : SageStringId {
     SEARCH_TITLE,
-    SEARCH_TODO,
+    SEARCH_HINT,
+    SEARCH_CLEAR_DESCRIPTION,
+    SEARCH_BACK_DESCRIPTION,
+    SEARCH_PROMPT,
+    SEARCH_NO_RESULTS,
+    SEARCH_RESULT_CLICKED,
+    SEARCH_SECTION_LIST,
+    SEARCH_SECTION_GRID,
 }
