@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.ui.navigation
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,5 +32,18 @@ class SampleChromeTest {
         controller.set(SampleScreenChrome.Default)
 
         assertTrue(controller.state.showTopBar)
+    }
+
+    @Test
+    fun `the route key is the active tab plus the top screen of its stack`() {
+        val cases = listOf(
+            Triple("home-tab", "home", "home-tab/home"),
+            Triple("browse-tab", "home", "browse-tab/home"),
+            Triple("home-tab", "settings", "home-tab/settings"),
+        )
+
+        cases.forEach { (tabKey, screenKey, expected) ->
+            assertEquals(expected, routeKeyFor(tabKey, screenKey))
+        }
     }
 }

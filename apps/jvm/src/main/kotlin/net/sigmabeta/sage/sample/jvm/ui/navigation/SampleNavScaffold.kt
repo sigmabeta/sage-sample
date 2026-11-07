@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,8 +22,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.ui.vector
 
@@ -40,6 +45,10 @@ import net.sigmabeta.sage.ui.vector
  * [WidthClass] keeps the nav suite and list/grid layout on the same breakpoints. The rail is a
  * sibling of the [Scaffold] rather than part of it, so it spans the full window height next to the
  * content instead of sitting below the top bar.
+ *
+ * The top bar collapses as the active list or grid scrolls
+ * ([TopAppBarDefaults.enterAlwaysScrollBehavior]) and re-expands whenever [activeRouteKey] changes —
+ * a tab switch, a deep push or a pop. The bottom bar and rail are outside that collapsing area.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +57,7 @@ fun SampleNavScaffold(
     widthClass: WidthClass,
     chrome: SampleScreenChrome,
     topBar: SampleTopBarState,
+    activeRouteKey: String,
     snackbarHostState: SnackbarHostState,
     onSelectDestination: (SampleDestination) -> Unit,
     onOpenSettings: () -> Unit,
@@ -55,6 +65,26 @@ fun SampleNavScaffold(
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val useRail = widthClass != WidthClass.COMPACT
+    val topAppBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(topAppBarState)
+
+    // Re-extend the bar on any navigation, not just on a tab switch. contentOffset is the scroll
+    // accumulator; heightOffset drives the visible height, so it is tweened back to zero with the
+    // behavior's own snap spec. Re-keying cancels the coroutine, so a fast follow-up navigation
+    // restarts from the current height instead of jumping.
+    LaunchedEffect(activeRouteKey) {
+        topAppBarState.contentOffset = 0f
+        val spec = scrollBehavior.snapAnimationSpec
+        if (spec != null) {
+            animate(
+                initialValue = topAppBarState.heightOffset,
+                targetValue = 0f,
+                animationSpec = spec,
+            ) { value, _ -> topAppBarState.heightOffset = value }
+        } else {
+            topAppBarState.heightOffset = 0f
+        }
+    }
 
     Row(modifier = Modifier.fillMaxSize()) {
         if (useRail) {
@@ -72,7 +102,10 @@ fun SampleNavScaffold(
 
         Scaffold(
             // Take the space left over beside the rail (or the whole window when there is none).
-            modifier = Modifier.weight(1f).fillMaxHeight(),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
             topBar = {
                 AnimatedVisibility(
                     visible = chrome.showTopBar,
@@ -81,6 +114,7 @@ fun SampleNavScaffold(
                 ) {
                     SampleTopBar(
                         state = topBar,
+                        scrollBehavior = scrollBehavior,
                         onOpenSettings = onOpenSettings,
                         onBack = onBack,
                     )
