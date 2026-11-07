@@ -56,7 +56,7 @@ class ListItemsListIdentityTest {
     }
 
     private suspend fun demoItems(): List<SampleItem> {
-        val emission = DemoSampleItemRepository().load().toList().single()
+        val emission = DemoSampleItemRepository(FakeSampleSettingsManager()).load().toList().single()
         return (emission as LCE.Content).data
     }
 }

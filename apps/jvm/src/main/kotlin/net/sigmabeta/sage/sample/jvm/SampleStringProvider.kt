@@ -44,10 +44,18 @@ object SampleStringProvider : StringProvider {
             SampleStrings.CONTENT_DETAIL_ITEM_CLICKED,
         ListItemsStringId.LIST_ITEMS_TITLE to SampleStrings.NAV_LIST_ITEMS,
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
+        ListItemsStringId.LIST_ITEMS_EMPTY to SampleStrings.LIST_ITEMS_EMPTY,
+        ListItemsStringId.LIST_ITEMS_ERROR to SampleStrings.LIST_ITEMS_ERROR,
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_TITLE to SampleStrings.NAV_LIST_ITEMS_WITH_IMAGES,
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_EMPTY to
+            SampleStrings.LIST_ITEMS_WITH_IMAGES_EMPTY,
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR to
+            SampleStrings.LIST_ITEMS_WITH_IMAGES_ERROR,
         ListItemsStringId.GRID_OF_IMAGES_TITLE to SampleStrings.NAV_GRID_OF_IMAGES,
         ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED to SampleStrings.LIST_ITEMS_ITEM_CLICKED,
+        ListItemsStringId.GRID_OF_IMAGES_EMPTY to SampleStrings.GRID_OF_IMAGES_EMPTY,
+        ListItemsStringId.GRID_OF_IMAGES_ERROR to SampleStrings.GRID_OF_IMAGES_ERROR,
         SearchStringId.SEARCH_TITLE to SampleStrings.NAV_SEARCH,
         SearchStringId.SEARCH_HINT to SampleStrings.SEARCH_HINT,
         SearchStringId.SEARCH_CLEAR_DESCRIPTION to SampleStrings.SEARCH_CLEAR_DESCRIPTION,

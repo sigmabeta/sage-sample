@@ -9,6 +9,8 @@ plugins {
 
 dependencies {
     api(projects.core.viewmodel)
+    // The recent-search list is persisted through the app-scoped settings module.
+    api(projects.core.settings)
     // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
     api(libs.metrox.viewmodel)
 
