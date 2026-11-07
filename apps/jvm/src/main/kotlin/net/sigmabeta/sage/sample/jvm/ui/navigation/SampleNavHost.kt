@@ -64,9 +64,10 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
     val chromeController = remember { SampleChromeController() }
 
     // A new tab or pushed screen starts with the default shell chrome; a screen may hide the top
-    // bar from its own LaunchedEffect (Search does). Keying on tab + inner top screen also covers
-    // a push/pop within the active tab.
-    LaunchedEffect("${currentTab.key}/${activeScreen.key}") {
+    // bar from its own LaunchedEffect (Search does). The same route key re-expands the scrolling
+    // top bar, so a push/pop within the active tab resets it just like a tab switch.
+    val activeRouteKey = routeKeyFor(currentTab.key, activeScreen.key)
+    LaunchedEffect(activeRouteKey) {
         chromeController.set(SampleScreenChrome.Default)
     }
 
@@ -107,6 +108,7 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
             widthClass = widthClass,
             chrome = chromeController.state,
             topBar = topBar,
+            activeRouteKey = activeRouteKey,
             snackbarHostState = snackbarHostState,
             onSelectDestination = { destination ->
                 tabFor(destination)?.let(shellNavigation::selectTab)
