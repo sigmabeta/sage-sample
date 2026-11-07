@@ -12,6 +12,7 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.settings.SimulateDelay
@@ -139,6 +140,9 @@ internal class FakeHomeSettingsManager(
     override val simulateDelay: StateFlow<SimulateDelay> =
         MutableStateFlow(SimulateDelay.DEFAULT).asStateFlow()
 
+    override val demoOutcome: StateFlow<DemoOutcome> =
+        MutableStateFlow(DemoOutcome.DEFAULT).asStateFlow()
+
     override val homeShowsSameContent: StateFlow<Boolean> = homeSameContent.asStateFlow()
 
     override fun setThemeMode(mode: ThemeMode) = Unit
@@ -146,6 +150,8 @@ internal class FakeHomeSettingsManager(
     override fun setFontChoice(choice: FontChoice) = Unit
 
     override fun setSimulateDelay(delay: SimulateDelay) = Unit
+
+    override fun setDemoOutcome(outcome: DemoOutcome) = Unit
 
     override fun setHomeShowsSameContent(showSameContent: Boolean) {
         homeSameContent.value = showSameContent
