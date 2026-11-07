@@ -66,6 +66,11 @@ class SettingsViewModel(
             }
         }
         viewModelScope.launch {
+            settingsManager.demoOutcome.collect { outcome ->
+                updateState { it.copy(demoOutcome = outcome) }
+            }
+        }
+        viewModelScope.launch {
             settingsManager.homeShowsSameContent.collect { showSameContent ->
                 updateState { it.copy(homeShowsSameContent = showSameContent) }
             }
@@ -93,6 +98,11 @@ class SettingsViewModel(
 
             is SettingsAction.SimulateDelaySelected -> {
                 settingsManager.setSimulateDelay(action.delay)
+                collapseDropdown()
+            }
+
+            is SettingsAction.DemoOutcomeSelected -> {
+                settingsManager.setDemoOutcome(action.outcome)
                 collapseDropdown()
             }
 

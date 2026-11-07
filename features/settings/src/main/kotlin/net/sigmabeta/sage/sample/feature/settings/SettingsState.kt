@@ -10,6 +10,7 @@ import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
@@ -26,6 +27,7 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.DEFAULT,
     val fontChoice: FontChoice = FontChoice.DEFAULT,
     val simulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
+    val demoOutcome: DemoOutcome = DemoOutcome.DEFAULT,
     val homeShowsSameContent: Boolean = DEFAULT_HOME_SHOWS_SAME_CONTENT,
     val appVersion: String? = null,
     val buildDate: String? = null,
@@ -43,6 +45,7 @@ data class SettingsState(
         fontDropdown(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_SIMULATION),
         simulateDelayDropdown(stringProvider),
+        demoOutcomeDropdown(stringProvider),
         homeShowsSameContentToggle(stringProvider),
         sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_ABOUT),
         labelValue(
@@ -108,6 +111,23 @@ data class SettingsState(
         )
     }
 
+    private fun demoOutcomeDropdown(stringProvider: StringProvider): ListModel {
+        val settingId = SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
+        return DropdownSettingListModel.ofLabels(
+            settingId = settingId,
+            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME),
+            selectedPosition = demoOutcome.ordinal,
+            labels = DemoOutcome.entries
+                .map { stringProvider.getString(it.labelId()) }
+                .toImmutableList(),
+            expanded = expandedDropdownId == settingId,
+            onExpandClicked = SettingsAction.DropdownExpandClicked(settingId),
+            onNewOptionSelected = { index ->
+                SettingsAction.DemoOutcomeSelected(DemoOutcome.entries[index])
+            },
+        )
+    }
+
     private fun homeShowsSameContentToggle(stringProvider: StringProvider): ListModel {
         val settingId = SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.name
         return CheckableListModel(
@@ -134,6 +154,12 @@ data class SettingsState(
         SimulateDelay.ONE_SECOND -> SettingsStringId.SETTINGS_DELAY_ONE_SECOND
         SimulateDelay.TWO_SECONDS -> SettingsStringId.SETTINGS_DELAY_TWO_SECONDS
         SimulateDelay.FIVE_SECONDS -> SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS
+    }
+
+    private fun DemoOutcome.labelId(): SettingsStringId = when (this) {
+        DemoOutcome.CONTENT -> SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT
+        DemoOutcome.EMPTY -> SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY
+        DemoOutcome.ERROR -> SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR
     }
 
     private fun sectionHeader(

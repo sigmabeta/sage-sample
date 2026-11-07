@@ -21,10 +21,17 @@ interface SampleSettingsManager {
      */
     val homeShowsSameContent: StateFlow<Boolean>
 
+    /**
+     * Which terminal outcome the sample's generated demo sources should produce. Read at call
+     * time by the datasources, so changing it affects the next load without an app restart.
+     */
+    val demoOutcome: StateFlow<DemoOutcome>
+
     fun setThemeMode(mode: ThemeMode)
     fun setFontChoice(choice: FontChoice)
     fun setSimulateDelay(delay: SimulateDelay)
     fun setHomeShowsSameContent(showSameContent: Boolean)
+    fun setDemoOutcome(outcome: DemoOutcome)
 }
 
 /** Default for [SampleSettingsManager.homeShowsSameContent]: show the stable plan each visit. */
