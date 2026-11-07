@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.feature.home
 
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 
 /**
  * Actions Home rows carry.
@@ -10,6 +11,16 @@ import net.sigmabeta.sage.appcomm.SageAction
  * user action rather than a screen view.
  */
 sealed class HomeAction : SageAction() {
-    /** A module's image was tapped; [title] names the demo item. */
-    data class ItemClicked(val title: String) : HomeAction()
+    /** A module's image was tapped; [contentId] names the detail screen it opens. */
+    data class ItemClicked(val contentId: ContentId) : HomeAction()
 }
+
+/**
+ * The stable content ID for [itemId] shown by the module instance [moduleId].
+ *
+ * Home repeats module types, so the same numeric item can appear in more than one row. The
+ * module id (already unique within a plan) is part of the namespace, keeping the routes distinct
+ * while still reproducing the same detail for the same row.
+ */
+internal fun homeContentId(moduleId: String, itemId: Long): ContentId =
+    ContentId("home:$moduleId:$itemId")

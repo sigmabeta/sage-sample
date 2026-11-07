@@ -4,7 +4,6 @@
     <string name="home_title">SAGE Sample</string>
     <string name="home_section_big_image">Big image %1$d</string>
     <string name="home_section_grid_images">Grid images %1$d</string>
-    <string name="home_item_clicked">%1$s clicked</string>
     <string name="home_empty">No Home content is available. Change the demo outcome in Settings to load content.</string>
     <string name="home_all_error">Home content could not be loaded. Change the demo outcome in Settings to try again.</string>
 
@@ -41,7 +40,6 @@
     <string name="search_back_description">Back</string>
     <string name="search_prompt">Type at least 3 characters to search.</string>
     <string name="search_no_results">No results for “%1$s”.</string>
-    <string name="search_result_clicked">%1$s clicked</string>
     <string name="search_section_list">List results</string>
     <string name="search_section_grid">Grid results</string>
 

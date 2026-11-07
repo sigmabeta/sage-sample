@@ -18,6 +18,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.feature.contentdetail.contentDetailRoute
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
@@ -82,12 +83,8 @@ class HomeViewModel(
     override fun handleAction(action: SageAction) {
         when (action) {
             is HomeAction.ItemClicked -> emitEvent(
-                SageEvent.ShowSnackbar(
-                    message = stringProvider.getStringOneArg(
-                        HomeStringId.HOME_ITEM_CLICKED,
-                        action.title,
-                    ),
-                    withDismissAction = false,
+                SageEvent.NavigateTo(
+                    destination = contentDetailRoute(action.contentId),
                     source = "HomeViewModel",
                 ),
             )

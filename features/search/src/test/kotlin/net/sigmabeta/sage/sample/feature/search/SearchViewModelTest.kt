@@ -25,6 +25,7 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -363,7 +364,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `clicking a result emits a snackbar naming it`() = runTest(dispatcher) {
+    fun `clicking a result opens the detail for its content id`() = runTest(dispatcher) {
         val viewModel = createViewModel()
         val events = mutableListOf<SageEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -372,14 +373,15 @@ class SearchViewModelTest {
 
         viewModel.sendAction(
             SearchAction.ResultClicked(
-                SearchResult(id = 7L, name = "Fermentum Pellentesque", caption = "Elias Conrad"),
+                contentId = ContentId("search:list:123456:7"),
             ),
         )
         advanceUntilIdle()
 
-        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals("str-SEARCH_RESULT_CLICKED:Fermentum Pellentesque", snackbar.message)
-        assertEquals("SearchViewModel", snackbar.source)
+        val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
+        assertEquals("content-detail/search:list:123456:7", navigation.destination)
+        assertEquals("SearchViewModel", navigation.source)
+        assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
 
     @Test

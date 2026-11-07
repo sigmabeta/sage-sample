@@ -9,7 +9,9 @@ import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -90,7 +92,7 @@ class SearchStateTest {
     }
 
     @Test
-    fun `result clicks carry the originating result`() {
+    fun `result clicks carry namespaced content ids for their section`() {
         val rows = SearchState(
             query = "chrono",
             submittedQuery = "chrono",
@@ -98,13 +100,52 @@ class SearchStateTest {
             gridResults = LCE.Content(gridResults),
         ).toListItems(strings)
 
-        val listIds = rows.filterIsInstance<ImageNameCaptionListModel>()
-            .map { (it.clickAction as SearchAction.ResultClicked).result.id }
-        val gridIds = rows.filterIsInstance<GridImageListModel>()
-            .map { (it.clickAction as SearchAction.ResultClicked).result.id }
+        val listIds = resultContentIds(rows.filterIsInstance<ImageNameCaptionListModel>())
+        val gridIds = resultContentIds(rows.filterIsInstance<GridImageListModel>())
 
-        assertEquals(listOf(11L, 22L), listIds)
-        assertEquals(listOf(11L, 22L), gridIds)
+        assertEquals(
+            listOf(
+                searchContentId("chrono", SearchResultKind.LIST, 11L),
+                searchContentId("chrono", SearchResultKind.LIST, 22L),
+            ),
+            listIds,
+        )
+        assertEquals(
+            listOf(
+                searchContentId("chrono", SearchResultKind.GRID, 11L),
+                searchContentId("chrono", SearchResultKind.GRID, 22L),
+            ),
+            gridIds,
+        )
+        // Both sections number their results from 1, so equal numeric ids must still route apart.
+        assertEquals(listResults.map { it.id }, gridResults.map { it.id })
+        assertNotEquals(listIds[0], gridIds[0])
+    }
+
+    @Test
+    fun `a query reproduces the same result routes`() {
+        fun listRoutes(query: String): List<String> = SearchState(
+            query = query,
+            submittedQuery = query,
+            listResults = LCE.Content(listResults),
+            gridResults = LCE.Content(emptyList()),
+        ).toListItems(strings)
+            .filterIsInstance<ImageNameCaptionListModel>()
+            .map { (it.clickAction as SearchAction.ResultClicked).contentId.value }
+
+        assertEquals(listRoutes("chrono"), listRoutes("  CHRONO  "))
+        assertTrue(listRoutes("chrono").all { it.startsWith("search:list:") })
+        assertTrue(listRoutes("chrono").all { it.endsWith(":11") || it.endsWith(":22") })
+        assertNotEquals(listRoutes("chrono"), listRoutes("ff7"))
+    }
+
+    private fun resultContentIds(rows: List<*>): List<ContentId> = rows.map { row ->
+        val clickAction = when (row) {
+            is ImageNameCaptionListModel -> row.clickAction
+            is GridImageListModel -> row.clickAction
+            else -> error("not a result row: $row")
+        }
+        (clickAction as SearchAction.ResultClicked).contentId
     }
 
     @Test

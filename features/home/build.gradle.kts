@@ -9,6 +9,8 @@ plugins {
 
 dependencies {
     api(projects.core.viewmodel)
+    // The Content detail route codec: rows open detail through the one shared encoding.
+    implementation(projects.features.contentdetail)
     // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
     api(libs.metrox.viewmodel)
 

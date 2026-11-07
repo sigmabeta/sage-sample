@@ -108,7 +108,9 @@ data class SearchState(
             caption = result.caption,
             sourceInfo = imageSourceFor(result, query, SearchResultKind.LIST, LIST_IMAGE_SIZE),
             imagePlaceholder = Icon.Search,
-            clickAction = SearchAction.ResultClicked(result),
+            clickAction = SearchAction.ResultClicked(
+                searchContentId(query, SearchResultKind.LIST, result.id),
+            ),
         )
     }
 
@@ -126,7 +128,9 @@ data class SearchState(
             name = result.name,
             sourceInfo = imageSourceFor(result, query, SearchResultKind.GRID, GRID_IMAGE_SIZE),
             imagePlaceholder = Icon.Album,
-            clickAction = SearchAction.ResultClicked(result),
+            clickAction = SearchAction.ResultClicked(
+                searchContentId(query, SearchResultKind.GRID, result.id),
+            ),
         )
     }
 

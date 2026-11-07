@@ -48,6 +48,25 @@ class ContentDetailRouteTest {
     }
 
     @Test
+    fun `the same numeric item routes apart in every content namespace`() {
+        // Every surface numbers its generated items from 1, so the namespaces are what keep a
+        // tap on item 7 in one list from opening item 7 from another.
+        val ids = listOf(
+            "home:big_image_1:7",
+            "search:list:-123456:7",
+            "search:grid:-123456:7",
+            "grid-of-images:7",
+            "content-detail:related:7",
+            "content-detail:item:7",
+            "list-items:7",
+            "list-items-with-images:7",
+        ).map(::ContentId)
+
+        ids.forEach { assertTrue("$it must name a known surface", isKnownContentId(it)) }
+        assertEquals(ids.size, ids.map { contentDetailRoute(it) }.toSet().size)
+    }
+
+    @Test
     fun `the default content id is a known, encodable id`() {
         assertTrue(isKnownContentId(DEFAULT_CONTENT_ID))
         assertEquals(

@@ -9,6 +9,8 @@ plugins {
 
 dependencies {
     api(projects.core.viewmodel)
+    // The Content detail route codec: result rows open detail through the one shared encoding.
+    implementation(projects.features.contentdetail)
     // The recent-search list is persisted through the app-scoped settings module.
     api(projects.core.settings)
     // `@ViewModelKey`, the map key Metro uses to bind ViewModels.

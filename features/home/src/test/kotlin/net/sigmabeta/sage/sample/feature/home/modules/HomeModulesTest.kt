@@ -19,6 +19,7 @@ import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.feature.home.HomeRepository
 import net.sigmabeta.sage.sample.feature.home.HomeSectionState
 import net.sigmabeta.sage.sample.feature.home.HomeState
+import net.sigmabeta.sage.sample.feature.home.homeContentId
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -64,7 +65,10 @@ class HomeModulesTest {
         assertEquals("Chosen", hero.name)
         assertEquals(20_000_000L + 7L, hero.dataId)
         assertEquals("generated://home/big_image_3/7?width=528&height=704", hero.sourceInfo.info)
-        assertEquals(HomeAction.ItemClicked("Chosen"), hero.clickAction)
+        assertEquals(
+            HomeAction.ItemClicked(homeContentId("big_image_3", 7L)),
+            hero.clickAction,
+        )
         assertEquals(0.75f, hero.aspectRatio, 0f)
         assertEquals(400f, hero.maxWidthDp!!, 0f)
 
@@ -116,7 +120,10 @@ class HomeModulesTest {
             "generated://home/grid_images_2/1?width=264&height=352",
             cells.first().sourceInfo.info,
         )
-        assertEquals(HomeAction.ItemClicked("Item 1"), cells.first().clickAction)
+        assertEquals(
+            HomeAction.ItemClicked(homeContentId("grid_images_2", 1L)),
+            cells.first().clickAction,
+        )
         assertTrue(cells.all { it.aspectRatio == 0.75f })
 
         assertEquals(listOf("grid_images_2"), repository.gridSeeds)
@@ -182,6 +189,27 @@ class HomeModulesTest {
 
         val headers = rows.filterIsInstance<SectionHeaderListModel>().map { it.title }
         assertEquals(headers.size, headers.toSet().size)
+    }
+
+    @Test
+    fun `row content ids carry the module namespace and stay unique for equal item ids`() = runTest {
+        val item = HomeItem(id = 7L, title = "Same item")
+        val repository = FakeHomeRepository(items = listOf(item))
+
+        suspend fun heroContentId(module: BigImageModule) =
+            (module.state().toList().last() as LCE.Content<HomeModuleSection>)
+                .data
+                .items
+                .single()
+                .let { (it as GridImageListModel).clickAction as HomeAction.ItemClicked }
+                .contentId
+
+        val first = heroContentId(bigImage(repository, instanceNumber = 1))
+        val second = heroContentId(bigImage(repository, instanceNumber = 2))
+
+        assertEquals("home:big_image_1:7", first.value)
+        assertEquals("home:big_image_2:7", second.value)
+        assertNotEquals(first, second)
     }
 
     @Test

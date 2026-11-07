@@ -64,7 +64,6 @@ object SampleBindings {
         HomeStringId.HOME_TITLE -> R.string.home_title
         HomeStringId.HOME_SECTION_BIG_IMAGE -> R.string.home_section_big_image
         HomeStringId.HOME_SECTION_GRID_IMAGES -> R.string.home_section_grid_images
-        HomeStringId.HOME_ITEM_CLICKED -> R.string.home_item_clicked
         HomeStringId.HOME_EMPTY -> R.string.home_empty
         HomeStringId.HOME_ALL_ERROR -> R.string.home_all_error
     }
@@ -96,7 +95,6 @@ object SampleBindings {
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_EMPTY -> R.string.list_items_with_images_empty
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR -> R.string.list_items_with_images_error
         ListItemsStringId.GRID_OF_IMAGES_TITLE -> R.string.nav_grid_of_images
-        ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
         ListItemsStringId.GRID_OF_IMAGES_EMPTY -> R.string.grid_of_images_empty
         ListItemsStringId.GRID_OF_IMAGES_ERROR -> R.string.grid_of_images_error
     }
@@ -108,7 +106,6 @@ object SampleBindings {
         SearchStringId.SEARCH_BACK_DESCRIPTION -> R.string.search_back_description
         SearchStringId.SEARCH_PROMPT -> R.string.search_prompt
         SearchStringId.SEARCH_NO_RESULTS -> R.string.search_no_results
-        SearchStringId.SEARCH_RESULT_CLICKED -> R.string.search_result_clicked
         SearchStringId.SEARCH_SECTION_LIST -> R.string.search_section_list
         SearchStringId.SEARCH_SECTION_GRID -> R.string.search_section_grid
     }

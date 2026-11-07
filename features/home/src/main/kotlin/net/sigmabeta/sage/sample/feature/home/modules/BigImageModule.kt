@@ -12,6 +12,7 @@ import net.sigmabeta.sage.sample.feature.home.HomeModule
 import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.feature.home.HomeRepository
 import net.sigmabeta.sage.sample.feature.home.HomeStringId
+import net.sigmabeta.sage.sample.feature.home.homeContentId
 import net.sigmabeta.sage.sample.feature.home.homeImageSource
 import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringProvider
@@ -76,7 +77,7 @@ class BigImageModule(
                         height = HERO_IMAGE_HEIGHT,
                     ),
                     imagePlaceholder = Icon.Album,
-                    clickAction = HomeAction.ItemClicked(pick.title),
+                    clickAction = HomeAction.ItemClicked(homeContentId(id, pick.id)),
                     aspectRatio = HERO_ASPECT_RATIO,
                     maxWidthDp = MAX_WIDTH_DP,
                 ),
