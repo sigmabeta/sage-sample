@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.settings
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,6 +10,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
+import net.sigmabeta.sage.sample.settings.DemoDataResetter
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
@@ -83,6 +85,26 @@ internal class FakeSettingsManager(
     override fun setHomeShowsSameContent(showSameContent: Boolean) {
         setHomeShowsSameContentCalls += showSameContent
         homeSameContent.value = showSameContent
+    }
+}
+
+/**
+ * A controllable [DemoDataResetter]: counts calls and can hold the reset open or make it fail.
+ *
+ * [gate] lets a test keep the reset in flight while it dispatches a second one; [failure] is
+ * thrown after the gate opens.
+ */
+internal class FakeDemoDataResetter(
+    private val gate: CompletableDeferred<Unit>? = null,
+    private val failure: Throwable? = null,
+) : DemoDataResetter {
+    var resetCalls: Int = 0
+        private set
+
+    override suspend fun reset() {
+        resetCalls += 1
+        gate?.await()
+        failure?.let { throw it }
     }
 }
 

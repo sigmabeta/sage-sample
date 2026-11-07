@@ -69,6 +69,13 @@ object SampleStrings {
     const val SETTINGS_DEMO_OUTCOME_EMPTY = "Empty"
     const val SETTINGS_DEMO_OUTCOME_ERROR = "Error"
     const val SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT = "Home shows same content"
+    const val SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT =
+        "Render Home from one stable plan of modules on every visit."
+    const val SETTINGS_LABEL_RESET_DEMO_DATA = "Reset demo data"
+    const val SETTINGS_CAPTION_RESET_DEMO_DATA =
+        "Clear recent searches and restore the default demo outcome and Home content."
+    const val SETTINGS_RESET_DEMO_DATA_SUCCESS = "Demo data reset"
+    const val SETTINGS_RESET_DEMO_DATA_FAILURE = "Couldn’t reset demo data. Try again."
 
     const val SETTINGS_SECTION_ABOUT = "About"
     const val SETTINGS_LABEL_APP_VERSION = "App version"

@@ -87,6 +87,10 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         isTopLevel = activeScreen.destination.isTopLevel,
     )
 
+    // One stable reference for the window-level inputs, so the pointer handler is not restarted by
+    // ordinary recomposition.
+    val onBack = remember(shellNavigation) { shellNavigation::back }
+
     CompositionLocalProvider(
         LocalSampleChromeController provides chromeController,
         LocalSampleNavEffects provides navEffects,
@@ -95,27 +99,31 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         LocalSampleActiveTabNavigator provides activeTabNavigator,
         LocalSampleBackHandler provides shellNavigation,
     ) {
-        // Desktop Back input is a window-level seam (ticket 02); the no-op keeps the shell's shape
-        // identical to Android, where the same call installs the system Back handler.
+        // Desktop Back input is a window-level seam; onBack is the same policy handler the top-bar
+        // arrow and `SageEvent.NavigateBack` use.
         SampleSystemBack(
             enabled = activeNavigator?.canPop != true,
-            onBack = shellNavigation::back,
+            onBack = onBack,
         )
 
-        SampleNavScaffold(
-            selectedDestination = currentTab.destination,
-            widthClass = widthClass,
-            chrome = chromeController.state,
-            topBar = topBar,
-            snackbarHostState = snackbarHostState,
-            onSelectDestination = { destination ->
-                tabFor(destination)?.let(shellNavigation::selectTab)
-            },
-            onOpenSettings = { shellNavigation.push(SampleDestination.SETTINGS) },
-            onBack = shellNavigation::back,
-        ) { innerPadding ->
-            Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                CurrentTab()
+        // The mouse back button is a pointer event, so it needs no focus and is observed across the
+        // whole shell. Clicks are read, never consumed, so normal buttons still work.
+        Box(modifier = Modifier.fillMaxSize().backMouseButton(onBack)) {
+            SampleNavScaffold(
+                selectedDestination = currentTab.destination,
+                widthClass = widthClass,
+                chrome = chromeController.state,
+                topBar = topBar,
+                snackbarHostState = snackbarHostState,
+                onSelectDestination = { destination ->
+                    tabFor(destination)?.let(shellNavigation::selectTab)
+                },
+                onOpenSettings = { shellNavigation.push(SampleDestination.SETTINGS) },
+                onBack = onBack,
+            ) { innerPadding ->
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                    CurrentTab()
+                }
             }
         }
     }

@@ -85,6 +85,16 @@ object SampleStringProvider : StringProvider {
         SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR to SampleStrings.SETTINGS_DEMO_OUTCOME_ERROR,
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT to
             SampleStrings.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
+        SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT to
+            SampleStrings.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
+        SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA to
+            SampleStrings.SETTINGS_LABEL_RESET_DEMO_DATA,
+        SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA to
+            SampleStrings.SETTINGS_CAPTION_RESET_DEMO_DATA,
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS to
+            SampleStrings.SETTINGS_RESET_DEMO_DATA_SUCCESS,
+        SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE to
+            SampleStrings.SETTINGS_RESET_DEMO_DATA_FAILURE,
         SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,
         SettingsStringId.SETTINGS_LABEL_APP_VERSION to SampleStrings.SETTINGS_LABEL_APP_VERSION,
         SettingsStringId.SETTINGS_LABEL_BUILD_DATE to SampleStrings.SETTINGS_LABEL_BUILD_DATE,
