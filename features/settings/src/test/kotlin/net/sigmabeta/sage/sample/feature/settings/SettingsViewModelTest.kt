@@ -12,6 +12,7 @@ import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SimulateDelay
@@ -43,6 +44,7 @@ class SettingsViewModelTest {
             initialThemeMode = ThemeMode.DARK,
             initialFontChoice = FontChoice.INTER,
             initialSimulateDelay = SimulateDelay.ONE_SECOND,
+            initialDemoOutcome = DemoOutcome.ERROR,
             initialHomeShowsSameContent = true,
         )
         val viewModel = createViewModel(settings = settings, appInfo = testAppInfo(versionName = "9.9.9"))
@@ -52,6 +54,7 @@ class SettingsViewModelTest {
         assertEquals(ThemeMode.DARK.ordinal, themeDropdown(items).selectedPosition)
         assertEquals(FontChoice.INTER.ordinal, fontDropdown(items).selectedPosition)
         assertEquals(SimulateDelay.ONE_SECOND.ordinal, delayDropdown(items).selectedPosition)
+        assertEquals(DemoOutcome.ERROR.ordinal, demoOutcomeDropdown(items).selectedPosition)
         assertEquals(true, homeShowsSameContentToggle(items).checked)
         assertEquals("9.9.9", items.filterIsInstance<LabelValueListModel>()[0].value)
     }
@@ -104,6 +107,26 @@ class SettingsViewModelTest {
         assertEquals(listOf(SimulateDelay.FIVE_SECONDS), settings.setSimulateDelayCalls)
         assertEquals(SimulateDelay.FIVE_SECONDS.ordinal, delayDropdown(viewModel.uiStateActual.value.listItems).selectedPosition)
         assertFalse(delayDropdown(viewModel.uiStateActual.value.listItems).expanded)
+    }
+
+    @Test
+    fun `selecting a demo outcome writes through and collapses the dropdown`() = runTest(dispatcher) {
+        val settings = FakeSettingsManager()
+        val viewModel = createViewModel(settings = settings)
+
+        viewModel.sendAction(SettingsAction.DropdownExpandClicked(DEMO_OUTCOME_SETTING_ID))
+        advanceUntilIdle()
+        assertTrue(demoOutcomeDropdown(viewModel.uiStateActual.value.listItems).expanded)
+
+        viewModel.sendAction(SettingsAction.DemoOutcomeSelected(DemoOutcome.EMPTY))
+        advanceUntilIdle()
+
+        assertEquals(listOf(DemoOutcome.EMPTY), settings.setDemoOutcomeCalls)
+        assertEquals(
+            DemoOutcome.EMPTY.ordinal,
+            demoOutcomeDropdown(viewModel.uiStateActual.value.listItems).selectedPosition,
+        )
+        assertFalse(demoOutcomeDropdown(viewModel.uiStateActual.value.listItems).expanded)
     }
 
     @Test
@@ -169,6 +192,10 @@ class SettingsViewModelTest {
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
 
+    private fun demoOutcomeDropdown(items: List<ListModel>): DropdownSettingListModel =
+        items.filterIsInstance<DropdownSettingListModel>()
+            .single { it.name == SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
+
     private fun homeShowsSameContentToggle(items: List<ListModel>): CheckableListModel =
         items.filterIsInstance<CheckableListModel>()
             .single {
@@ -179,5 +206,6 @@ class SettingsViewModelTest {
         val THEME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_THEME.name
         val FONT_SETTING_ID = SettingsStringId.SETTINGS_LABEL_FONT.name
         val DELAY_SETTING_ID = SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
+        val DEMO_OUTCOME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
     }
 }

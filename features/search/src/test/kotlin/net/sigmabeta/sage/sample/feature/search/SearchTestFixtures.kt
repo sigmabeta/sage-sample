@@ -1,12 +1,21 @@
 package net.sigmabeta.sage.sample.feature.search
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreenId
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
+import net.sigmabeta.sage.sample.settings.DemoOutcome
+import net.sigmabeta.sage.sample.settings.FontChoice
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.SimulateDelay
+import net.sigmabeta.sage.sample.settings.ThemeMode
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -37,6 +46,48 @@ internal class FakeAnalytics : Analytics {
         errorString: String,
         error: Throwable,
     ) = Unit
+}
+
+/**
+ * Settings seam used by repository tests that read a preference at call time.
+ *
+ * Only the values those tests care about are mutable; the rest mirror the manager's defaults so
+ * the sample's preferences have one fake vocabulary in this module.
+ */
+internal class FakeSampleSettingsManager(
+    initialDemoOutcome: DemoOutcome = DemoOutcome.DEFAULT,
+) : SampleSettingsManager {
+    private val demoOutcomeState = MutableStateFlow(initialDemoOutcome)
+    private val themeModeState = MutableStateFlow(ThemeMode.DEFAULT)
+    private val fontChoiceState = MutableStateFlow(FontChoice.DEFAULT)
+    private val simulateDelayState = MutableStateFlow(SimulateDelay.DEFAULT)
+    private val homeShowsSameContentState = MutableStateFlow(DEFAULT_HOME_SHOWS_SAME_CONTENT)
+
+    override val demoOutcome: StateFlow<DemoOutcome> = demoOutcomeState.asStateFlow()
+    override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
+    override val fontChoice: StateFlow<FontChoice> = fontChoiceState.asStateFlow()
+    override val simulateDelay: StateFlow<SimulateDelay> = simulateDelayState.asStateFlow()
+    override val homeShowsSameContent: StateFlow<Boolean> = homeShowsSameContentState.asStateFlow()
+
+    override fun setDemoOutcome(outcome: DemoOutcome) {
+        demoOutcomeState.value = outcome
+    }
+
+    override fun setThemeMode(mode: ThemeMode) {
+        themeModeState.value = mode
+    }
+
+    override fun setFontChoice(choice: FontChoice) {
+        fontChoiceState.value = choice
+    }
+
+    override fun setSimulateDelay(delay: SimulateDelay) {
+        simulateDelayState.value = delay
+    }
+
+    override fun setHomeShowsSameContent(showSameContent: Boolean) {
+        homeShowsSameContentState.value = showSameContent
+    }
 }
 
 /**

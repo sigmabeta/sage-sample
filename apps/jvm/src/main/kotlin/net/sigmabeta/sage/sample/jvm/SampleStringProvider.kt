@@ -70,6 +70,11 @@ object SampleStringProvider : StringProvider {
         SettingsStringId.SETTINGS_DELAY_ONE_SECOND to SampleStrings.SETTINGS_DELAY_ONE_SECOND,
         SettingsStringId.SETTINGS_DELAY_TWO_SECONDS to SampleStrings.SETTINGS_DELAY_TWO_SECONDS,
         SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS to SampleStrings.SETTINGS_DELAY_FIVE_SECONDS,
+        SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME to SampleStrings.SETTINGS_LABEL_DEMO_OUTCOME,
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT to
+            SampleStrings.SETTINGS_DEMO_OUTCOME_CONTENT,
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY to SampleStrings.SETTINGS_DEMO_OUTCOME_EMPTY,
+        SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR to SampleStrings.SETTINGS_DEMO_OUTCOME_ERROR,
         SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT to
             SampleStrings.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
         SettingsStringId.SETTINGS_SECTION_ABOUT to SampleStrings.SETTINGS_SECTION_ABOUT,

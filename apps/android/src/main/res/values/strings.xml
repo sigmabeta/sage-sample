@@ -52,6 +52,10 @@
     <string name="settings_delay_one_second">1 second</string>
     <string name="settings_delay_two_seconds">2 seconds</string>
     <string name="settings_delay_five_seconds">5 seconds</string>
+    <string name="settings_label_demo_outcome">Demo outcome</string>
+    <string name="settings_demo_outcome_content">Content</string>
+    <string name="settings_demo_outcome_empty">Empty</string>
+    <string name="settings_demo_outcome_error">Error</string>
     <string name="settings_label_home_shows_same_content">Home shows same content</string>
 
     <string name="settings_section_about">About</string>

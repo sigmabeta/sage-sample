@@ -55,6 +55,10 @@ object SampleStrings {
     const val SETTINGS_DELAY_ONE_SECOND = "1 second"
     const val SETTINGS_DELAY_TWO_SECONDS = "2 seconds"
     const val SETTINGS_DELAY_FIVE_SECONDS = "5 seconds"
+    const val SETTINGS_LABEL_DEMO_OUTCOME = "Demo outcome"
+    const val SETTINGS_DEMO_OUTCOME_CONTENT = "Content"
+    const val SETTINGS_DEMO_OUTCOME_EMPTY = "Empty"
+    const val SETTINGS_DEMO_OUTCOME_ERROR = "Error"
     const val SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT = "Home shows same content"
 
     const val SETTINGS_SECTION_ABOUT = "About"

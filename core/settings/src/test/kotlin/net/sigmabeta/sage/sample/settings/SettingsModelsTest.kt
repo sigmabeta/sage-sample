@@ -68,6 +68,21 @@ class SettingsModelsTest {
     }
 
     @Test
+    fun `demo outcome parses every stored name`() {
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("CONTENT"))
+        assertEquals(DemoOutcome.EMPTY, DemoOutcome.fromStorageValue("EMPTY"))
+        assertEquals(DemoOutcome.ERROR, DemoOutcome.fromStorageValue("ERROR"))
+    }
+
+    @Test
+    fun `demo outcome falls back to content for missing or unknown values`() {
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(null))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue(""))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("BOGUS"))
+        assertEquals(DemoOutcome.CONTENT, DemoOutcome.DEFAULT)
+    }
+
+    @Test
     fun `home shows same content parses persisted booleans and defaults to off`() {
         assertTrue(homeShowsSameContentFromStorage("true"))
         assertFalse(homeShowsSameContentFromStorage("false"))
