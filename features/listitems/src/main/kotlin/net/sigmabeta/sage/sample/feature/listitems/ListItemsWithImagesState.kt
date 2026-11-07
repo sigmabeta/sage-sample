@@ -1,6 +1,8 @@
 package net.sigmabeta.sage.sample.feature.listitems
 
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.components.EmptyStateListModel
+import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingType
@@ -20,7 +22,9 @@ import net.sigmabeta.sage.ui.StringProvider
  * image without shipping any bitmap assets.
  *
  * Loading rows use [LoadingType.TEXT_CAPTION_IMAGE] with no section header, so the placeholder has
- * the same image, name and caption shape as the [ImageNameCaptionListModel] rows.
+ * the same image, name and caption shape as the [ImageNameCaptionListModel] rows. An empty
+ * successful result renders one localized [EmptyStateListModel], and a failed load renders one
+ * localized [ErrorStateListModel] naming the operation; neither falls through to a blank list.
  */
 data class ListItemsWithImagesState(
     val content: LCE<List<SampleItem>> = LCE.Loading(
@@ -35,14 +39,20 @@ data class ListItemsWithImagesState(
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> =
         when (val loaded = content) {
-            is LCE.Error -> error(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME, loaded.error)
+            is LCE.Error -> listOf(
+                ErrorStateListModel(
+                    failedOperationName = LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
+                    errorString = stringProvider.getString(
+                        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR,
+                    ),
+                    error = loaded.error,
+                ),
+            )
 
-            else -> loaded.withStandardErrorAndLoading(
-                loadingType = LoadingType.TEXT_CAPTION_IMAGE,
-                loadingWithHeader = false,
-                loadingOperationNameOverride = LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
-            ) {
-                data.map { item ->
+            is LCE.Content -> if (loaded.data.isEmpty()) {
+                listOf(emptyState(stringProvider))
+            } else {
+                loaded.data.map { item ->
                     ImageNameCaptionListModel(
                         dataId = item.id,
                         name = item.name,
@@ -53,7 +63,24 @@ data class ListItemsWithImagesState(
                     )
                 }
             }
+
+            is LCE.Loading,
+            LCE.Uninitialized -> loading(
+                operationName = LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
+                loadingType = LoadingType.TEXT_CAPTION_IMAGE,
+                loadingItemCount = LOADING_ITEM_COUNT,
+            )
         }
+
+    private fun emptyState(stringProvider: StringProvider) = EmptyStateListModel(
+        icon = Icon.Person,
+        explanation = stringProvider.getString(ListItemsStringId.LIST_ITEMS_WITH_IMAGES_EMPTY),
+        showCrossOut = false,
+    )
+
+    private companion object {
+        const val LOADING_ITEM_COUNT = 10
+    }
 }
 
 /**

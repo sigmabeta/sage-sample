@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.feature.listitems
 
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
@@ -8,6 +9,7 @@ import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.list.ColumnType
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -91,7 +93,19 @@ class GridOfImagesStateTest {
     }
 
     @Test
-    fun `error maps to an error state`() {
+    fun `empty content maps to one localized empty state`() {
+        val rows = GridOfImagesState(LCE.Content(emptyList())).toListItems(strings)
+
+        val emptyState = rows.filterIsInstance<EmptyStateListModel>().single()
+        assertEquals("str-GRID_OF_IMAGES_EMPTY", emptyState.explanation)
+        assertEquals(Icon.Album, emptyState.icon)
+        assertFalse(emptyState.showCrossOut)
+        assertTrue(rows.none { it is GridImageListModel })
+        assertEquals(1, rows.size)
+    }
+
+    @Test
+    fun `error maps to one localized error state under the grid operation`() {
         val rows = GridOfImagesState(
             LCE.Error(
                 GRID_OF_IMAGES_OPERATION_NAME,
@@ -101,6 +115,44 @@ class GridOfImagesStateTest {
 
         val errorState = rows.filterIsInstance<ErrorStateListModel>().single()
         assertEquals(GRID_OF_IMAGES_OPERATION_NAME, errorState.failedOperationName)
+        assertEquals("str-GRID_OF_IMAGES_ERROR", errorState.errorString)
         assertEquals("boom", errorState.error.message)
+        assertTrue(rows.none { it is GridImageListModel })
+        assertEquals(1, rows.size)
+    }
+
+    @Test
+    fun `uninitialized content shows loading rather than a blank grid`() {
+        val rows = GridOfImagesState(LCE.Uninitialized).toListItems(strings)
+
+        assertTrue(rows.any { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `every terminal state renders at least one row`() {
+        val states = listOf(
+            GridOfImagesState(LCE.Loading(GRID_OF_IMAGES_OPERATION_NAME)),
+            GridOfImagesState(LCE.Content(emptyList())),
+            GridOfImagesState(LCE.Error(GRID_OF_IMAGES_OPERATION_NAME, IllegalStateException("boom"))),
+            GridOfImagesState(LCE.Uninitialized),
+        )
+
+        states.forEach { state ->
+            val rows = state.toListItems(strings)
+            assertTrue("$state rendered no rows", rows.isNotEmpty())
+            assertEquals(rows.size, rows.map { it.dataId }.distinct().size)
+        }
+    }
+
+    @Test
+    fun `empty and error keep the screen title and back`() {
+        listOf(
+            GridOfImagesState(LCE.Content(emptyList())),
+            GridOfImagesState(LCE.Error(GRID_OF_IMAGES_OPERATION_NAME, IllegalStateException("boom"))),
+        ).forEach { state ->
+            val title = state.title(strings)
+            assertEquals("str-GRID_OF_IMAGES_TITLE", title.title)
+            assertTrue(title.shouldShowBack)
+        }
     }
 }
