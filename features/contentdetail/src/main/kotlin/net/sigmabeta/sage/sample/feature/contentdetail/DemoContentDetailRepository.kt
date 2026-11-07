@@ -14,11 +14,13 @@ import net.sigmabeta.sage.ui.StringGenerator
 /**
  * The sample's generated datasource for Content detail.
  *
- * Every load rebuilds the same content through [demoContentDetail], so the screen is random in
- * content but identical on every visit — popping and re-pushing it never changes the title,
- * metadata, actions, related items or parts. The artificial latency comes from the shared
- * `runInBackground` seam, which applies the duration selected on the Settings screen; this
- * repository does not add a delay of its own.
+ * Content is generated from the requested [ContentId], so two IDs show different items while the
+ * same ID reproduces exactly on every visit — popping and re-pushing a screen never changes its
+ * title, metadata, actions, related items or parts. An ID outside the sample's known surfaces is
+ * the explicit not-found result (`LCE.Content(null)`), not an error.
+ *
+ * The artificial latency comes from the shared `runInBackground` seam, which applies the duration
+ * selected on the Settings screen; this repository does not add a delay of its own.
  *
  * Metro binds it to [ContentDetailRepository] once for the application graph; the sample has no
  * real content backend.
@@ -27,24 +29,26 @@ import net.sigmabeta.sage.ui.StringGenerator
 @ContributesBinding(AppScope::class)
 @Inject
 class DemoContentDetailRepository : ContentDetailRepository {
-    override fun load(): Flow<LCE<ContentDetail>> = flow {
-        emit(LCE.Content(demoContentDetail()))
+    override fun load(contentId: ContentId): Flow<LCE<ContentDetail?>> = flow {
+        emit(LCE.Content(demoContentDetail(contentId)))
     }
 }
 
 /**
- * Builds the detail screen's content from [CONTENT_DETAIL_SEED].
+ * Builds the detail screen's content for [contentId].
  *
- * The seed is deliberately fixed rather than drawn per visit: this is the "randomized content,
- * predetermined seed" contract, so a demo screenshot and a re-push of the screen always show the
- * same item. Changing the seed changes every generated field.
+ * The ID seeds the generator rather than a fixed constant: the content is still "randomized
+ * content, predetermined seed" per address, so a demo screenshot and a re-push of the same link
+ * always show the same item while a different link shows a different one.
  */
-internal fun demoContentDetail(seed: Long = CONTENT_DETAIL_SEED): ContentDetail {
-    val random = Random(seed)
+internal fun demoContentDetail(contentId: ContentId): ContentDetail? {
+    if (!isKnownContentId(contentId)) return null
+
+    val random = Random(contentIdSeed(contentId))
     val generator = StringGenerator(random)
 
     return ContentDetail(
-        id = CONTENT_DETAIL_ID,
+        id = contentId,
         title = generator.generateTitle(),
         details = List(DETAILS_COUNT) {
             ContentDetailField(
@@ -75,18 +79,29 @@ internal fun demoContentDetail(seed: Long = CONTENT_DETAIL_SEED): ContentDetail 
 }
 
 /**
- * Static seed: the generated detail is random-looking but reproducible.
+ * A stable seed derived from the ID's text.
  *
- * It is intentionally unrelated to the list, grid and search seeds so each screen has its own
- * content while every screen remains deterministic.
+ * `String.hashCode()` is specified on the JVM but is only 32 bits; this local 64-bit mixing keeps
+ * two nearby IDs (`list-items:7`, `list-items:8`) from landing on similar generated content while
+ * staying deterministic across runs and platforms.
  */
-internal const val CONTENT_DETAIL_SEED = 20260911L
+internal fun contentIdSeed(contentId: ContentId): Long {
+    var hash = FNV_OFFSET_BASIS
+    contentId.value.forEach { char ->
+        hash = hash xor char.code.toLong()
+        hash *= FNV_PRIME
+    }
+    return hash
+}
 
-private const val CONTENT_DETAIL_ID = 1L
 private const val DETAILS_COUNT = 4
 private const val ACTION_COUNT = 4
 private const val RELATED_COUNT = 5
 private const val ITEM_COUNT = 8
+
+/** FNV-1a's 64-bit offset basis and prime. */
+private const val FNV_OFFSET_BASIS = -0x340d631b7bdddcdbL
+private const val FNV_PRIME = 0x100000001b3L
 
 /**
  * The icons a generated action may draw. Deliberately generic library/navigation icons rather

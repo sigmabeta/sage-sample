@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
 
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -66,6 +67,33 @@ class SampleNavActionTest {
                 SageEvent.NavigateTo(destination = "content-detail", source = "test"),
             ),
         )
+    }
+
+    @Test
+    fun `a content detail route carries its typed id`() {
+        assertEquals(
+            SampleNavAction.Push(
+                SampleDestination.CONTENT_DETAIL,
+                ContentId("list-items:7"),
+            ),
+            navActionFor(
+                SageEvent.NavigateTo(
+                    destination = "content-detail/list-items:7",
+                    source = "test",
+                ),
+            ),
+        )
+    }
+
+    @Test
+    fun `a content detail route reports the destination without a usable id as not-found`() {
+        listOf("content-detail", "content-detail/", "content-detail/has space").forEach { route ->
+            assertEquals(
+                "route $route must still open the not-found destination",
+                SampleNavAction.Push(SampleDestination.CONTENT_DETAIL, null),
+                navActionFor(SageEvent.NavigateTo(destination = route, source = "test")),
+            )
+        }
     }
 
     @Test

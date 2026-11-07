@@ -10,7 +10,13 @@ import net.sigmabeta.sage.appcomm.LCE
  * without knowing where the data came from. Tests inject their own fake implementation.
  */
 fun interface ContentDetailRepository {
-    fun load(): Flow<LCE<ContentDetail>>
+    /**
+     * Loads the item named by [contentId].
+     *
+     * A `null` [ContentDetail] is the repository's explicit not-found result, not an error: the
+     * screen renders a localized explanation for it.
+     */
+    fun load(contentId: ContentId): Flow<LCE<ContentDetail?>>
 }
 
 /** The operation name Content detail's LCE values carry through loading and error states. */
