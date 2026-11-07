@@ -102,7 +102,7 @@ internal class FakeSampleItemRepository : SampleItemRepository {
         extraBufferCapacity = 1,
     )
 
-    override fun load(): Flow<LCE<List<SampleItem>>> = stream
+    override fun load(offset: Int, limit: Int): Flow<LCE<List<SampleItem>>> = stream
 
     suspend fun emit(value: LCE<List<SampleItem>>) {
         stream.emit(value)
@@ -116,9 +116,67 @@ internal class FakeGridOfImagesRepository : GridOfImagesRepository {
         extraBufferCapacity = 1,
     )
 
-    override fun load(): Flow<LCE<List<SampleItem>>> = stream
+    override fun load(offset: Int, limit: Int): Flow<LCE<List<SampleItem>>> = stream
 
     suspend fun emit(value: LCE<List<SampleItem>>) {
         stream.emit(value)
     }
+}
+
+/** One repository window request, recorded so paging tests can assert offsets and limits. */
+internal data class PageRequest(val offset: Int, val limit: Int)
+
+/**
+ * A repository whose every [load] call returns its own controllable flow.
+ *
+ * Paging is sequential in production, so each call's flow is independent: the test starts a page,
+ * waits for the view model to subscribe, then emits that page's result. [requests] records the
+ * order of windows so tests can prove one-at-a-time coalescing and end-of-content stops.
+ */
+internal class ControlledSampleItemRepository : SampleItemRepository {
+    private val pages = mutableListOf<MutableSharedFlow<LCE<List<SampleItem>>>>()
+
+    val requests = mutableListOf<PageRequest>()
+
+    override fun load(offset: Int, limit: Int): Flow<LCE<List<SampleItem>>> {
+        requests += PageRequest(offset, limit)
+        return MutableSharedFlow<LCE<List<SampleItem>>>(replay = 1).also { pages += it }
+    }
+
+    suspend fun emitPage(index: Int, value: LCE<List<SampleItem>>) {
+        pages[index].emit(value)
+    }
+
+    suspend fun emitLatest(value: LCE<List<SampleItem>>) {
+        pages.last().emit(value)
+    }
+}
+
+/** Grid of Images' controllable paging seam, mirroring [ControlledSampleItemRepository]. */
+internal class ControlledGridOfImagesRepository : GridOfImagesRepository {
+    private val pages = mutableListOf<MutableSharedFlow<LCE<List<SampleItem>>>>()
+
+    val requests = mutableListOf<PageRequest>()
+
+    override fun load(offset: Int, limit: Int): Flow<LCE<List<SampleItem>>> {
+        requests += PageRequest(offset, limit)
+        return MutableSharedFlow<LCE<List<SampleItem>>>(replay = 1).also { pages += it }
+    }
+
+    suspend fun emitPage(index: Int, value: LCE<List<SampleItem>>) {
+        pages[index].emit(value)
+    }
+
+    suspend fun emitLatest(value: LCE<List<SampleItem>>) {
+        pages.last().emit(value)
+    }
+}
+
+/** Generated-looking rows with stable ids in [range], for paging assertions. */
+internal fun pagedItems(range: IntRange): List<SampleItem> = range.map { index ->
+    SampleItem(
+        id = index.toLong(),
+        name = "Name $index",
+        caption = "Caption $index",
+    )
 }

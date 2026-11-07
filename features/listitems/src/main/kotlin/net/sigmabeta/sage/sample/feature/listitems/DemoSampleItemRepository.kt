@@ -13,9 +13,11 @@ import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 /**
  * The sample's generated datasource for List Items and List Items with Images.
  *
- * Every load rebuilds the same seeded rows through [demoSampleItems], so the 25 rows are random
- * in content but identical on every visit — the screen looks the same after popping and
- * re-pushing. The artificial latency comes from the shared `runInBackground` seam, which applies
+ * Every load rebuilds the same seeded rows through [demoSampleItems], so the rows are random in
+ * content but identical on every visit — the screen looks the same after popping and re-pushing.
+ * [load] serves an `[offset, offset + limit)` window of the fixed [LIST_ITEMS_ITEM_COUNT] set, so
+ * paging screens fetch one page at a time while the non-paginated List Items screen asks for the
+ * whole set. The artificial latency comes from the shared `runInBackground` seam, which applies
  * the duration selected on the Settings screen; this repository does not add a delay of its own.
  *
  * The Settings demo outcome is read when a load is requested, not cached at construction:
@@ -32,13 +34,19 @@ import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 class DemoSampleItemRepository(
     private val settingsManager: SampleSettingsManager,
 ) : SampleItemRepository {
-    override fun load(): Flow<LCE<List<SampleItem>>> {
+    override fun load(offset: Int, limit: Int): Flow<LCE<List<SampleItem>>> {
         val outcome = settingsManager.demoOutcome.value
 
         return flow {
             emit(
                 when (outcome) {
-                    DemoOutcome.CONTENT -> LCE.Content(demoSampleItems(ITEM_COUNT))
+                    DemoOutcome.CONTENT -> LCE.Content(
+                        demoSampleItemsWindow(
+                            offset = offset,
+                            limit = limit,
+                            total = LIST_ITEMS_ITEM_COUNT,
+                        ),
+                    )
 
                     DemoOutcome.EMPTY -> LCE.Content(emptyList())
 
@@ -49,9 +57,5 @@ class DemoSampleItemRepository(
                 },
             )
         }
-    }
-
-    private companion object {
-        const val ITEM_COUNT = 25
     }
 }

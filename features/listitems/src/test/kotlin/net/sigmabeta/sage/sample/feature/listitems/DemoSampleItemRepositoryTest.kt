@@ -106,6 +106,37 @@ class DemoSampleItemRepositoryTest {
     }
 
     @Test
+    fun `a window returns the requested slice of the deterministic set`() = runTest {
+        settings.setDemoOutcome(DemoOutcome.CONTENT)
+        val all = contentOf(repository)
+
+        assertEquals(all.subList(10, 20), contentOf(repository, offset = 10, limit = 10))
+        assertEquals(all.subList(20, 25), contentOf(repository, offset = 20, limit = 10))
+    }
+
+    @Test
+    fun `a window starting past the end is an empty page`() = runTest {
+        settings.setDemoOutcome(DemoOutcome.CONTENT)
+
+        assertEquals(
+            emptyList<SampleItem>(),
+            contentOf(repository, offset = LIST_ITEMS_ITEM_COUNT, limit = 10),
+        )
+    }
+
+    @Test
+    fun `empty and error outcomes apply to window loads too`() = runTest {
+        settings.setDemoOutcome(DemoOutcome.EMPTY)
+        assertEquals(
+            LCE.Content(emptyList<SampleItem>()),
+            repository.load(offset = 10, limit = 5).single(),
+        )
+
+        settings.setDemoOutcome(DemoOutcome.ERROR)
+        assertTrue(repository.load(offset = 10, limit = 5).single() is LCE.Error)
+    }
+
+    @Test
     fun `empty outcome reaches both list screens as one empty state`() = runTest {
         settings.setDemoOutcome(DemoOutcome.EMPTY)
         val loaded = repository.load().single()
@@ -143,8 +174,12 @@ class DemoSampleItemRepositoryTest {
         assertEquals(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME, imageError.failedOperationName)
     }
 
-    private suspend fun contentOf(repository: SampleItemRepository): List<SampleItem> {
-        val emission = repository.load().single()
+    private suspend fun contentOf(
+        repository: SampleItemRepository,
+        offset: Int = 0,
+        limit: Int = LIST_ITEMS_ITEM_COUNT,
+    ): List<SampleItem> {
+        val emission = repository.load(offset, limit).single()
         assertTrue(emission is LCE.Content)
         return (emission as LCE.Content).data
     }
