@@ -13,6 +13,10 @@ object SampleStrings {
     const val HOME_SECTION_BIG_IMAGE = "Big image %d"
     const val HOME_SECTION_GRID_IMAGES = "Grid images %d"
     const val HOME_ITEM_CLICKED = "%s clicked"
+    const val HOME_EMPTY =
+        "No Home content is available. Change the demo outcome in Settings to load content."
+    const val HOME_ALL_ERROR =
+        "Home content could not be loaded. Change the demo outcome in Settings to try again."
 
     const val NAV_HOME = "Home"
     const val NAV_BROWSE = "Browse"
@@ -22,6 +26,12 @@ object SampleStrings {
     const val NAV_GRID_OF_IMAGES = "Grid of images"
     const val NAV_CONTENT_DETAIL = "Content detail"
     const val LIST_ITEMS_ITEM_CLICKED = "Clicked %s"
+    const val LIST_ITEMS_EMPTY = "No list items to show."
+    const val LIST_ITEMS_ERROR = "Couldn't load list items."
+    const val LIST_ITEMS_WITH_IMAGES_EMPTY = "No items with images to show."
+    const val LIST_ITEMS_WITH_IMAGES_ERROR = "Couldn't load items with images."
+    const val GRID_OF_IMAGES_EMPTY = "No images to show."
+    const val GRID_OF_IMAGES_ERROR = "Couldn't load images."
     const val NAV_SETTINGS = "Settings"
     const val CD_OPEN_SETTINGS = "Open settings"
     const val CD_NAVIGATE_BACK = "Back"
@@ -30,6 +40,7 @@ object SampleStrings {
     const val CONTENT_DETAIL_SECTION_RELATED = "Related"
     const val CONTENT_DETAIL_SECTION_ITEMS = "Items"
     const val CONTENT_DETAIL_ITEM_CLICKED = "%s clicked"
+    const val CONTENT_DETAIL_NOT_FOUND = "This content isn't available."
 
     const val SEARCH_HINT = "Search"
     const val SEARCH_CLEAR_DESCRIPTION = "Clear search"

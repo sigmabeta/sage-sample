@@ -65,6 +65,8 @@ object SampleBindings {
         HomeStringId.HOME_SECTION_BIG_IMAGE -> R.string.home_section_big_image
         HomeStringId.HOME_SECTION_GRID_IMAGES -> R.string.home_section_grid_images
         HomeStringId.HOME_ITEM_CLICKED -> R.string.home_item_clicked
+        HomeStringId.HOME_EMPTY -> R.string.home_empty
+        HomeStringId.HOME_ALL_ERROR -> R.string.home_all_error
     }
 
     private fun browseResource(id: BrowseStringId): Int = when (id) {
@@ -81,15 +83,22 @@ object SampleBindings {
         ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED -> R.string.content_detail_section_related
         ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS -> R.string.content_detail_section_items
         ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED -> R.string.content_detail_item_clicked
+        ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND -> R.string.content_detail_not_found
     }
 
     private fun listItemsResource(id: ListItemsStringId): Int = when (id) {
         ListItemsStringId.LIST_ITEMS_TITLE -> R.string.nav_list_items
         ListItemsStringId.LIST_ITEMS_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.LIST_ITEMS_EMPTY -> R.string.list_items_empty
+        ListItemsStringId.LIST_ITEMS_ERROR -> R.string.list_items_error
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_TITLE -> R.string.nav_list_items_with_images
         ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_EMPTY -> R.string.list_items_with_images_empty
+        ListItemsStringId.LIST_ITEMS_WITH_IMAGES_ERROR -> R.string.list_items_with_images_error
         ListItemsStringId.GRID_OF_IMAGES_TITLE -> R.string.nav_grid_of_images
         ListItemsStringId.GRID_OF_IMAGES_ITEM_CLICKED -> R.string.list_items_item_clicked
+        ListItemsStringId.GRID_OF_IMAGES_EMPTY -> R.string.grid_of_images_empty
+        ListItemsStringId.GRID_OF_IMAGES_ERROR -> R.string.grid_of_images_error
     }
 
     private fun searchResource(id: SearchStringId): Int = when (id) {

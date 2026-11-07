@@ -13,4 +13,6 @@ enum class HomeStringId : SageStringId {
     HOME_SECTION_BIG_IMAGE,
     HOME_SECTION_GRID_IMAGES,
     HOME_ITEM_CLICKED,
+    HOME_EMPTY,
+    HOME_ALL_ERROR,
 }

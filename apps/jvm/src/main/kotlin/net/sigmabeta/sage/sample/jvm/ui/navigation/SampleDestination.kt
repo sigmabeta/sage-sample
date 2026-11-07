@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.jvm.ui.navigation
 
 import net.sigmabeta.sage.nav.ArgType
 import net.sigmabeta.sage.nav.RouteDescriptor
+import net.sigmabeta.sage.sample.feature.contentdetail.CONTENT_DETAIL_ROUTE
 import net.sigmabeta.sage.sample.jvm.SampleStrings
 import net.sigmabeta.sage.ui.Icon
 
@@ -61,7 +62,14 @@ enum class SampleDestination(
          * strings, and this is the single app-side lookup. Unknown routes return `null` so
          * callers can ignore them instead of crashing.
          */
-        fun fromRoute(route: String): SampleDestination? =
-            entries.firstOrNull { it.destName == route }
+        fun fromRoute(route: String): SampleDestination? = when {
+            // Content detail is parameterized: every route under its prefix is the destination,
+            // and the route codec decides whether the carried ID is usable. A bare or malformed
+            // route still opens the explicit not-found screen instead of being ignored.
+            route == CONTENT_DETAIL_ROUTE || route.startsWith("$CONTENT_DETAIL_ROUTE/") ->
+                CONTENT_DETAIL
+
+            else -> entries.firstOrNull { it.destName == route }
+        }
     }
 }

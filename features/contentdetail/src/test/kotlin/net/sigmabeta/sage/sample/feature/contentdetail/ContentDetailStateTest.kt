@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.feature.contentdetail
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.CtaListModel
+import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.HeroImageListModel
 import net.sigmabeta.sage.components.HorizontalScrollerListModel
@@ -62,6 +63,25 @@ class ContentDetailStateTest {
     }
 
     @Test
+    fun `not-found content renders one localized empty state and keeps Back`() {
+        val state = ContentDetailState(LCE.Content(null))
+
+        val rows = state.toListItems(strings)
+        val empty = rows.filterIsInstance<EmptyStateListModel>().single()
+        assertEquals("str-CONTENT_DETAIL_NOT_FOUND", empty.explanation)
+        assertTrue(rows.none { it is ErrorStateListModel })
+        assertTrue(state.title(strings).shouldShowBack)
+    }
+
+    @Test
+    fun `not-found content keeps the fallback title`() {
+        val notFound = ContentDetailState(LCE.Content(null)).title(strings)
+
+        assertEquals("str-CONTENT_DETAIL_TITLE", notFound.title)
+        assertTrue(notFound.shouldShowBack)
+    }
+
+    @Test
     fun `loaded content titles the screen with the item`() {
         val loaded = ContentDetailState(LCE.Content(CONTENT_DETAIL_FIXTURE)).title(strings)
 
@@ -78,7 +98,7 @@ class ContentDetailStateTest {
             .single() as HeroImageListModel
 
         assertEquals(
-            "generated://content-detail/hero/1?width=528&height=704",
+            "generated://content-detail/hero/list-items:1?width=528&height=704",
             hero.sourceInfo.info,
         )
         assertEquals(CONTENT_DETAIL_FIXTURE.title, hero.contentDescription)
@@ -217,6 +237,14 @@ class ContentDetailStateTest {
         val error = rows.filterIsInstance<ErrorStateListModel>().single()
         assertEquals(CONTENT_DETAIL_OPERATION_NAME, error.failedOperationName)
         assertEquals("boom", error.error.message)
+    }
+
+    @Test
+    fun `the not-found state has stable model identity`() {
+        val first = ContentDetailState(LCE.Content(null)).toActual(strings)
+        val second = ContentDetailState(LCE.Content(null)).toActual(strings)
+
+        assertEquals(first.listItems.map { it.dataId }, second.listItems.map { it.dataId })
     }
 
     @Test

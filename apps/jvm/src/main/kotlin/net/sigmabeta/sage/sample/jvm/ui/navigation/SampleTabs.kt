@@ -14,6 +14,7 @@ import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
 import net.sigmabeta.sage.sample.jvm.ui.WithPerScreenViewModelStore
+import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.ui.vector
 
 /**
@@ -124,14 +125,22 @@ val LocalSampleBackHandler = staticCompositionLocalOf<SampleBackHandler> {
     error("No SampleBackHandler provided — render screens inside SampleNavHost.")
 }
 
-/** The [SampleScreen] for a destination the app can reach (top-level roots and pushed screens). */
-internal fun screenFor(destination: SampleDestination): SampleScreen = when (destination) {
+/**
+ * The [SampleScreen] for a destination the app can reach (top-level roots and pushed screens).
+ *
+ * Only the parameterized Content detail destination consumes [contentId]; for every other
+ * destination it is ignored.
+ */
+internal fun screenFor(
+    destination: SampleDestination,
+    contentId: ContentId? = null,
+): SampleScreen = when (destination) {
     SampleDestination.HOME -> HomeScreen
     SampleDestination.BROWSE -> BrowseScreen
     SampleDestination.LIST_ITEMS -> ListItemsScreen
     SampleDestination.LIST_ITEMS_WITH_IMAGES -> ListItemsWithImagesScreen
     SampleDestination.GRID_OF_IMAGES -> GridOfImagesScreen
-    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen
+    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen(contentId)
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
 }

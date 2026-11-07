@@ -5,6 +5,8 @@
     <string name="home_section_big_image">Big image %1$d</string>
     <string name="home_section_grid_images">Grid images %1$d</string>
     <string name="home_item_clicked">%1$s clicked</string>
+    <string name="home_empty">No Home content is available. Change the demo outcome in Settings to load content.</string>
+    <string name="home_all_error">Home content could not be loaded. Change the demo outcome in Settings to try again.</string>
 
     <!-- Navigation scaffold. The app owns these labels because destinations are an app concern;
          feature screens keep their own text behind their SageStringId enums. -->
@@ -17,6 +19,12 @@
     <string name="nav_content_detail">Content detail</string>
     <string name="nav_settings">Settings</string>
     <string name="list_items_item_clicked">Clicked %1$s</string>
+    <string name="list_items_empty">No list items to show.</string>
+    <string name="list_items_error">Couldn\'t load list items.</string>
+    <string name="list_items_with_images_empty">No items with images to show.</string>
+    <string name="list_items_with_images_error">Couldn\'t load items with images.</string>
+    <string name="grid_of_images_empty">No images to show.</string>
+    <string name="grid_of_images_error">Couldn\'t load images.</string>
     <string name="cd_open_settings">Open settings</string>
     <string name="cd_navigate_back">Back</string>
 
@@ -25,6 +33,7 @@
     <string name="content_detail_section_related">Related</string>
     <string name="content_detail_section_items">Items</string>
     <string name="content_detail_item_clicked">%1$s clicked</string>
+    <string name="content_detail_not_found">This content isn\'t available.</string>
 
     <!-- Search. -->
     <string name="search_hint">Search</string>

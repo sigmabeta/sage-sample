@@ -5,13 +5,16 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.sigmabeta.sage.appcomm.LCE
+import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.SectionListModel
@@ -41,21 +44,97 @@ class ContentDetailViewModelTest {
     }
 
     @Test
-    fun `init loads content through the action and state path`() = runTest {
+    fun `init no args does not load anything`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(repository.requestedIds.isEmpty())
+        assertTrue(viewModel.uiStateActual.value.listItems.isNotEmpty())
+    }
+
+    @Test
+    fun `init with string loads the addressed content`() = runTest {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+        val id = ContentId("list-items:7")
+
+        viewModel.sendAction(SageAction.InitWithString(id.value))
+        advanceUntilIdle()
+
+        assertEquals(listOf(id), repository.requestedIds)
+
+        repository.emit(id, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(id = id)))
+        advanceUntilIdle()
+
+        val sections = state.value.listItems.filterIsInstance<SectionListModel>()
+        assertEquals(5, sections.size)
+        assertEquals(CONTENT_DETAIL_FIXTURE.title, state.value.title.title)
+        val items = sections.last().sectionItems
+            .filterIsInstance<ImageNameCaptionListModel>()
+        assertEquals(listOf("One", "Two"), items.map { it.name })
+    }
+
+    @Test
+    fun `a blank init string shows the not-found state without a load`() = runTest {
         val viewModel = createViewModel()
         val state = viewModel.uiStateActual
         advanceUntilIdle()
 
-        repository.emit(LCE.Content(CONTENT_DETAIL_FIXTURE))
+        viewModel.sendAction(SageAction.InitWithString(""))
         advanceUntilIdle()
 
-        val rows = state.value.listItems
-        val sections = rows.filterIsInstance<SectionListModel>()
-        assertEquals(5, sections.size)
+        assertTrue(repository.requestedIds.isEmpty())
+        val empty = state.value.listItems
+            .filterIsInstance<EmptyStateListModel>()
+            .single()
+        assertEquals("str-CONTENT_DETAIL_NOT_FOUND", empty.explanation)
+    }
 
-        val items = sections.last().sectionItems
-            .filterIsInstance<ImageNameCaptionListModel>()
-        assertEquals(listOf("One", "Two"), items.map { it.name })
+    @Test
+    fun `an invalid init string shows the not-found state without a load`() = runTest {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.InitWithString("not a content id"))
+        advanceUntilIdle()
+
+        assertTrue(repository.requestedIds.isEmpty())
+        assertTrue(
+            state.value.listItems
+                .filterIsInstance<EmptyStateListModel>()
+                .isNotEmpty(),
+        )
+    }
+
+    @Test
+    fun `a second init string does not keep serving the first id's content`() = runTest {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+        val first = ContentId("list-items:1")
+        val second = ContentId("list-items:2")
+
+        viewModel.sendAction(SageAction.InitWithString(first.value))
+        advanceUntilIdle()
+        repository.emit(first, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(title = "First")))
+        advanceUntilIdle()
+        assertEquals("First", state.value.title.title)
+
+        viewModel.sendAction(SageAction.InitWithString(second.value))
+        advanceUntilIdle()
+        assertEquals(listOf(first, second), repository.requestedIds)
+
+        // The first ID's stream is still live in the test; its late emission must not overwrite
+        // the second ID's loading state.
+        repository.emit(first, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(title = "Stale")))
+        advanceUntilIdle()
+        assertTrue(state.value.title.title != "Stale")
+
+        repository.emit(second, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(title = "Second")))
+        advanceUntilIdle()
+        assertEquals("Second", state.value.title.title)
     }
 
     @Test
@@ -63,17 +142,14 @@ class ContentDetailViewModelTest {
         val viewModel = createViewModel()
         val state = viewModel.uiStateActual
         advanceUntilIdle()
+        val id = ContentId("list-items:7")
 
-        repository.emit(
-            LCE.Error(
-                CONTENT_DETAIL_OPERATION_NAME,
-                IllegalStateException("boom"),
-            ),
-        )
+        viewModel.sendAction(SageAction.InitWithString(id.value))
+        advanceUntilIdle()
+        repository.emit(id, LCE.Error(CONTENT_DETAIL_OPERATION_NAME, IllegalStateException("boom")))
         advanceUntilIdle()
 
-        val errors = state.value.listItems
-            .filterIsInstance<ErrorStateListModel>()
+        val errors = state.value.listItems.filterIsInstance<ErrorStateListModel>()
         assertEquals(1, errors.size)
         assertTrue(errors.all { it.error.message == "boom" })
     }
@@ -81,10 +157,7 @@ class ContentDetailViewModelTest {
     @Test
     fun `clicking a part emits a snackbar naming it`() = runTest {
         val viewModel = createViewModel()
-        val events = mutableListOf<SageEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiEvents.collect { event -> events += event }
-        }
+        val events = collectEvents(viewModel)
         advanceUntilIdle()
 
         viewModel.sendAction(ContentDetailAction.ItemClicked(CONTENT_DETAIL_FIXTURE.items[0]))
@@ -98,10 +171,7 @@ class ContentDetailViewModelTest {
     @Test
     fun `clicking a related item emits a snackbar naming it`() = runTest {
         val viewModel = createViewModel()
-        val events = mutableListOf<SageEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiEvents.collect { event -> events += event }
-        }
+        val events = collectEvents(viewModel)
         advanceUntilIdle()
 
         viewModel.sendAction(ContentDetailAction.RelatedClicked(CONTENT_DETAIL_FIXTURE.related[0]))
@@ -114,10 +184,7 @@ class ContentDetailViewModelTest {
     @Test
     fun `clicking a generated cta emits a snackbar with its label`() = runTest {
         val viewModel = createViewModel()
-        val events = mutableListOf<SageEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiEvents.collect { event -> events += event }
-        }
+        val events = collectEvents(viewModel)
         advanceUntilIdle()
 
         viewModel.sendAction(ContentDetailAction.CtaClicked("First action"))
@@ -131,12 +198,12 @@ class ContentDetailViewModelTest {
     fun `clicking the hero emits a snackbar with the content title`() = runTest {
         val viewModel = createViewModel()
         val state = viewModel.uiStateActual
-        val events = mutableListOf<SageEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            viewModel.uiEvents.collect { event -> events += event }
-        }
+        val events = collectEvents(viewModel)
         advanceUntilIdle()
-        repository.emit(LCE.Content(CONTENT_DETAIL_FIXTURE))
+        val id = ContentId("list-items:7")
+        viewModel.sendAction(SageAction.InitWithString(id.value))
+        advanceUntilIdle()
+        repository.emit(id, LCE.Content(CONTENT_DETAIL_FIXTURE))
         advanceUntilIdle()
 
         viewModel.sendAction(ContentDetailAction.HeroClicked)
@@ -145,6 +212,16 @@ class ContentDetailViewModelTest {
         val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
         assertEquals("str-CONTENT_DETAIL_ITEM_CLICKED:Fugiat lorem ipsum", snackbar.message)
         assertEquals(CONTENT_DETAIL_FIXTURE.title, state.value.title.title)
+    }
+
+    private fun TestScope.collectEvents(
+        viewModel: ContentDetailViewModel,
+    ): MutableList<SageEvent> {
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvents.collect { event -> events += event }
+        }
+        return events
     }
 
     private fun createViewModel() = ContentDetailViewModel(
