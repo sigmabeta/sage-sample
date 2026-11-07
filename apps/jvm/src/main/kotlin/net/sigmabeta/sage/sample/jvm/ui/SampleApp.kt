@@ -21,9 +21,11 @@ import net.sigmabeta.sage.sample.ui.components.api.sampleTypography
  *
  * [settingsManager] is app-scoped and persisted, so a theme or font chosen on the Settings screen
  * recomposes this root and applies immediately.
+ *
+ * [onOuterBack] is the shell's bottom-of-stack Back branch; desktop leaves it empty.
  */
 @Composable
-fun SampleApp(settingsManager: SampleSettingsManager) {
+fun SampleApp(settingsManager: SampleSettingsManager, onOuterBack: () -> Unit = {}) {
     val themeMode by settingsManager.themeMode.collectAsState()
     val fontChoice by settingsManager.fontChoice.collectAsState()
     val fontFamily = remember(fontChoice) { fontFamilyFor(fontChoice) }
@@ -36,7 +38,7 @@ fun SampleApp(settingsManager: SampleSettingsManager) {
         },
         typography = sampleTypography(fontFamily),
     ) {
-        SampleNavHost()
+        SampleNavHost(onOuterBack = onOuterBack)
     }
 }
 
