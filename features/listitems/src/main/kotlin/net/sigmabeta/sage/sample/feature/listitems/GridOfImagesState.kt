@@ -3,6 +3,7 @@ package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ColumnType
 import net.sigmabeta.sage.list.ListState
@@ -16,6 +17,9 @@ import net.sigmabeta.sage.ui.StringProvider
  * [GridImageListModel]s. The [ColumnType.Regular] declaration is what makes the shared screen
  * choose SAGE's `GridScreen`: 160 dp cells give two columns on a compact window and more as it
  * widens.
+ *
+ * Loading rows use [LoadingType.SQUARE] with no section header, so the placeholder cells have the
+ * same 1:1 shape as the [GridImageListModel] cells they are replaced by.
  */
 data class GridOfImagesState(
     val content: LCE<List<SampleItem>> = LCE.Loading(
@@ -35,6 +39,8 @@ data class GridOfImagesState(
             is LCE.Error -> error(GRID_OF_IMAGES_OPERATION_NAME, loaded.error)
 
             else -> loaded.withStandardErrorAndLoading(
+                loadingType = LoadingType.SQUARE,
+                loadingWithHeader = false,
                 loadingOperationNameOverride = GRID_OF_IMAGES_OPERATION_NAME,
             ) {
                 data.map { item ->

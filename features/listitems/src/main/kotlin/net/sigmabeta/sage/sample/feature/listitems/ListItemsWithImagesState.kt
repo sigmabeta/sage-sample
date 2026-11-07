@@ -3,6 +3,7 @@ package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.images.SourceInfo
 import net.sigmabeta.sage.list.ListState
@@ -17,6 +18,9 @@ import net.sigmabeta.sage.ui.StringProvider
  * [ImageNameCaptionListModel]. Its [SourceInfo] is a `generated://` URL: `:core:bitmaps`'
  * Coil fetcher turns that URL into deterministic artwork, so the same item always shows the same
  * image without shipping any bitmap assets.
+ *
+ * Loading rows use [LoadingType.TEXT_CAPTION_IMAGE] with no section header, so the placeholder has
+ * the same image, name and caption shape as the [ImageNameCaptionListModel] rows.
  */
 data class ListItemsWithImagesState(
     val content: LCE<List<SampleItem>> = LCE.Loading(
@@ -34,6 +38,8 @@ data class ListItemsWithImagesState(
             is LCE.Error -> error(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME, loaded.error)
 
             else -> loaded.withStandardErrorAndLoading(
+                loadingType = LoadingType.TEXT_CAPTION_IMAGE,
+                loadingWithHeader = false,
                 loadingOperationNameOverride = LIST_ITEMS_WITH_IMAGES_OPERATION_NAME,
             ) {
                 data.map { item ->

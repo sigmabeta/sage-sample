@@ -4,6 +4,7 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -32,7 +33,10 @@ class ListItemsWithImagesStateTest {
             LCE.Loading(LIST_ITEMS_WITH_IMAGES_OPERATION_NAME),
         ).toListItems(strings)
 
-        assertTrue(rows.any { it is LoadingItemListModel })
+        val loadingRows = rows.filterIsInstance<LoadingItemListModel>()
+        assertTrue(loadingRows.isNotEmpty())
+        assertTrue(loadingRows.all { it.loadingType == LoadingType.TEXT_CAPTION_IMAGE })
+        assertTrue(loadingRows.all { it.loadOperationName == LIST_ITEMS_WITH_IMAGES_OPERATION_NAME })
         assertTrue(rows.none { it is ImageNameCaptionListModel })
     }
 

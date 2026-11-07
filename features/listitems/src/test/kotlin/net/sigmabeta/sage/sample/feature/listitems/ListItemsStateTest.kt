@@ -3,6 +3,7 @@ package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.NameCaptionListModel
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -15,7 +16,10 @@ class ListItemsStateTest {
     fun `loading content maps to loading rows`() {
         val items = ListItemsState(LCE.Loading(LIST_ITEMS_OPERATION_NAME)).toListItems(strings)
 
-        assertTrue(items.any { it is LoadingItemListModel })
+        val loadingRows = items.filterIsInstance<LoadingItemListModel>()
+        assertTrue(loadingRows.isNotEmpty())
+        assertTrue(loadingRows.all { it.loadingType == LoadingType.TEXT_CAPTION })
+        assertTrue(loadingRows.all { it.loadOperationName == LIST_ITEMS_OPERATION_NAME })
         assertTrue(items.none { it is NameCaptionListModel })
     }
 

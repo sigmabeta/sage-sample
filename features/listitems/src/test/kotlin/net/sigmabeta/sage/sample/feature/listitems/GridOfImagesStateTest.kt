@@ -4,6 +4,7 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.list.ColumnType
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
@@ -38,7 +39,10 @@ class GridOfImagesStateTest {
             LCE.Loading(GRID_OF_IMAGES_OPERATION_NAME),
         ).toListItems(strings)
 
-        assertTrue(rows.any { it is LoadingItemListModel })
+        val loadingRows = rows.filterIsInstance<LoadingItemListModel>()
+        assertTrue(loadingRows.isNotEmpty())
+        assertTrue(loadingRows.all { it.loadingType == LoadingType.SQUARE })
+        assertTrue(loadingRows.all { it.loadOperationName == GRID_OF_IMAGES_OPERATION_NAME })
         assertTrue(rows.none { it is GridImageListModel })
     }
 
