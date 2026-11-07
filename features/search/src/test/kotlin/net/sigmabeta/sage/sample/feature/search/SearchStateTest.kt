@@ -190,6 +190,26 @@ class SearchStateTest {
     }
 
     @Test
+    fun `errors in both queries keep both headers and render one error per section`() {
+        val rows = SearchState(
+            query = "chrono",
+            submittedQuery = "chrono",
+            listResults = LCE.Error(SEARCH_LIST_OPERATION_NAME, IllegalStateException("list boom")),
+            gridResults = LCE.Error(SEARCH_GRID_OPERATION_NAME, IllegalStateException("grid boom")),
+        ).toListItems(strings)
+
+        assertEquals(
+            listOf("str-SEARCH_SECTION_LIST", "str-SEARCH_SECTION_GRID"),
+            rows.filterIsInstance<SectionHeaderListModel>().map { it.title },
+        )
+        assertEquals(
+            listOf(SEARCH_LIST_OPERATION_NAME, SEARCH_GRID_OPERATION_NAME),
+            rows.filterIsInstance<ErrorStateListModel>().map { it.failedOperationName },
+        )
+        assertTrue(rows.none { it is ImageNameCaptionListModel || it is GridImageListModel })
+    }
+
+    @Test
     fun `the same submitted query seeds the same artwork for both sections`() {
         fun urls(query: String): List<String> = seededUrls(submittedQuery = query, query = query)
 

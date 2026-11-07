@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.settings.DemoOutcome
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 
 /**
  * The sample's generated search datasource.
@@ -17,18 +19,48 @@ import net.sigmabeta.sage.di.AppScope
  * `runInBackground` seam, which applies the duration selected on the Settings screen; this
  * repository does not add a delay of its own.
  *
+ * The Settings demo outcome is read when a query is requested, not cached at construction:
+ * [DemoOutcome.CONTENT] returns the generated results, [DemoOutcome.EMPTY] returns a successful
+ * empty result set, and [DemoOutcome.ERROR] fails the load. `EMPTY`/`ERROR` apply to both the list
+ * and grid queries, so Search's no-results state and its per-section errors are reachable without
+ * source changes. Because the value is read per call, changing it affects the next search with no
+ * app restart.
+ *
  * Metro binds it to [SearchRepository] once for the application graph; the sample has no real
  * backend.
  */
 @SingleIn(AppScope::class)
 @ContributesBinding(AppScope::class)
 @Inject
-class DemoSearchRepository : SearchRepository {
-    override fun searchList(query: String): Flow<LCE<List<SearchResult>>> = flow {
-        emit(LCE.Content(searchResultsFor(query, SearchResultKind.LIST)))
-    }
+class DemoSearchRepository(
+    private val settingsManager: SampleSettingsManager,
+) : SearchRepository {
+    override fun searchList(query: String): Flow<LCE<List<SearchResult>>> =
+        resultsFor(query, SearchResultKind.LIST, SEARCH_LIST_OPERATION_NAME)
 
-    override fun searchGrid(query: String): Flow<LCE<List<SearchResult>>> = flow {
-        emit(LCE.Content(searchResultsFor(query, SearchResultKind.GRID)))
+    override fun searchGrid(query: String): Flow<LCE<List<SearchResult>>> =
+        resultsFor(query, SearchResultKind.GRID, SEARCH_GRID_OPERATION_NAME)
+
+    private fun resultsFor(
+        query: String,
+        kind: SearchResultKind,
+        operationName: String,
+    ): Flow<LCE<List<SearchResult>>> {
+        val outcome = settingsManager.demoOutcome.value
+
+        return flow {
+            emit(
+                when (outcome) {
+                    DemoOutcome.CONTENT -> LCE.Content(searchResultsFor(query, kind))
+
+                    DemoOutcome.EMPTY -> LCE.Content(emptyList())
+
+                    DemoOutcome.ERROR -> LCE.Error(
+                        operationName = operationName,
+                        error = IllegalStateException("Demo outcome is ERROR"),
+                    )
+                },
+            )
+        }
     }
 }
