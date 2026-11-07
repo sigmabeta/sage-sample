@@ -335,7 +335,7 @@ shell:
 - **Back is one policy** (`backActionFor`): a pushed screen pops inside the active tab, Search
   at its root returns Home, and Home/Browse roots fall through to the host (Android finishes
   the activity; desktop has nothing above the shell). The top-bar arrow, Android system Back,
-  and `SageEvent.NavigateBack` all run it. Desktop key and mouse Back inputs will use the same
+  and `SageEvent.NavigateBack` all run it. Desktop key and mouse Back inputs use the same
   seam (`SampleSystemBack`).
 - **Settings** is pushed from the hamburger onto the active tab.
 - **List Items, List Items with Images, Grid of Images, and Content Detail** are pushed from

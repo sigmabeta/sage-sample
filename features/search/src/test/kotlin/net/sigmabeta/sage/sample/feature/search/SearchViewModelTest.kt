@@ -511,6 +511,44 @@ class SearchViewModelTest {
         }
 
     @Test
+    fun `a query slowed past the linger window records once its results arrive`() =
+        runTest(dispatcher) {
+            val viewModel = createViewModel(delayMillis = 5_000L)
+            advanceUntilIdle()
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+            advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+            runCurrent()
+
+            // The linger window has elapsed, but the simulated 5 s load is still in flight.
+            advanceTimeBy(SEARCH_HISTORY_RECORD_DELAY_MILLIS + 1)
+            runCurrent()
+            assertTrue(
+                "history must wait for the submitted query's results",
+                historyManager.recorded.isEmpty(),
+            )
+
+            advanceUntilIdle()
+            assertEquals(listOf("abc"), historyManager.recorded)
+        }
+
+    @Test
+    fun `a query slowed past the linger window with no results is not recorded`() =
+        runTest(dispatcher) {
+            repository = FakeSearchRepository(
+                listResponse = { LCE.Content(emptyList()) },
+                gridResponse = { LCE.Content(emptyList()) },
+            )
+            val viewModel = createViewModel(delayMillis = 5_000L)
+            advanceUntilIdle()
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("nothing-matches"))
+            advanceUntilIdle()
+
+            assertTrue(historyManager.recorded.isEmpty())
+        }
+
+    @Test
     fun `clearing the field cancels the pending record`() = runTest(dispatcher) {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -533,7 +571,7 @@ class SearchViewModelTest {
     private fun List<ListModel>.gridNames(): List<String> =
         filterIsInstance<GridImageListModel>().map { it.name }
 
-    private fun createViewModel() = SearchViewModel(
+    private fun createViewModel(delayMillis: Long = 0L) = SearchViewModel(
         stringProvider = FakeStringProvider(),
         analytics = FakeAnalytics(),
         dispatchers = SageDispatchers(
@@ -543,7 +581,7 @@ class SearchViewModelTest {
             main = dispatcher,
         ),
         delayManager = object : SampleDelayManager {
-            override fun delayMillis() = 0L
+            override fun delayMillis() = delayMillis
         },
         repository = repository,
         historyManager = historyManager,

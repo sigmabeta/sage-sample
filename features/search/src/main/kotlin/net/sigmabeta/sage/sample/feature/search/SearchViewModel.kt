@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -49,11 +50,12 @@ internal const val SEARCH_HISTORY_RECORD_DELAY_MILLIS = 3_000L
  *
  * A blank query returns to the resting prompt immediately, without waiting for the debounce.
  *
- * Recent searches come from [SearchHistoryManager]. A settled query is recorded only after
- * [SEARCH_HISTORY_RECORD_DELAY_MILLIS] of lingering and only when at least one result section has
- * content; a newer settled query or a clear cancels the pending record. Selecting a history row
- * refills [SearchState.query] so the normal debounce submits it, and clearing the field keeps the
- * history rendered.
+ * Recent searches come from [SearchHistoryManager]. A settled query is recorded only after both
+ * [SEARCH_HISTORY_RECORD_DELAY_MILLIS] of lingering *and* that query's two sections reaching a
+ * terminal result (the Settings simulate-delay can hold results past the linger window), and only
+ * when at least one section has content; a newer settled query or a clear cancels the pending
+ * record. Selecting a history row refills [SearchState.query] so the normal debounce submits it,
+ * and clearing the field keeps the history rendered.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -217,16 +219,18 @@ class SearchViewModel(
     }
 
     /**
-     * Starts the linger window for [query]. When it elapses, the query is recorded only if it is
-     * still the submitted one and at least one result section produced content.
+     * Starts recording [query] once both gates pass: the linger window has elapsed *and* both of
+     * that query's result sections are terminal. The second gate matters because the Settings
+     * simulate-delay makes results arrive after the linger window; checking only the timer would
+     * see `Loading` and never record. A newer query or a clear cancels this job.
      */
     private fun startHistoryRecording(query: String) {
         historyJob?.cancel()
         historyJob = viewModelScope.launch {
             delay(SEARCH_HISTORY_RECORD_DELAY_MILLIS)
 
-            val state = internalUiState.value
-            if (state.submittedQuery == query && state.hasAnyResults()) {
+            val settled = internalUiState.first { it.hasSettled(query) }
+            if (settled.hasAnyResults()) {
                 historyManager.record(query)
             }
         }
@@ -234,6 +238,12 @@ class SearchViewModel(
 }
 
 private fun LCE<List<*>>.hasContent(): Boolean = this is LCE.Content && data.isNotEmpty()
+
+private fun LCE<List<*>>.isTerminal(): Boolean = this is LCE.Content || this is LCE.Error
+
+/** Whether [query] is still submitted and its two result sections have both finished loading. */
+private fun SearchState.hasSettled(query: String): Boolean =
+    submittedQuery == query && listResults.isTerminal() && gridResults.isTerminal()
 
 /** Whether any result section has at least one row, Chipbox's guard for recording history. */
 private fun SearchState.hasAnyResults(): Boolean =

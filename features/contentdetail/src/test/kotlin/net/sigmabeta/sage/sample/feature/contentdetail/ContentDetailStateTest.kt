@@ -63,6 +63,16 @@ class ContentDetailStateTest {
     }
 
     @Test
+    fun `uninitialized content renders no rows until a load starts`() {
+        val state = ContentDetailState(LCE.Uninitialized)
+
+        assertTrue(state.toListItems(strings).isEmpty())
+        val title = state.title(strings)
+        assertEquals("str-CONTENT_DETAIL_TITLE", title.title)
+        assertTrue(title.shouldShowBack)
+    }
+
+    @Test
     fun `not-found content renders one localized empty state and keeps Back`() {
         val state = ContentDetailState(LCE.Content(null))
 

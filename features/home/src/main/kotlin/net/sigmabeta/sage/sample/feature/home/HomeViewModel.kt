@@ -32,8 +32,10 @@ import net.sigmabeta.sage.ui.StringProvider
  * module's slot so rows render independently as their data arrives.
  *
  * The tab root is retained across tab switches, so the screen is not rebuilt when the "Home shows
- * same content" preference changes. The view model observes the setting and, on a real change,
- * cancels the current plan's collectors, builds the new plan, and starts collecting its modules.
+ * same content" preference or the demo outcome changes. The view model observes both settings and,
+ * on a real change, cancels the current plan's collectors, rebuilds the plan, and starts collecting
+ * its modules. A demo-outcome change needs the rebuild because each module's flow emits once: the
+ * repositories read the outcome when they are called, so a fresh plan is what reloads them.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -55,6 +57,12 @@ class HomeViewModel(
     /** The plan mode the current [modules] were built for. */
     private var showsSameContent = settingsManager.homeShowsSameContent.value
 
+    /**
+     * The demo outcome the current [modules] last observed. The plan itself does not depend on it,
+     * but rebuilding on a change re-runs every module flow, which reads the new outcome.
+     */
+    private var demoOutcome = settingsManager.demoOutcome.value
+
     /** Collectors for the current plan; cancelled when the plan is rebuilt. */
     private val moduleJobs = mutableListOf<Job>()
 
@@ -74,7 +82,16 @@ class HomeViewModel(
             settingsManager.homeShowsSameContent.collect { showSameContent ->
                 if (showSameContent != showsSameContent) {
                     showsSameContent = showSameContent
-                    replacePlan(showSameContent)
+                    replacePlan()
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            settingsManager.demoOutcome.collect { outcome ->
+                if (outcome != demoOutcome) {
+                    demoOutcome = outcome
+                    replacePlan()
                 }
             }
         }
@@ -93,14 +110,15 @@ class HomeViewModel(
         }
     }
 
-    private fun replacePlan(homeShowsSameContent: Boolean) {
+    private fun replacePlan() {
         moduleJobs.forEach { it.cancel() }
         moduleJobs.clear()
 
-        val newModules = moduleFactory.create(homeShowsSameContent)
+        val newModules = moduleFactory.create(showsSameContent)
         modules = newModules
         // Drop the old plan's rows before the new modules start emitting, so a stale section
-        // cannot linger after a preference flip.
+        // cannot linger after a preference flip or demo-outcome change. Fresh sections are
+        // Uninitialized with hasEmitted = false, so HomeState waits instead of flashing Empty.
         updateState { it.copy(sections = newModules.toSections()) }
         collectModules(newModules)
     }

@@ -22,3 +22,24 @@ enum class DemoOutcome {
             entries.firstOrNull { it.name == value } ?: DEFAULT
     }
 }
+
+/**
+ * Resolves this outcome to one of a generated datasource's three results.
+ *
+ * The four demo repositories share this so the branch set and the ERROR failure cannot drift
+ * between screens. Each repository still reads the setting at call time; this only replaces the
+ * repeated `when`.
+ */
+fun <T> DemoOutcome.select(
+    content: () -> T,
+    empty: () -> T,
+    error: () -> T,
+): T = when (this) {
+    DemoOutcome.CONTENT -> content()
+    DemoOutcome.EMPTY -> empty()
+    DemoOutcome.ERROR -> error()
+}
+
+/** The one failure every generated datasource throws for [DemoOutcome.ERROR]. */
+fun demoOutcomeFailure(): IllegalStateException =
+    IllegalStateException("Demo outcome is ERROR")
