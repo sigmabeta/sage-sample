@@ -1,17 +1,23 @@
 package net.sigmabeta.sage.sample.feature.settings
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import net.sigmabeta.sage.components.CheckableListModel
+import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
+import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.settings.DemoDataResetter
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
@@ -161,9 +167,74 @@ class SettingsViewModelTest {
         assertFalse(delayDropdown(viewModel.uiStateActual.value.listItems).expanded)
     }
 
+    @Test
+    fun `resetting demo data runs the resetter and reports success`() = runTest(dispatcher) {
+        val resetter = FakeDemoDataResetter()
+        val viewModel = createViewModel(resetter = resetter)
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvents.collect { events += it }
+        }
+
+        viewModel.sendAction(SettingsAction.ResetDemoDataClicked)
+        advanceUntilIdle()
+
+        assertEquals(1, resetter.resetCalls)
+        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
+        assertEquals(SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS.toString(), snackbar.message)
+        assertEquals(RESET_ROW_ACTION, resetDemoDataRow(viewModel.uiStateActual.value.listItems).clickAction)
+        assertTrue(viewModel.uiStateActual.value.listItems.none { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `a failed reset reports failure and leaves the row actionable`() = runTest(dispatcher) {
+        val resetter = FakeDemoDataResetter(failure = IllegalStateException("storage unavailable"))
+        val viewModel = createViewModel(resetter = resetter)
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvents.collect { events += it }
+        }
+
+        viewModel.sendAction(SettingsAction.ResetDemoDataClicked)
+        advanceUntilIdle()
+
+        assertEquals(1, resetter.resetCalls)
+        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
+        assertEquals(SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE.toString(), snackbar.message)
+        assertEquals(RESET_ROW_ACTION, resetDemoDataRow(viewModel.uiStateActual.value.listItems).clickAction)
+        assertTrue(viewModel.uiStateActual.value.listItems.none { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `a second reset while one is running is ignored`() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val resetter = FakeDemoDataResetter(gate = gate)
+        val viewModel = createViewModel(resetter = resetter)
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.uiEvents.collect { events += it }
+        }
+
+        viewModel.sendAction(SettingsAction.ResetDemoDataClicked)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiStateActual.value.listItems.any { it is LoadingItemListModel })
+
+        viewModel.sendAction(SettingsAction.ResetDemoDataClicked)
+        advanceUntilIdle()
+        assertEquals(1, resetter.resetCalls)
+
+        gate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(1, resetter.resetCalls)
+        assertEquals(1, events.filterIsInstance<SageEvent.ShowSnackbar>().size)
+        assertTrue(viewModel.uiStateActual.value.listItems.none { it is LoadingItemListModel })
+    }
+
     private fun createViewModel(
-        settings: FakeSettingsManager,
+        settings: FakeSettingsManager = FakeSettingsManager(),
         appInfo: net.sigmabeta.sage.appinfo.AppInfo = testAppInfo(),
+        resetter: DemoDataResetter = FakeDemoDataResetter(),
     ) = SettingsViewModel(
         stringProvider = FakeStringProvider,
         analytics = FakeAnalytics,
@@ -177,6 +248,7 @@ class SettingsViewModelTest {
             override fun delayMillis() = 0L
         },
         settingsManager = settings,
+        demoDataResetter = resetter,
         appInfo = appInfo,
     )
 
@@ -196,16 +268,21 @@ class SettingsViewModelTest {
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
 
-    private fun homeShowsSameContentToggle(items: List<ListModel>): CheckableListModel =
-        items.filterIsInstance<CheckableListModel>()
+    private fun homeShowsSameContentToggle(items: List<ListModel>): NameCaptionCheckboxListModel =
+        items.filterIsInstance<NameCaptionCheckboxListModel>()
             .single {
                 it.name == SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
             }
+
+    private fun resetDemoDataRow(items: List<ListModel>): NameCaptionListModel =
+        items.filterIsInstance<NameCaptionListModel>()
+            .single { it.name == SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
 
     private companion object {
         val THEME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_THEME.name
         val FONT_SETTING_ID = SettingsStringId.SETTINGS_LABEL_FONT.name
         val DELAY_SETTING_ID = SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
         val DEMO_OUTCOME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
+        val RESET_ROW_ACTION = SettingsAction.ResetDemoDataClicked
     }
 }

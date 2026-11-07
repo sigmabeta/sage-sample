@@ -66,6 +66,11 @@
     <string name="settings_demo_outcome_empty">Empty</string>
     <string name="settings_demo_outcome_error">Error</string>
     <string name="settings_label_home_shows_same_content">Home shows same content</string>
+    <string name="settings_caption_home_shows_same_content">Render Home from one stable plan of modules on every visit.</string>
+    <string name="settings_label_reset_demo_data">Reset demo data</string>
+    <string name="settings_caption_reset_demo_data">Clear recent searches and restore the default demo outcome and Home content.</string>
+    <string name="settings_reset_demo_data_success">Demo data reset</string>
+    <string name="settings_reset_demo_data_failure">Couldn’t reset demo data. Try again.</string>
 
     <string name="settings_section_about">About</string>
     <string name="settings_label_app_version">App version</string>
