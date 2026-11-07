@@ -2,6 +2,8 @@ package net.sigmabeta.sage.sample.feature.search
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
@@ -9,6 +11,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.sigmabeta.sage.appcomm.LCE
@@ -18,6 +21,8 @@ import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
+import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
@@ -93,6 +98,202 @@ class SearchViewModelTest {
                 gridRows.map { it.name },
             )
         }
+
+    @Test
+    fun `results stay shown while the next query is still being typed`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        val query = viewModel.query
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceUntilIdle()
+        val settledListNames = state.value.listItems.listNames()
+        val settledGridNames = state.value.listItems.gridNames()
+        assertEquals(searchResultsFor("abc", SearchResultKind.LIST).map { it.name }, settledListNames)
+        assertEquals(searchResultsFor("abc", SearchResultKind.GRID).map { it.name }, settledGridNames)
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abcd"))
+        advanceTimeBy(SEARCH_DEBOUNCE_MILLIS - 1)
+
+        assertEquals("abcd", query.value)
+        assertEquals(listOf("abc"), repository.listQueries)
+        assertEquals(settledListNames, state.value.listItems.listNames())
+        assertEquals(settledGridNames, state.value.listItems.gridNames())
+        assertTrue(state.value.listItems.none { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `a short non-blank query neither submits nor replaces valid results`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        val query = viewModel.query
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceUntilIdle()
+        val settledListNames = state.value.listItems.listNames()
+        val settledGridNames = state.value.listItems.gridNames()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("ab"))
+        advanceUntilIdle()
+
+        assertEquals("ab", query.value)
+        assertEquals(listOf("abc"), repository.listQueries)
+        assertEquals(listOf("abc"), repository.gridQueries)
+        assertEquals(settledListNames, state.value.listItems.listNames())
+        assertEquals(settledGridNames, state.value.listItems.gridNames())
+    }
+
+    @Test
+    fun `clearing the field by deleting the text returns to the prompt immediately`() =
+        runTest(dispatcher) {
+            val viewModel = createViewModel()
+            val state = viewModel.uiStateActual
+            val query = viewModel.query
+            advanceUntilIdle()
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+            advanceUntilIdle()
+            assertTrue(state.value.listItems.any { it is ImageNameCaptionListModel })
+
+            viewModel.sendAction(SageAction.SearchQueryEntered(""))
+            advanceUntilIdle()
+
+            assertEquals("", query.value)
+            val prompt = state.value.listItems.filterIsInstance<EmptyStateListModel>().single()
+            assertEquals("str-SEARCH_PROMPT", prompt.explanation)
+            assertTrue(
+                state.value.listItems.none {
+                    it is ImageNameCaptionListModel ||
+                        it is GridImageListModel ||
+                        it is LoadingItemListModel
+                },
+            )
+            assertEquals(listOf("abc"), repository.listQueries)
+            assertEquals(listOf("abc"), repository.gridQueries)
+        }
+
+    @Test
+    fun `a whitespace-only query also returns to the prompt`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceUntilIdle()
+        viewModel.sendAction(SageAction.SearchQueryEntered("   "))
+        advanceUntilIdle()
+
+        assertTrue(state.value.listItems.any { it is EmptyStateListModel })
+        assertTrue(state.value.listItems.none { it is ImageNameCaptionListModel })
+    }
+
+    @Test
+    fun `a superseded search is cancelled and cannot publish stale results`() =
+        runTest(dispatcher) {
+            val cancelled = mutableListOf<String>()
+            val stale = SearchResult(id = 1L, name = "Stale Result", caption = "Old Query")
+            repository = FakeSearchRepository(
+                listFlow = { submitted ->
+                    if (submitted == "abc") {
+                        flow {
+                            try {
+                                delay(STALE_RESULT_DELAY_MILLIS)
+                                emit(LCE.Content(listOf(stale)))
+                            } finally {
+                                cancelled += submitted
+                            }
+                        }
+                    } else {
+                        flow { emit(LCE.Content(searchResultsFor(submitted, SearchResultKind.LIST))) }
+                    }
+                },
+                gridFlow = { submitted ->
+                    if (submitted == "abc") {
+                        flow {
+                            try {
+                                delay(STALE_RESULT_DELAY_MILLIS)
+                                emit(LCE.Content(searchResultsFor(submitted, SearchResultKind.GRID)))
+                            } finally {
+                                cancelled += "grid:$submitted"
+                            }
+                        }
+                    } else {
+                        flow { emit(LCE.Content(searchResultsFor(submitted, SearchResultKind.GRID))) }
+                    }
+                },
+            )
+            val viewModel = createViewModel()
+            val state = viewModel.uiStateActual
+            advanceUntilIdle()
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+            advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+            runCurrent()
+            // "abc" is still in flight when the user settles a new query.
+            viewModel.sendAction(SageAction.SearchQueryEntered("abcd"))
+            advanceUntilIdle()
+
+            assertTrue("the superseded list search should be cancelled", "abc" in cancelled)
+            assertTrue("the superseded grid search should be cancelled", "grid:abc" in cancelled)
+            assertEquals(listOf("abc", "abcd"), repository.listQueries)
+            assertEquals(listOf("abc", "abcd"), repository.gridQueries)
+            assertEquals(
+                searchResultsFor("abcd", SearchResultKind.LIST).map { it.name },
+                state.value.listItems.listNames(),
+            )
+            assertTrue(state.value.listItems.listNames().none { it == stale.name })
+        }
+
+    @Test
+    fun `one section can still be loading while the other shows results`() = runTest(dispatcher) {
+        repository = FakeSearchRepository(
+            listFlow = { submitted ->
+                flow {
+                    delay(LIST_RESULT_DELAY_MILLIS)
+                    emit(LCE.Content(searchResultsFor(submitted, SearchResultKind.LIST)))
+                }
+            },
+            gridFlow = { submitted ->
+                flow { emit(LCE.Content(searchResultsFor(submitted, SearchResultKind.GRID))) }
+            },
+        )
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+        runCurrent()
+
+        assertTrue(state.value.listItems.any { it is GridImageListModel })
+        val loadingRows = state.value.listItems.filterIsInstance<LoadingItemListModel>()
+        assertTrue(loadingRows.isNotEmpty())
+        assertTrue(loadingRows.all { it.loadOperationName == SEARCH_LIST_OPERATION_NAME })
+        assertTrue(state.value.listItems.none { it is ImageNameCaptionListModel })
+
+        advanceUntilIdle()
+        assertEquals(
+            searchResultsFor("abc", SearchResultKind.LIST).map { it.name },
+            state.value.listItems.listNames(),
+        )
+        assertTrue(state.value.listItems.none { it is LoadingItemListModel })
+    }
+
+    @Test
+    fun `a settled query is trimmed before it reaches the repositories`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val query = viewModel.query
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("  abc  "))
+        advanceUntilIdle()
+
+        assertEquals("  abc  ", query.value)
+        assertEquals(listOf("abc"), repository.listQueries)
+        assertEquals(listOf("abc"), repository.gridQueries)
+    }
 
     @Test
     fun `rapid typing only submits the settled query to both repositories`() =
@@ -178,6 +379,12 @@ class SearchViewModelTest {
         assertEquals("SearchViewModel", snackbar.source)
     }
 
+    private fun List<ListModel>.listNames(): List<String> =
+        filterIsInstance<ImageNameCaptionListModel>().map { it.name }
+
+    private fun List<ListModel>.gridNames(): List<String> =
+        filterIsInstance<GridImageListModel>().map { it.name }
+
     private fun createViewModel() = SearchViewModel(
         stringProvider = FakeStringProvider(),
         analytics = FakeAnalytics(),
@@ -192,4 +399,9 @@ class SearchViewModelTest {
         },
         repository = repository,
     )
+
+    private companion object {
+        const val STALE_RESULT_DELAY_MILLIS = 1_000L
+        const val LIST_RESULT_DELAY_MILLIS = 1_000L
+    }
 }
