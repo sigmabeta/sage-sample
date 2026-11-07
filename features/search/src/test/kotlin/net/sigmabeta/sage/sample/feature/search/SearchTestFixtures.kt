@@ -14,6 +14,7 @@ import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.SearchHistoryManager
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
 import net.sigmabeta.sage.ui.SageStringId
@@ -87,6 +88,38 @@ internal class FakeSampleSettingsManager(
 
     override fun setHomeShowsSameContent(showSameContent: Boolean) {
         homeShowsSameContentState.value = showSameContent
+    }
+}
+
+/**
+ * Recent-search seam used by the view model tests.
+ *
+ * Records what the view model actually did, so the linger/cancellation tests assert on persisted
+ * effects rather than on the timer mechanism.
+ */
+internal class FakeSearchHistoryManager(initialHistory: List<String> = emptyList()) : SearchHistoryManager {
+    private val state = MutableStateFlow(initialHistory)
+
+    override val history: StateFlow<List<String>> = state.asStateFlow()
+
+    val recorded = mutableListOf<String>()
+    val removed = mutableListOf<String>()
+    var clearCount = 0
+        private set
+
+    override fun record(query: String) {
+        recorded += query
+        state.value = listOf(query) + state.value.filterNot { it == query }
+    }
+
+    override fun remove(query: String) {
+        removed += query
+        state.value = state.value.filterNot { it == query }
+    }
+
+    override fun clear() {
+        clearCount++
+        state.value = emptyList()
     }
 }
 

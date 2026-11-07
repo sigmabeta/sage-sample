@@ -11,4 +11,10 @@ import net.sigmabeta.sage.appcomm.SageAction
  */
 sealed class SearchAction : SageAction() {
     data class ResultClicked(val result: SearchResult) : SearchAction()
+
+    /** A recent-search row: refill the field, then let the normal debounce submit it. */
+    data class HistoryClicked(val query: String) : SearchAction()
+
+    /** A recent-search row's remove button. */
+    data class HistoryRemoved(val query: String) : SearchAction()
 }

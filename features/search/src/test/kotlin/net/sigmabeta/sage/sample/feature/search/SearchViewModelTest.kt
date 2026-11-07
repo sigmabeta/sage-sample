@@ -23,6 +23,7 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
+import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
@@ -41,12 +42,14 @@ import org.junit.Test
 class SearchViewModelTest {
     private lateinit var dispatcher: TestDispatcher
     private lateinit var repository: FakeSearchRepository
+    private lateinit var historyManager: FakeSearchHistoryManager
 
     @Before
     fun setUp() {
         dispatcher = StandardTestDispatcher()
         Dispatchers.setMain(dispatcher)
         repository = FakeSearchRepository()
+        historyManager = FakeSearchHistoryManager()
     }
 
     @After
@@ -379,6 +382,149 @@ class SearchViewModelTest {
         assertEquals("SearchViewModel", snackbar.source)
     }
 
+    @Test
+    fun `history from the manager appears in the rendered state`() = runTest(dispatcher) {
+        historyManager = FakeSearchHistoryManager(listOf("chrono", "ff7"))
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("chrono", "ff7"),
+            state.value.listItems.filterIsInstance<SearchHistoryListModel>().map { it.name },
+        )
+    }
+
+    @Test
+    fun `clicking a history row refills the field and submits after the debounce`() =
+        runTest(dispatcher) {
+            val viewModel = createViewModel()
+            val query = viewModel.query
+            advanceUntilIdle()
+
+            viewModel.sendAction(SearchAction.HistoryClicked("ff7"))
+            runCurrent()
+
+            assertEquals("ff7", query.value)
+            assertTrue(repository.listQueries.isEmpty())
+
+            advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(listOf("ff7"), repository.listQueries)
+            assertEquals(listOf("ff7"), repository.gridQueries)
+        }
+
+    @Test
+    fun `removing a history row updates the manager and the rendered list`() =
+        runTest(dispatcher) {
+            historyManager = FakeSearchHistoryManager(listOf("chrono", "ff7"))
+            val viewModel = createViewModel()
+            val state = viewModel.uiStateActual
+            advanceUntilIdle()
+
+            viewModel.sendAction(SearchAction.HistoryRemoved("chrono"))
+            advanceUntilIdle()
+
+            assertEquals(listOf("chrono"), historyManager.removed)
+            assertEquals(
+                listOf("ff7"),
+                state.value.listItems.filterIsInstance<SearchHistoryListModel>().map { it.name },
+            )
+        }
+
+    @Test
+    fun `clearing the field preserves the rendered history`() = runTest(dispatcher) {
+        historyManager = FakeSearchHistoryManager(listOf("chrono"))
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+        runCurrent()
+        viewModel.sendAction(SageAction.SearchClearClicked)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("chrono"),
+            state.value.listItems.filterIsInstance<SearchHistoryListModel>().map { it.name },
+        )
+    }
+
+    @Test
+    fun `a settled query with results is recorded once after the linger window`() =
+        runTest(dispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+            advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+            runCurrent()
+
+            assertTrue("history must wait for the linger window", historyManager.recorded.isEmpty())
+
+            advanceTimeBy(SEARCH_HISTORY_RECORD_DELAY_MILLIS + 1)
+            runCurrent()
+            assertEquals(listOf("abc"), historyManager.recorded)
+
+            advanceTimeBy(SEARCH_HISTORY_RECORD_DELAY_MILLIS * 2)
+            runCurrent()
+            assertEquals("the record must happen exactly once", listOf("abc"), historyManager.recorded)
+        }
+
+    @Test
+    fun `a settled query with no results is not recorded`() = runTest(dispatcher) {
+        repository = FakeSearchRepository(
+            listResponse = { LCE.Content(emptyList()) },
+            gridResponse = { LCE.Content(emptyList()) },
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("nothing-matches"))
+        advanceUntilIdle()
+
+        assertTrue(historyManager.recorded.isEmpty())
+    }
+
+    @Test
+    fun `a new settled query cancels the pending record for the previous query`() =
+        runTest(dispatcher) {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+            advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+            runCurrent()
+            advanceTimeBy(1_500)
+
+            viewModel.sendAction(SageAction.SearchQueryEntered("abcd"))
+            advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+            runCurrent()
+            advanceTimeBy(SEARCH_HISTORY_RECORD_DELAY_MILLIS + 1)
+            runCurrent()
+
+            assertEquals(listOf("abcd"), historyManager.recorded)
+        }
+
+    @Test
+    fun `clearing the field cancels the pending record`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceTimeBy(SEARCH_DEBOUNCE_MILLIS + 1)
+        runCurrent()
+        advanceTimeBy(1_500)
+
+        viewModel.sendAction(SageAction.SearchClearClicked)
+        advanceTimeBy(SEARCH_HISTORY_RECORD_DELAY_MILLIS * 2)
+        runCurrent()
+
+        assertTrue(historyManager.recorded.isEmpty())
+    }
+
     private fun List<ListModel>.listNames(): List<String> =
         filterIsInstance<ImageNameCaptionListModel>().map { it.name }
 
@@ -398,6 +544,7 @@ class SearchViewModelTest {
             override fun delayMillis() = 0L
         },
         repository = repository,
+        historyManager = historyManager,
     )
 
     private companion object {
