@@ -6,6 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
@@ -67,7 +70,11 @@ data object SearchScreen : SampleScreen {
     @Composable
     override fun Content() {
         val viewModel: SearchViewModel = metroViewModel()
-        val query by viewModel.query.collectAsState()
+
+        // The field owns its echo: typing updates this local state synchronously, while the view
+        // model's query flow lags behind the key events. Rendering the view model's value directly
+        // lets fast keystrokes race the state update and reorder characters.
+        var fieldText by remember(viewModel) { mutableStateOf(viewModel.query.value) }
         val navEffects = LocalSampleNavEffects.current
         val chromeController = LocalSampleChromeController.current
 
@@ -77,15 +84,26 @@ data object SearchScreen : SampleScreen {
             chromeController.set(SampleScreenChrome(showTopBar = false))
         }
 
+        // History refills and clears are the only text changes the user did not type.
+        LaunchedEffect(viewModel) {
+            viewModel.fieldUpdates.collect { fieldText = it }
+        }
+
         SampleListScreen(viewModel) { state ->
             SearchContent(
                 listItems = state.listItems,
-                query = query,
+                query = fieldText,
                 hint = SearchStringId.SEARCH_HINT.text(),
                 clearContentDescription = SearchStringId.SEARCH_CLEAR_DESCRIPTION.text(),
                 backContentDescription = SearchStringId.SEARCH_BACK_DESCRIPTION.text(),
-                onQueryChange = { viewModel.sendAction(SageAction.SearchQueryEntered(it)) },
-                onClear = { viewModel.sendAction(SageAction.SearchClearClicked) },
+                onQueryChange = { newText ->
+                    fieldText = newText
+                    viewModel.sendAction(SageAction.SearchQueryEntered(newText))
+                },
+                onClear = {
+                    fieldText = ""
+                    viewModel.sendAction(SageAction.SearchClearClicked)
+                },
                 onBack = {
                     navEffects.onEvent(SageEvent.NavigateBack(source = "SearchScreen"))
                 },

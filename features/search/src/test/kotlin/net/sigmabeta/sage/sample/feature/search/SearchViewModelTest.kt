@@ -418,6 +418,55 @@ class SearchViewModelTest {
         }
 
     @Test
+    fun `clicking a history row publishes the refill to the search field`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val updates = mutableListOf<String>()
+        val collector = launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.fieldUpdates.collect { updates += it }
+        }
+
+        viewModel.sendAction(SearchAction.HistoryClicked("ff7"))
+        advanceUntilIdle()
+
+        assertEquals(listOf("ff7"), updates)
+        collector.cancel()
+    }
+
+    @Test
+    fun `clearing the field publishes an empty field update`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val updates = mutableListOf<String>()
+        val collector = launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.fieldUpdates.collect { updates += it }
+        }
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceUntilIdle()
+        viewModel.sendAction(SageAction.SearchClearClicked)
+        advanceUntilIdle()
+
+        assertEquals(listOf(""), updates)
+        collector.cancel()
+    }
+
+    @Test
+    fun `typing does not publish field updates`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val updates = mutableListOf<String>()
+        val collector = launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.fieldUpdates.collect { updates += it }
+        }
+
+        viewModel.sendAction(SageAction.SearchQueryEntered("a"))
+        viewModel.sendAction(SageAction.SearchQueryEntered("ab"))
+        viewModel.sendAction(SageAction.SearchQueryEntered("abc"))
+        advanceUntilIdle()
+
+        assertTrue(updates.isEmpty())
+        collector.cancel()
+    }
+
+    @Test
     fun `removing a history row updates the manager and the rendered list`() =
         runTest(dispatcher) {
             historyManager = FakeSearchHistoryManager(listOf("chrono", "ff7"))

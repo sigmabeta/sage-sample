@@ -8,7 +8,10 @@ import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -86,6 +89,19 @@ class SearchViewModel(
             )
     }
 
+    /**
+     * Field-text changes the user did not type, such as selecting a recent search or clearing the
+     * box. The app-owned search field keeps its text in local composition state so typing echoes
+     * synchronously; it subscribes to this flow only to apply those external refills.
+     */
+    private val internalFieldUpdates = MutableSharedFlow<String>(
+        replay = 0,
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    val fieldUpdates: SharedFlow<String> = internalFieldUpdates
+
     /** In-flight repository reads; cancelled whenever a newer query supersedes them. */
     private var listJob: Job? = null
     private var gridJob: Job? = null
@@ -105,9 +121,15 @@ class SearchViewModel(
         when (action) {
             is SageAction.SearchQueryEntered -> onQueryEntered(action.query)
 
-            SageAction.SearchClearClicked -> clearSearch()
+            SageAction.SearchClearClicked -> {
+                clearSearch()
+                internalFieldUpdates.tryEmit("")
+            }
 
-            is SearchAction.HistoryClicked -> onQueryEntered(action.query)
+            is SearchAction.HistoryClicked -> {
+                onQueryEntered(action.query)
+                internalFieldUpdates.tryEmit(action.query)
+            }
 
             is SearchAction.HistoryRemoved -> historyManager.remove(action.query)
 
