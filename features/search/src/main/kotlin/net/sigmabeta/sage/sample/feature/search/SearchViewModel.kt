@@ -7,6 +7,7 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
@@ -30,11 +31,16 @@ import net.sigmabeta.sage.ui.StringProvider
  * Search's view model.
  *
  * Query entry uses SAGE's shared [SageAction.SearchQueryEntered] / [SageAction.SearchClearClicked]
- * actions, like the other SAGE apps. Typing updates [SearchState.query] immediately, then
- * [observeQuery] waits [SEARCH_DEBOUNCE_MILLIS] and runs *two* repository queries: one for the
- * row-shaped results and one for the grid images. Results are live data from the sample
- * generator and are keyed by the query they were started for, so a slow load cannot overwrite a
- * newer query's rows.
+ * actions, like the other SAGE apps. Typing only updates [SearchState.query], so the results
+ * already on screen stay visible while the next query is being edited.
+ *
+ * [observeQuery] waits [SEARCH_DEBOUNCE_MILLIS] and then submits a settled query of at least
+ * [MIN_QUERY_LENGTH] characters: it records [SearchState.submittedQuery] and runs *two*
+ * repository queries, one for the row-shaped results and one for the grid images. The previous
+ * pair is cancelled first, and each result is only published while its query is still the
+ * submitted one, so a superseded search can neither waste work nor overwrite newer rows.
+ *
+ * A blank query returns to the resting prompt immediately, without waiting for the debounce.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -64,6 +70,10 @@ class SearchViewModel(
             )
     }
 
+    /** In-flight repository reads; cancelled whenever a newer query supersedes them. */
+    private var listJob: Job? = null
+    private var gridJob: Job? = null
+
     override fun initialState(): SearchState = SearchState()
 
     init {
@@ -75,7 +85,7 @@ class SearchViewModel(
         when (action) {
             is SageAction.SearchQueryEntered -> onQueryEntered(action.query)
 
-            SageAction.SearchClearClicked -> updateState { SearchState() }
+            SageAction.SearchClearClicked -> clearSearch()
 
             is SearchAction.ResultClicked -> emitEvent(
                 SageEvent.ShowSnackbar(
@@ -93,25 +103,16 @@ class SearchViewModel(
     }
 
     private fun onQueryEntered(rawQuery: String) {
-        val trimmedQuery = rawQuery.trim()
-
-        updateState { state ->
-            when {
-                trimmedQuery.length < MIN_QUERY_LENGTH -> state.copy(
-                    query = rawQuery,
-                    listResults = LCE.Uninitialized,
-                    gridResults = LCE.Uninitialized,
-                )
-
-                trimmedQuery == state.query.trim() -> state.copy(query = rawQuery)
-
-                else -> state.copy(
-                    query = rawQuery,
-                    listResults = LCE.Loading(SEARCH_LIST_OPERATION_NAME),
-                    gridResults = LCE.Loading(SEARCH_GRID_OPERATION_NAME),
-                )
-            }
+        if (rawQuery.isBlank()) {
+            // Clearing the box returns to the resting prompt straight away; the debounce never
+            // sees a blank query worth submitting.
+            clearSearch()
+            return
         }
+
+        // Only the field text changes. Whatever is on screen belongs to the last submitted
+        // query and stays there until a new query settles (or the field is cleared).
+        updateState { it.copy(query = rawQuery) }
     }
 
     @OptIn(FlowPreview::class)
@@ -121,27 +122,39 @@ class SearchViewModel(
             .distinctUntilChanged()
             .debounce(SEARCH_DEBOUNCE_MILLIS)
             .onEach { query ->
-                if (query.length >= MIN_QUERY_LENGTH) {
-                    search(query)
+                if (query.length >= MIN_QUERY_LENGTH &&
+                    query != internalUiState.value.submittedQuery
+                ) {
+                    submit(query)
                 }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun search(query: String) {
+    /** Cancels both repository reads and returns to the empty, resting state. */
+    private fun clearSearch() {
+        cancelSearchJobs()
+        updateState { SearchState() }
+    }
+
+    /** Makes [query] the submitted query and runs both repository reads for it. */
+    private fun submit(query: String) {
+        cancelSearchJobs()
+
         updateState {
             it.copy(
+                submittedQuery = query,
                 listResults = LCE.Loading(SEARCH_LIST_OPERATION_NAME),
                 gridResults = LCE.Loading(SEARCH_GRID_OPERATION_NAME),
             )
         }
 
-        repository.searchList(query)
+        listJob = repository.searchList(query)
             .onEach { results ->
                 updateState { state ->
-                    // The query may have moved on while this result was loading; only the
-                    // current query's result set may replace the rows.
-                    if (state.query.trim() == query) {
+                    // A superseded search must not publish, even if its result was already
+                    // queued when the new query cancelled it.
+                    if (state.submittedQuery == query) {
                         state.copy(listResults = results)
                     } else {
                         state
@@ -150,10 +163,10 @@ class SearchViewModel(
             }
             .runInBackground()
 
-        repository.searchGrid(query)
+        gridJob = repository.searchGrid(query)
             .onEach { results ->
                 updateState { state ->
-                    if (state.query.trim() == query) {
+                    if (state.submittedQuery == query) {
                         state.copy(gridResults = results)
                     } else {
                         state
@@ -161,5 +174,12 @@ class SearchViewModel(
                 }
             }
             .runInBackground()
+    }
+
+    private fun cancelSearchJobs() {
+        listJob?.cancel()
+        gridJob?.cancel()
+        listJob = null
+        gridJob = null
     }
 }

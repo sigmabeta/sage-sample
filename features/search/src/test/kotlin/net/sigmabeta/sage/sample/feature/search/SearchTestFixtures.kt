@@ -45,6 +45,10 @@ internal class FakeAnalytics : Analytics {
  * By default it answers with the real seeded generators, so the view model test also exercises
  * the two-query-to-results path. The separate query lists record what actually reached each
  * repository method, which is how the debounce and minimum-length tests observe submissions.
+ *
+ * [listFlow] / [gridFlow] replace the default immediate answer when a test needs control over
+ * timing (delays) or cancellation (a `finally` block), while still recording the submitted
+ * query.
  */
 internal class FakeSearchRepository(
     private val listResponse: (String) -> LCE<List<SearchResult>> = { query ->
@@ -53,17 +57,19 @@ internal class FakeSearchRepository(
     private val gridResponse: (String) -> LCE<List<SearchResult>> = { query ->
         LCE.Content(searchResultsFor(query, SearchResultKind.GRID))
     },
+    private val listFlow: ((String) -> Flow<LCE<List<SearchResult>>>)? = null,
+    private val gridFlow: ((String) -> Flow<LCE<List<SearchResult>>>)? = null,
 ) : SearchRepository {
     val listQueries = mutableListOf<String>()
     val gridQueries = mutableListOf<String>()
 
-    override fun searchList(query: String): Flow<LCE<List<SearchResult>>> = flow {
+    override fun searchList(query: String): Flow<LCE<List<SearchResult>>> {
         listQueries += query
-        emit(listResponse(query))
+        return listFlow?.invoke(query) ?: flow { emit(listResponse(query)) }
     }
 
-    override fun searchGrid(query: String): Flow<LCE<List<SearchResult>>> = flow {
+    override fun searchGrid(query: String): Flow<LCE<List<SearchResult>>> {
         gridQueries += query
-        emit(gridResponse(query))
+        return gridFlow?.invoke(query) ?: flow { emit(gridResponse(query)) }
     }
 }

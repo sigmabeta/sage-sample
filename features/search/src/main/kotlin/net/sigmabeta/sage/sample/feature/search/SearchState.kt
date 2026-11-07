@@ -18,20 +18,22 @@ import net.sigmabeta.sage.ui.StringProvider
  * Search's content, declared as a SAGE [ListState].
  *
  * [query] is the live text in the app-owned search field. It is kept here (rather than only in
- * the field's composition state) so the view model can debounce it and so the result mapping can
- * seed each row's artwork from it.
+ * the field's composition state) so the view model can debounce it. [submittedQuery] is the
+ * last query that actually reached the repository; it drives everything rendered, so editing
+ * the field never blanks or replaces results before the new query settles.
  *
- * A query feeds two independent [LCE] slots: [listResults] renders as
+ * A submitted query feeds two independent [LCE] slots: [listResults] renders as
  * [ImageNameCaptionListModel] rows, and [gridResults] renders as [GridImageListModel] cells.
  * Each section owns its loading and error rows, so one can fail while the other still shows
  * content. The app's search content draws both in one adaptive grid; row items and headers span
  * the full width, while grid cells keep one column each.
  *
- * Queries shorter than [MIN_QUERY_LENGTH] show a prompt: the same guard the other SAGE apps use
- * to avoid running a search for one or two characters.
+ * With no submitted query the screen shows its resting prompt. Queries shorter than
+ * [MIN_QUERY_LENGTH] never reach the repository, so they never become a submitted query.
  */
 data class SearchState(
     val query: String = "",
+    val submittedQuery: String = "",
     val listResults: LCE<List<SearchResult>> = LCE.Uninitialized,
     val gridResults: LCE<List<SearchResult>> = LCE.Uninitialized,
 ) : ListState() {
@@ -42,13 +44,13 @@ data class SearchState(
         )
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> {
-        val trimmedQuery = query.trim()
-        if (trimmedQuery.length < MIN_QUERY_LENGTH) {
+        val submitted = submittedQuery.trim()
+        if (submitted.isEmpty()) {
             return listOf(prompt(stringProvider))
         }
 
-        val rows = listSection(stringProvider, trimmedQuery) +
-            gridSection(stringProvider, trimmedQuery)
+        val rows = listSection(stringProvider, submitted) +
+            gridSection(stringProvider, submitted)
 
         return rows.ifEmpty {
             listOf(
@@ -56,7 +58,7 @@ data class SearchState(
                     icon = Icon.Search,
                     explanation = stringProvider.getStringOneArg(
                         SearchStringId.SEARCH_NO_RESULTS,
-                        trimmedQuery,
+                        submitted,
                     ),
                     showCrossOut = false,
                 ),
