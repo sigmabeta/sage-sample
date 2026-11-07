@@ -2,6 +2,9 @@ package net.sigmabeta.sage.sample.feature.home
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreenId
@@ -9,6 +12,10 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.settings.FontChoice
+import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.settings.SimulateDelay
+import net.sigmabeta.sage.sample.settings.ThemeMode
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -93,4 +100,54 @@ internal class FakeHomeModule(
     override val showHeader: Boolean = true,
 ) : HomeModule {
     override fun state(): Flow<LCE<HomeModuleSection>> = flow
+}
+
+/** A registered row whose created instances reuse one test flow. */
+internal class FakeHomeModuleDefinition(
+    override val typeId: String,
+    override val priority: Int,
+    private val moduleFor: (Int, Long) -> HomeModule,
+) : HomeModuleDefinition {
+    override fun create(instanceNumber: Int, dataIdBase: Long): HomeModule =
+        moduleFor(instanceNumber, dataIdBase)
+}
+
+/** A definition that reports each instance it creates, keyed by plan position. */
+internal fun fakeDefinition(
+    typeId: String,
+    priority: Int,
+    flow: Flow<LCE<HomeModuleSection>>,
+): FakeHomeModuleDefinition = FakeHomeModuleDefinition(typeId, priority) { instanceNumber, _ ->
+    FakeHomeModule(
+        id = "${typeId}_$instanceNumber",
+        priority = instanceNumber - 1,
+        flow = flow,
+    )
+}
+
+/** In-memory settings; only [homeShowsSameContent] changes in Home tests. */
+internal class FakeHomeSettingsManager(
+    initialHomeShowsSameContent: Boolean = true,
+) : SampleSettingsManager {
+    private val homeSameContent = MutableStateFlow(initialHomeShowsSameContent)
+
+    override val themeMode: StateFlow<ThemeMode> = MutableStateFlow(ThemeMode.DEFAULT).asStateFlow()
+
+    override val fontChoice: StateFlow<FontChoice> =
+        MutableStateFlow(FontChoice.DEFAULT).asStateFlow()
+
+    override val simulateDelay: StateFlow<SimulateDelay> =
+        MutableStateFlow(SimulateDelay.DEFAULT).asStateFlow()
+
+    override val homeShowsSameContent: StateFlow<Boolean> = homeSameContent.asStateFlow()
+
+    override fun setThemeMode(mode: ThemeMode) = Unit
+
+    override fun setFontChoice(choice: FontChoice) = Unit
+
+    override fun setSimulateDelay(delay: SimulateDelay) = Unit
+
+    override fun setHomeShowsSameContent(showSameContent: Boolean) {
+        homeSameContent.value = showSameContent
+    }
 }
