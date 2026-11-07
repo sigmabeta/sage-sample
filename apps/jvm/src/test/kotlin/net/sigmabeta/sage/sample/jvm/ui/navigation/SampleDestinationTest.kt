@@ -10,6 +10,18 @@ import org.junit.Test
  */
 class SampleDestinationTest {
     @Test
+    fun `top-level destinations are Home, Browse and Search in display order`() {
+        assertEquals(
+            listOf(
+                SampleDestination.HOME,
+                SampleDestination.BROWSE,
+                SampleDestination.SEARCH,
+            ),
+            SampleDestination.topLevel,
+        )
+    }
+
+    @Test
     fun `fromRoute maps the browse route to the browse destination`() {
         assertEquals(SampleDestination.BROWSE, SampleDestination.fromRoute("browse"))
     }

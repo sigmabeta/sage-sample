@@ -30,19 +30,21 @@ import net.sigmabeta.sage.ui.vector
  * The app's navigation chrome: an animated shared top bar, plus the top-level destinations as a
  * bottom bar on [WidthClass.COMPACT] windows and a rail on anything wider.
  *
- * [chrome] comes from the active screen's [SampleChromeController]. Search hides the top bar while
- * it is visible (its overlay search field replaces it); [SampleNavHost] resets the chrome on every
- * destination change. The Scaffold uses zero content insets, matching Chipbox: the top and bottom
- * bars supply their own system-bar insets, and a screen that hides the top bar handles the status
- * bar itself (as Search does). The width class is computed once by [SampleNavHost] from the window
- * size (see [widthClassFromDp]); using SAGE's [WidthClass] keeps the nav suite and list/grid layout
- * on the same breakpoints. The rail is a sibling of the [Scaffold] rather than part of it, so it
- * spans the full window height next to the content instead of sitting below the top bar.
+ * [selectedDestination] is the *active tab*, not the top screen: a pushed screen keeps its owning
+ * tab highlighted in both the bottom bar and the rail. [chrome] comes from the active screen's
+ * [SampleChromeController]. Search hides the top bar while it is visible (its overlay search field
+ * replaces it); [SampleNavHost] resets the chrome on every route change. The Scaffold uses zero
+ * content insets, matching Chipbox: the top and bottom bars supply their own system-bar insets, and
+ * a screen that hides the top bar handles the status bar itself (as Search does). The width class is
+ * computed once by [SampleNavHost] from the window size (see [widthClassFromDp]); using SAGE's
+ * [WidthClass] keeps the nav suite and list/grid layout on the same breakpoints. The rail is a
+ * sibling of the [Scaffold] rather than part of it, so it spans the full window height next to the
+ * content instead of sitting below the top bar.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SampleNavScaffold(
-    destination: SampleDestination,
+    selectedDestination: SampleDestination,
     widthClass: WidthClass,
     chrome: SampleScreenChrome,
     topBar: SampleTopBarState,
@@ -59,7 +61,7 @@ fun SampleNavScaffold(
             NavigationRail(modifier = Modifier.safeDrawingPadding()) {
                 SampleDestination.topLevel.forEach { item ->
                     NavigationRailItem(
-                        selected = item == destination,
+                        selected = item == selectedDestination,
                         onClick = { onSelectDestination(item) },
                         icon = { DestinationIcon(item) },
                         label = { Text(item.label) },
@@ -91,7 +93,7 @@ fun SampleNavScaffold(
                     NavigationBar {
                         SampleDestination.topLevel.forEach { item ->
                             NavigationBarItem(
-                                selected = item == destination,
+                                selected = item == selectedDestination,
                                 onClick = { onSelectDestination(item) },
                                 icon = { DestinationIcon(item) },
                                 label = { Text(item.label) },

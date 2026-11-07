@@ -81,6 +81,7 @@ dependencies {
 
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.screenmodel)
+    implementation(libs.voyager.tab.navigator)
     implementation(libs.voyager.transitions)
 
     testImplementation(libs.junit4)
