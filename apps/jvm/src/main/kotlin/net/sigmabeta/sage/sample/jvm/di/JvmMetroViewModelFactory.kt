@@ -13,7 +13,7 @@ import net.sigmabeta.sage.di.AppScope
  *
  * Metro fills [viewModelProviders] from the graph's ViewModel multibinding map, which every
  * feature populates with `@ContributesIntoMap` + `@ViewModelKey`. This mirrors the Android
- * `SampleMetroViewModelFactory`; the two apps keep their own copy because `:app` is Android-only.
+ * `SampleMetroViewModelFactory`; the two apps keep their own copy because `:apps:android` is Android-only.
  */
 @Inject
 @SingleIn(AppScope::class)

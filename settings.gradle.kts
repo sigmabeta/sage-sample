@@ -37,7 +37,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "sage-sample"
 
 include(
-    ":app",
+    ":apps:android",
     ":apps:jvm",
     ":core:bitmaps",
     ":core:settings",

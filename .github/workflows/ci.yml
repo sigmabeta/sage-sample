@@ -111,16 +111,16 @@ jobs:
       # subsequent assemble steps incremental on this runner.
       - name: Android lint + debug/release APKs
         run: >-
-          ./gradlew :app:lintRelease :app:assembleDebug :app:assembleRelease
+          ./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease
           --build-cache --no-daemon --max-workers=4
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: android-lint-report
-          path: 'app/build/reports/**'
+          path: 'apps/android/build/reports/**'
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: apks
-          path: 'app/build/outputs/apk/**/*.apk'
+          path: 'apps/android/build/outputs/apk/**/*.apk'
           if-no-files-found: ignore

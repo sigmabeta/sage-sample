@@ -3,7 +3,7 @@ package net.sigmabeta.sage.sample.jvm
 /**
  * The desktop app's user-visible text.
  *
- * The Android app owns the same strings in `app/src/main/res/values/strings.xml`; the desktop
+ * The Android app owns the same strings in `apps/android/src/main/res/values/strings.xml`; the desktop
  * target has no Android resources, so it keeps its own copy and maps feature `SageStringId`s to
  * these values in [SampleStringProvider].
  */

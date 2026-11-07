@@ -6,7 +6,7 @@ agent-only guardrails and pointers; prefer a pointer over repeating the README.
 
 ## What this repo is
 
-The canonical reference for building an app on [SAGE](sage/): one Android app (`:app`), one
+The canonical reference for building an app on [SAGE](sage/): one Android app (`:apps:android`), one
 Compose Desktop app (`:apps:jvm`), four pure-JVM feature modules over `:core:viewmodel`, and SAGE
 itself as a Git submodule consumed through a Gradle composite build. Patterns added here are
 copied by real SAGE apps, so prefer the conventional SAGE way over a local shortcut.
@@ -62,13 +62,13 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `sage.di`; `:core:settings` applies both); `:core:bitmaps` and `:core:ui:components:api` apply
   `sage.kmp` + `sage.compose.kmp` because their Compose rendering is shared by both apps; `:apps:jvm` applies
   `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler and JetBrains Compose plugins);
-  `:app` applies `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly. Add
+  `:apps:android` applies `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly. Add
   SAGE dependencies through `libs.sage.*`, never a local version.
 - **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
   convention plugins — don't delete either.
 - **Tests live beside their module:** feature/core and `:apps:jvm` are pure JVM (JUnit);
   `:core:bitmaps` tests the seeded `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
-  `:app` uses Android unit tests for app-owned logic. No emulator, device suite, Paparazzi, or
+  `:apps:android` uses Android unit tests for app-owned logic. No emulator, device suite, Paparazzi, or
   native code.
 - **Generated bitmaps are placeholder art:** `:core:bitmaps` serves `@Preview`s and
   `generated://` Coil requests (seeded by the URL's scheme/authority/path; `?width=&height=`
@@ -90,8 +90,8 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 ## Build / verify
 
 ```sh
-./gradlew :app:assembleDebug              # Android build
-./gradlew :app:installDebug               # install on an attached device
+./gradlew :apps:android:assembleDebug     # Android build
+./gradlew :apps:android:installDebug      # install on an attached device
 ./gradlew :apps:jvm:run                   # run the Compose Desktop app
 ./gradlew ktlintCheck detekt              # lint — run BOTH, they gate commit/push
 ./gradlew ktlintFormat                    # auto-fix ktlint findings
@@ -148,7 +148,7 @@ Don't `git commit` or `git push` unless explicitly asked.
 
 ## Layout
 
-See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `app/`
+See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `apps/android/`
 (Android application), `apps/jvm/` (Compose Desktop application), `core/bitmaps/` (KMP Compose
 preview art), `core/ui/components/api/` (KMP Compose renderer suite), `core/settings/` and
 `core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`

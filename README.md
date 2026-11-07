@@ -1,7 +1,7 @@
 # SAGE Sample
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
-Android app module (`:app`), one Compose Desktop app module (`:apps:jvm`), five pure-JVM feature
+Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), five pure-JVM feature
 modules over shared `:core` modules (Welcome, Browse, List Items — as text-only, generated-image,
 and 50-item generated-image grid variants — Search, and a Settings screen with persisted
 preferences), and SAGE itself as a Git submodule consumed through a Gradle composite build.
@@ -24,8 +24,8 @@ git clone --recurse-submodules <this repo>
 cd sage-sample
 
 ./gradlew build             # compile, detekt, ktlint, lint, debug + release APK
-./gradlew :app:assembleDebug
-./gradlew :app:installDebug
+./gradlew :apps:android:assembleDebug
+./gradlew :apps:android:installDebug
 ./gradlew :apps:jvm:run     # run the Compose Desktop app
 ```
 
@@ -43,7 +43,7 @@ CI is `.github/workflows/ci.yml`. Four jobs run on every push, pull request, and
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
 | `unit-test` | `./gradlew test :core:bitmaps:jvmTest --continue` |
-| `android` | `./gradlew :app:lintRelease :app:assembleDebug :app:assembleRelease` |
+| `android` | `./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
 
 The compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
@@ -64,7 +64,7 @@ produces an unsigned artifact that must be signed before installing.
 
 Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
 `:core:viewmodel`, and the desktop app; `:core:bitmaps` uses the KMP `jvmTest` source set;
-Android unit tests in `:app` for app-owned logic such as route mapping, chrome derivation, and
+Android unit tests in `:apps:android` for app-owned logic such as route mapping, chrome derivation, and
 layout selection. No emulator is needed; there is no Paparazzi, device, or native target.
 
 Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
@@ -95,7 +95,7 @@ If SAGE renames a module, update the `libs.sage.*` alias used by the module that
 ## Layout
 
 ```
-app/                        Android application
+apps/android/               Android application
   SampleApplication.kt      owns the Metro AppScope graph
   di/SampleAppGraph.kt      @DependencyGraph(AppScope::class) : ViewModelGraph
   di/SampleMetroViewModelFactory.kt  the factory behind metroViewModel()
@@ -116,7 +116,7 @@ app/                        Android application
 apps/jvm/                   Compose Desktop application (shares the feature modules)
   Main.kt                   builds the desktop Metro graph and opens the window
   JvmBuildInfo.kt           generated version/build time for the About rows
-  SampleStrings.kt          desktop text, mirroring app/src/main/res/values/strings.xml
+  SampleStrings.kt          desktop text, mirroring apps/android/src/main/res/values/strings.xml
   SampleStringProvider.kt   feature SageStringId -> desktop text
   di/JvmSampleAppGraph.kt   desktop @DependencyGraph(AppScope::class) : ViewModelGraph
   di/JvmSampleBindings.kt   JVM implementations of SAGE seams (strings, logging, dispatchers, storage)
@@ -125,7 +125,7 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   ui/SampleApp.kt           settings-driven theme + navigation host
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
-  ui/navigation/            same destinations, chrome and back stack as :app
+  ui/navigation/            same destinations, chrome and back stack as :apps:android
 core/bitmaps/               KMP Compose module shared by both apps
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
@@ -292,10 +292,10 @@ Navigation uses Voyager (from SAGE's catalog). `SampleNavHost` owns one `Navigat
 
 `apps/jvm` renders the same UI with Compose Multiplatform desktop. It reuses the feature modules,
 SAGE's `common` UI modules and Voyager directly; the app-owned port lives in `apps/jvm` because
-`:app` is Android-only. Four platform seams differ:
+`:apps:android` is Android-only. Four platform seams differ:
 
 - **Text:** there are no Android resources. `SampleStrings` holds the same values as
-  `app/src/main/res/values/strings.xml`, and `SampleStringProvider` maps feature `SageStringId`s
+  `apps/android/src/main/res/values/strings.xml`, and `SampleStringProvider` maps feature `SageStringId`s
   to them — the desktop twin of `SampleBindings`.
 - **Theme:** both composition roots wrap `MaterialTheme` with `lightColorScheme` /
   `darkColorScheme`, selected by the persisted `ThemeMode` (light, dark, or follow the system).
@@ -315,7 +315,7 @@ The Metro graph is `JvmSampleAppGraph`; `Main.kt` builds it once and installs it
 1. Create `features/<name>` with the `sage.jvm` + `sage.di` convention, and depend on
    `projects.core.viewmodel` plus the SAGE modules it needs.
 2. Add `:features:<name>` to `settings.gradle.kts` and `implementation(projects.features.<name>)`
-   in `app/build.gradle.kts`.
+   in `apps/android/build.gradle.kts`.
 3. Write a `<Name>State : ListState` and a `<Name>ViewModel : SampleListViewModel<<Name>State>`,
    using a `<Name>StringId : SageStringId` enum for text. Annotate the view model with
    `@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())` + `@ViewModelKey`, and

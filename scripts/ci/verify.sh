@@ -38,8 +38,8 @@ GRADLE_FLAGS=(--build-cache --configuration-cache --console=plain)
 ALL_TASKS=(
   "static-analysis|ktlintCheck detekt --continue"
   "unit-test|test :core:bitmaps:jvmTest --continue"
-  "android-lint|:app:lintRelease"
-  "apk|:app:assembleDebug :app:assembleRelease"
+  "android-lint|:apps:android:lintRelease"
+  "apk|:apps:android:assembleDebug :apps:android:assembleRelease"
   "jvm-app|:apps:jvm:assemble"
 )
 # The lint/APK/JVM-build tasks are the heavy ones: they need an Android SDK (local.properties /
@@ -159,8 +159,8 @@ find . "${prune[@]}" -o -path '*/build/test-results/*' -name 'TEST-*.xml' -print
 done
 # Task-specific outputs — only collate when that task actually ran this invocation, so a partial
 # run doesn't surface stale artifacts from a previous build.
-if [[ "$ran" == *" apk "* ]] && [ -d app/build/outputs/apk ]; then
-  mkdir -p "$OUT/apk"; cp -r app/build/outputs/apk/. "$OUT/apk/"
+if [[ "$ran" == *" apk "* ]] && [ -d apps/android/build/outputs/apk ]; then
+  mkdir -p "$OUT/apk"; cp -r apps/android/build/outputs/apk/. "$OUT/apk/"
 fi
 
 # ---- summary ---------------------------------------------------------------
@@ -183,7 +183,7 @@ summary="$OUT/summary.txt"
   desc() { [ -d "$OUT/$1" ] && printf '  %-14s %s\n' "$1/" "$2"; }
   desc reports      "ktlint, detekt, android-lint, HTML test reports (per module)"
   desc test-results "JUnit XML (unit tests)"
-  desc apk          "debug + release APKs (app/build/outputs/apk; release is unsigned)"
+  desc apk          "debug + release APKs (apps/android/build/outputs/apk; release is unsigned)"
 } >"$summary"
 
 echo

@@ -31,7 +31,7 @@ As a Coil request — the URL's scheme/authority/path is the seed and `width`/`h
 output size, so `generated://cover-1` always has the same colours:
 
 ```kotlin
-// :app and :apps:jvm install the loader with SingletonImageLoader.setSafe in their entry points.
+// :apps:android and :apps:jvm install the loader with SingletonImageLoader.setSafe in their entry points.
 AsyncImage(
     model = GeneratedImageFetcher.urlFor("cover-1", width = 300, height = 200),
     contentDescription = null,
