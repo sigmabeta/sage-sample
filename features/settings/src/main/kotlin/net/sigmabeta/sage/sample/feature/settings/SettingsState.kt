@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.settings
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
@@ -41,37 +42,37 @@ data class SettingsState(
     val expandedDropdownId: String? = null,
 ) : ListState() {
     override fun title(stringProvider: StringProvider) = TitleBarModel(
-        title = stringProvider.getString(SettingsStringId.SETTINGS_TITLE),
+        title = stringProvider.getString(SampleStringId.SETTINGS_TITLE),
         shouldShowBack = true,
     )
 
     override fun toListItems(stringProvider: StringProvider): List<ListModel> = listOf(
-        sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_APPEARANCE),
+        sectionHeader(stringProvider, SampleStringId.SETTINGS_SECTION_APPEARANCE),
         themeDropdown(stringProvider),
         fontDropdown(stringProvider),
-        sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_SIMULATION),
+        sectionHeader(stringProvider, SampleStringId.SETTINGS_SECTION_SIMULATION),
         simulateDelayDropdown(stringProvider),
         demoOutcomeDropdown(stringProvider),
         homeShowsSameContentToggle(stringProvider),
         resetDemoDataRow(stringProvider),
-        sectionHeader(stringProvider, SettingsStringId.SETTINGS_SECTION_ABOUT),
+        sectionHeader(stringProvider, SampleStringId.SETTINGS_SECTION_ABOUT),
         labelValue(
             stringProvider,
-            SettingsStringId.SETTINGS_LABEL_APP_VERSION,
+            SampleStringId.SETTINGS_LABEL_APP_VERSION,
             appVersion,
         ),
         labelValue(
             stringProvider,
-            SettingsStringId.SETTINGS_LABEL_BUILD_DATE,
+            SampleStringId.SETTINGS_LABEL_BUILD_DATE,
             buildDate,
         ),
     )
 
     private fun themeDropdown(stringProvider: StringProvider): ListModel {
-        val settingId = SettingsStringId.SETTINGS_LABEL_THEME.name
+        val settingId = SampleStringId.SETTINGS_LABEL_THEME.name
         return DropdownSettingListModel.ofLabels(
             settingId = settingId,
-            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_THEME),
+            name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_THEME),
             selectedPosition = themeMode.ordinal,
             labels = ThemeMode.entries
                 .map { stringProvider.getString(it.labelId()) }
@@ -85,10 +86,10 @@ data class SettingsState(
     }
 
     private fun fontDropdown(stringProvider: StringProvider): ListModel {
-        val settingId = SettingsStringId.SETTINGS_LABEL_FONT.name
+        val settingId = SampleStringId.SETTINGS_LABEL_FONT.name
         return DropdownSettingListModel.ofLabels(
             settingId = settingId,
-            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_FONT),
+            name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_FONT),
             selectedPosition = fontChoice.ordinal,
             labels = FontChoice.entries
                 .map { stringProvider.getString(it.labelId()) }
@@ -102,10 +103,10 @@ data class SettingsState(
     }
 
     private fun simulateDelayDropdown(stringProvider: StringProvider): ListModel {
-        val settingId = SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
+        val settingId = SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
         return DropdownSettingListModel.ofLabels(
             settingId = settingId,
-            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY),
+            name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY),
             selectedPosition = simulateDelay.ordinal,
             labels = SimulateDelay.entries
                 .map { stringProvider.getString(it.labelId()) }
@@ -119,10 +120,10 @@ data class SettingsState(
     }
 
     private fun demoOutcomeDropdown(stringProvider: StringProvider): ListModel {
-        val settingId = SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
+        val settingId = SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
         return DropdownSettingListModel.ofLabels(
             settingId = settingId,
-            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME),
+            name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME),
             selectedPosition = demoOutcome.ordinal,
             labels = DemoOutcome.entries
                 .map { stringProvider.getString(it.labelId()) }
@@ -136,12 +137,12 @@ data class SettingsState(
     }
 
     private fun homeShowsSameContentToggle(stringProvider: StringProvider): ListModel {
-        val settingId = SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.name
+        val settingId = SampleStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.name
         return NameCaptionCheckboxListModel(
             settingId = settingId,
-            name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT),
+            name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT),
             caption = stringProvider.getString(
-                SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
+                SampleStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
             ),
             checked = homeShowsSameContent,
             clickAction = SettingsAction.HomeShowsSameContentToggled,
@@ -157,46 +158,46 @@ data class SettingsState(
             )
 
             else -> NameCaptionListModel(
-                dataId = SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.name.hashCode().toLong(),
-                name = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA),
-                caption = stringProvider.getString(SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA),
+                dataId = SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.name.hashCode().toLong(),
+                name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA),
+                caption = stringProvider.getString(SampleStringId.SETTINGS_CAPTION_RESET_DEMO_DATA),
                 clickAction = SettingsAction.ResetDemoDataClicked,
             )
         }
 
-    private fun ThemeMode.labelId(): SettingsStringId = when (this) {
-        ThemeMode.LIGHT -> SettingsStringId.SETTINGS_THEME_LIGHT
-        ThemeMode.DARK -> SettingsStringId.SETTINGS_THEME_DARK
-        ThemeMode.SYSTEM -> SettingsStringId.SETTINGS_THEME_SYSTEM
+    private fun ThemeMode.labelId(): SampleStringId = when (this) {
+        ThemeMode.LIGHT -> SampleStringId.SETTINGS_THEME_LIGHT
+        ThemeMode.DARK -> SampleStringId.SETTINGS_THEME_DARK
+        ThemeMode.SYSTEM -> SampleStringId.SETTINGS_THEME_SYSTEM
     }
 
-    private fun FontChoice.labelId(): SettingsStringId = when (this) {
-        FontChoice.STANDARD -> SettingsStringId.SETTINGS_FONT_STANDARD
-        FontChoice.INTER -> SettingsStringId.SETTINGS_FONT_INTER
+    private fun FontChoice.labelId(): SampleStringId = when (this) {
+        FontChoice.STANDARD -> SampleStringId.SETTINGS_FONT_STANDARD
+        FontChoice.INTER -> SampleStringId.SETTINGS_FONT_INTER
     }
 
-    private fun SimulateDelay.labelId(): SettingsStringId = when (this) {
-        SimulateDelay.NONE -> SettingsStringId.SETTINGS_DELAY_NONE
-        SimulateDelay.ONE_SECOND -> SettingsStringId.SETTINGS_DELAY_ONE_SECOND
-        SimulateDelay.TWO_SECONDS -> SettingsStringId.SETTINGS_DELAY_TWO_SECONDS
-        SimulateDelay.FIVE_SECONDS -> SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS
+    private fun SimulateDelay.labelId(): SampleStringId = when (this) {
+        SimulateDelay.NONE -> SampleStringId.SETTINGS_DELAY_NONE
+        SimulateDelay.ONE_SECOND -> SampleStringId.SETTINGS_DELAY_ONE_SECOND
+        SimulateDelay.TWO_SECONDS -> SampleStringId.SETTINGS_DELAY_TWO_SECONDS
+        SimulateDelay.FIVE_SECONDS -> SampleStringId.SETTINGS_DELAY_FIVE_SECONDS
     }
 
-    private fun DemoOutcome.labelId(): SettingsStringId = when (this) {
-        DemoOutcome.CONTENT -> SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT
-        DemoOutcome.EMPTY -> SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY
-        DemoOutcome.ERROR -> SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR
+    private fun DemoOutcome.labelId(): SampleStringId = when (this) {
+        DemoOutcome.CONTENT -> SampleStringId.SETTINGS_DEMO_OUTCOME_CONTENT
+        DemoOutcome.EMPTY -> SampleStringId.SETTINGS_DEMO_OUTCOME_EMPTY
+        DemoOutcome.ERROR -> SampleStringId.SETTINGS_DEMO_OUTCOME_ERROR
     }
 
     private fun sectionHeader(
         stringProvider: StringProvider,
-        id: SettingsStringId,
+        id: SampleStringId,
     ): ListModel = SectionHeaderListModel(title = stringProvider.getString(id))
 
     // Display-only rows: SageAction.Noop keeps them non-interactive in the app renderer.
     private fun labelValue(
         stringProvider: StringProvider,
-        labelId: SettingsStringId,
+        labelId: SampleStringId,
         value: String?,
     ): ListModel = LabelValueListModel(
         label = stringProvider.getString(labelId),

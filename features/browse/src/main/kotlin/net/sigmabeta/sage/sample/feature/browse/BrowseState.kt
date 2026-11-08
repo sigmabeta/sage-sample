@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.browse
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SingleTextListModel
@@ -17,7 +18,7 @@ import net.sigmabeta.sage.ui.StringProvider
 data object BrowseState : ListState() {
     override fun title(stringProvider: StringProvider) =
         TitleBarModel(
-            title = stringProvider.getString(BrowseStringId.BROWSE_TITLE),
+            title = stringProvider.getString(SampleStringId.BROWSE_TITLE),
             shouldShowBack = false,
         )
 
@@ -32,7 +33,7 @@ data object BrowseState : ListState() {
     /** The app-side List Items destination, reached through [BrowseAction.OpenListItems]. */
     private fun openListItemsRow(stringProvider: StringProvider): ListModel =
         SingleTextListModel(
-            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_LIST_ITEMS),
+            name = stringProvider.getString(SampleStringId.BROWSE_OPEN_LIST_ITEMS),
             clickAction = BrowseAction.OpenListItems,
             dataId = OPEN_LIST_ITEMS_DATA_ID,
         )
@@ -40,7 +41,7 @@ data object BrowseState : ListState() {
     /** The image-bearing variant of List Items. */
     private fun openListItemsWithImagesRow(stringProvider: StringProvider): ListModel =
         SingleTextListModel(
-            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES),
+            name = stringProvider.getString(SampleStringId.BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES),
             clickAction = BrowseAction.OpenListItemsWithImages,
             dataId = OPEN_LIST_ITEMS_WITH_IMAGES_DATA_ID,
         )
@@ -48,7 +49,7 @@ data object BrowseState : ListState() {
     /** The 50-image grid. */
     private fun openGridOfImagesRow(stringProvider: StringProvider): ListModel =
         SingleTextListModel(
-            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_GRID_OF_IMAGES),
+            name = stringProvider.getString(SampleStringId.BROWSE_OPEN_GRID_OF_IMAGES),
             clickAction = BrowseAction.OpenGridOfImages,
             dataId = OPEN_GRID_OF_IMAGES_DATA_ID,
         )
@@ -56,7 +57,7 @@ data object BrowseState : ListState() {
     /** The Chipbox-style detail screen over generated content. */
     private fun openContentDetailRow(stringProvider: StringProvider): ListModel =
         SingleTextListModel(
-            name = stringProvider.getString(BrowseStringId.BROWSE_OPEN_CONTENT_DETAIL),
+            name = stringProvider.getString(SampleStringId.BROWSE_OPEN_CONTENT_DETAIL),
             clickAction = BrowseAction.OpenContentDetail,
             dataId = OPEN_CONTENT_DETAIL_DATA_ID,
         )

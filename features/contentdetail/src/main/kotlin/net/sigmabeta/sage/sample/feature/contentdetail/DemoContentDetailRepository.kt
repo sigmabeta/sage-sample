@@ -1,4 +1,11 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.models.isKnownContentId
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.ContentItem
+import net.sigmabeta.sage.sample.models.RelatedContent
+import net.sigmabeta.sage.sample.models.ContentAction
+import net.sigmabeta.sage.sample.models.ContentDetailField
+import net.sigmabeta.sage.sample.models.ContentDetail
 
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject

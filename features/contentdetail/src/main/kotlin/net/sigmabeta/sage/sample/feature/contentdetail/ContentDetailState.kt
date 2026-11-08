@@ -1,4 +1,8 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.ContentDetailField
+import net.sigmabeta.sage.sample.models.ContentDetail
 
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
@@ -51,7 +55,7 @@ data class ContentDetailState(
         val loadedTitle = (content as? LCE.Content)?.data?.title
         return TitleBarModel(
             title = loadedTitle
-                ?: stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_TITLE),
+                ?: stringProvider.getString(SampleStringId.CONTENT_DETAIL_TITLE),
             shouldShowBack = true,
         )
     }
@@ -74,7 +78,7 @@ data class ContentDetailState(
     private fun notFound(stringProvider: StringProvider): ListModel = EmptyStateListModel(
         icon = Icon.Warning,
         explanation = stringProvider.getString(
-            ContentDetailStringId.CONTENT_DETAIL_NOT_FOUND,
+            SampleStringId.CONTENT_DETAIL_NOT_FOUND,
         ),
     )
 
@@ -141,7 +145,7 @@ data class ContentDetailState(
             listOf(
                 SectionHeaderListModel(
                     stringProvider.getString(
-                        ContentDetailStringId.CONTENT_DETAIL_SECTION_DETAILS,
+                        SampleStringId.CONTENT_DETAIL_SECTION_DETAILS,
                     ),
                 ),
             ) + rows
@@ -169,7 +173,7 @@ data class ContentDetailState(
     ) {
         listOf(
             SectionHeaderListModel(
-                stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_SECTION_RELATED),
+                stringProvider.getString(SampleStringId.CONTENT_DETAIL_SECTION_RELATED),
             ),
             HorizontalScrollerListModel(
                 dataId = SECTION_NAME_RELATED.hashCode().toLong() + ID_PREFIX_SCROLLER,
@@ -197,7 +201,7 @@ data class ContentDetailState(
     ) {
         listOf(
             SectionHeaderListModel(
-                stringProvider.getString(ContentDetailStringId.CONTENT_DETAIL_SECTION_ITEMS),
+                stringProvider.getString(SampleStringId.CONTENT_DETAIL_SECTION_ITEMS),
             ),
         ) + data.items.map { item ->
             ImageNameCaptionListModel(

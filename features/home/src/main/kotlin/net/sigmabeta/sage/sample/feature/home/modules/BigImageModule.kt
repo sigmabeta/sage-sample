@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.home.modules
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.Flow
@@ -7,11 +9,9 @@ import kotlinx.coroutines.flow.flow
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.sample.feature.home.HomeAction
-import net.sigmabeta.sage.sample.feature.home.HomeItem
 import net.sigmabeta.sage.sample.feature.home.HomeModule
 import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.feature.home.HomeRepository
-import net.sigmabeta.sage.sample.feature.home.HomeStringId
 import net.sigmabeta.sage.sample.feature.home.homeContentId
 import net.sigmabeta.sage.sample.feature.home.homeImageSource
 import net.sigmabeta.sage.ui.Icon
@@ -63,7 +63,7 @@ class BigImageModule(
     private fun sectionFor(pick: HomeItem): LCE<HomeModuleSection> = LCE.Content(
         HomeModuleSection(
             title = stringProvider.getStringOneInt(
-                HomeStringId.HOME_SECTION_BIG_IMAGE,
+                SampleStringId.HOME_SECTION_BIG_IMAGE,
                 instanceNumber,
             ),
             items = persistentListOf(

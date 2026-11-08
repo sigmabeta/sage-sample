@@ -11,7 +11,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import net.sigmabeta.sage.appcomm.ActionSink
-import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.sample.nav.foregroundActionFor
 
 /**
  * The [LifecycleOwner] screen entries observe for foreground/background, supplied by the app shell.
@@ -20,18 +20,6 @@ import net.sigmabeta.sage.appcomm.SageAction
  * `@Preview` — receives no lifecycle actions instead of crashing on a missing owner.
  */
 val LocalScreenLifecycleOwner = staticCompositionLocalOf<LifecycleOwner?> { null }
-
-/**
- * The single lifecycle-event → foreground-action decision.
- *
- * Only `ON_RESUME` and `ON_PAUSE` are foreground transitions; every other event ([Lifecycle.Event])
- * is not, and returns `null`.
- */
-internal fun foregroundActionFor(event: Lifecycle.Event): SageAction? = when (event) {
-    Lifecycle.Event.ON_RESUME -> SageAction.Resume
-    Lifecycle.Event.ON_PAUSE -> SageAction.Pause
-    else -> null
-}
 
 /**
  * The desktop counterpart of Android's activity lifecycle: window focus is the platform's

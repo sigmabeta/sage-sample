@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.models.HomeItem
 
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject

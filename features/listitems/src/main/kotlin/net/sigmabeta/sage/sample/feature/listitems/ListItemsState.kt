@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.EmptyStateListModel
@@ -26,7 +28,7 @@ data class ListItemsState(
 ) : ListState() {
     override fun title(stringProvider: StringProvider) =
         TitleBarModel(
-            title = stringProvider.getString(ListItemsStringId.LIST_ITEMS_TITLE),
+            title = stringProvider.getString(SampleStringId.LIST_ITEMS_TITLE),
             shouldShowBack = true,
         )
 
@@ -35,7 +37,7 @@ data class ListItemsState(
             is LCE.Error -> listOf(
                 ErrorStateListModel(
                     failedOperationName = LIST_ITEMS_OPERATION_NAME,
-                    errorString = stringProvider.getString(ListItemsStringId.LIST_ITEMS_ERROR),
+                    errorString = stringProvider.getString(SampleStringId.LIST_ITEMS_ERROR),
                     error = loaded.error,
                 ),
             )
@@ -63,7 +65,7 @@ data class ListItemsState(
 
     private fun emptyState(stringProvider: StringProvider) = EmptyStateListModel(
         icon = Icon.Person,
-        explanation = stringProvider.getString(ListItemsStringId.LIST_ITEMS_EMPTY),
+        explanation = stringProvider.getString(SampleStringId.LIST_ITEMS_EMPTY),
         showCrossOut = false,
     )
 

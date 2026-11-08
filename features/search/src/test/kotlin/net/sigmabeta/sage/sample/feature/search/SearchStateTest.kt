@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.SearchResult
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.EmptyStateListModel
@@ -9,7 +11,6 @@ import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue

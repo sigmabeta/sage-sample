@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.settings
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
@@ -25,15 +26,15 @@ class SettingsStateTest {
 
         assertEquals(
             listOf(
-                SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_APPEARANCE.toString()),
+                SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_APPEARANCE.toString()),
                 themeDropdown(items),
                 fontDropdown(items),
-                SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_SIMULATION.toString()),
+                SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_SIMULATION.toString()),
                 delayDropdown(items),
                 demoOutcomeDropdown(items),
                 homeShowsSameContentToggle(items),
                 resetDemoDataRow(items),
-                SectionHeaderListModel(SettingsStringId.SETTINGS_SECTION_ABOUT.toString()),
+                SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_ABOUT.toString()),
                 appVersionRow(items),
                 buildDateRow(items),
             ),
@@ -47,9 +48,9 @@ class SettingsStateTest {
 
         assertEquals(
             listOf(
-                SettingsStringId.SETTINGS_THEME_LIGHT.toString(),
-                SettingsStringId.SETTINGS_THEME_DARK.toString(),
-                SettingsStringId.SETTINGS_THEME_SYSTEM.toString(),
+                SampleStringId.SETTINGS_THEME_LIGHT.toString(),
+                SampleStringId.SETTINGS_THEME_DARK.toString(),
+                SampleStringId.SETTINGS_THEME_SYSTEM.toString(),
             ),
             dropdown.options.map { it.first },
         )
@@ -64,8 +65,8 @@ class SettingsStateTest {
 
         assertEquals(
             listOf(
-                SettingsStringId.SETTINGS_FONT_STANDARD.toString(),
-                SettingsStringId.SETTINGS_FONT_INTER.toString(),
+                SampleStringId.SETTINGS_FONT_STANDARD.toString(),
+                SampleStringId.SETTINGS_FONT_INTER.toString(),
             ),
             dropdown.options.map { it.first },
         )
@@ -80,10 +81,10 @@ class SettingsStateTest {
 
         assertEquals(
             listOf(
-                SettingsStringId.SETTINGS_DELAY_NONE.toString(),
-                SettingsStringId.SETTINGS_DELAY_ONE_SECOND.toString(),
-                SettingsStringId.SETTINGS_DELAY_TWO_SECONDS.toString(),
-                SettingsStringId.SETTINGS_DELAY_FIVE_SECONDS.toString(),
+                SampleStringId.SETTINGS_DELAY_NONE.toString(),
+                SampleStringId.SETTINGS_DELAY_ONE_SECOND.toString(),
+                SampleStringId.SETTINGS_DELAY_TWO_SECONDS.toString(),
+                SampleStringId.SETTINGS_DELAY_FIVE_SECONDS.toString(),
             ),
             dropdown.options.map { it.first },
         )
@@ -98,9 +99,9 @@ class SettingsStateTest {
 
         assertEquals(
             listOf(
-                SettingsStringId.SETTINGS_DEMO_OUTCOME_CONTENT.toString(),
-                SettingsStringId.SETTINGS_DEMO_OUTCOME_EMPTY.toString(),
-                SettingsStringId.SETTINGS_DEMO_OUTCOME_ERROR.toString(),
+                SampleStringId.SETTINGS_DEMO_OUTCOME_CONTENT.toString(),
+                SampleStringId.SETTINGS_DEMO_OUTCOME_EMPTY.toString(),
+                SampleStringId.SETTINGS_DEMO_OUTCOME_ERROR.toString(),
             ),
             dropdown.options.map { it.first },
         )
@@ -134,7 +135,7 @@ class SettingsStateTest {
 
     @Test
     fun `only the tracked dropdown is expanded`() {
-        val settingId = SettingsStringId.SETTINGS_LABEL_THEME.name
+        val settingId = SampleStringId.SETTINGS_LABEL_THEME.name
         val items = SettingsState(expandedDropdownId = settingId).toListItems(FakeStringProvider)
 
         assertTrue(themeDropdown(items).expanded)
@@ -148,11 +149,11 @@ class SettingsStateTest {
         val on = homeShowsSameContentToggle(SettingsState().toListItems(FakeStringProvider))
         assertEquals(true, on.checked)
         assertEquals(
-            SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString(),
+            SampleStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString(),
             on.name,
         )
         assertEquals(
-            SettingsStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT.toString(),
+            SampleStringId.SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT.toString(),
             on.caption,
         )
         assertEquals(SettingsAction.HomeShowsSameContentToggled, on.clickAction)
@@ -168,15 +169,15 @@ class SettingsStateTest {
         val row = resetDemoDataRow(SettingsState().toListItems(FakeStringProvider))
 
         assertEquals(
-            SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.name.hashCode().toLong(),
+            SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.name.hashCode().toLong(),
             row.dataId,
         )
         assertEquals(
-            SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString(),
+            SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString(),
             row.name,
         )
         assertEquals(
-            SettingsStringId.SETTINGS_CAPTION_RESET_DEMO_DATA.toString(),
+            SampleStringId.SETTINGS_CAPTION_RESET_DEMO_DATA.toString(),
             row.caption,
         )
         assertEquals(SettingsAction.ResetDemoDataClicked, row.clickAction)
@@ -184,7 +185,7 @@ class SettingsStateTest {
 
     @Test
     fun `a pending reset replaces the action row with inline progress`() {
-        val operationName = SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString()
+        val operationName = SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString()
         val items = SettingsState(resetStatus = LCE.Loading(operationName))
             .toListItems(FakeStringProvider)
 
@@ -194,7 +195,7 @@ class SettingsStateTest {
         assertTrue(
             items.none {
                 it is NameCaptionListModel &&
-                    it.name == SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString()
+                    it.name == SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString()
             },
         )
     }
@@ -204,7 +205,7 @@ class SettingsStateTest {
         listOf(
             LCE.Uninitialized,
             LCE.Content(Unit),
-            LCE.Error(SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString(), IllegalStateException()),
+            LCE.Error(SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString(), IllegalStateException()),
         ).forEach { status ->
             val items = SettingsState(resetStatus = status).toListItems(FakeStringProvider)
 
@@ -231,37 +232,37 @@ class SettingsStateTest {
 
     private fun themeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_THEME.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_THEME.toString() }
 
     private fun fontDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_FONT.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_FONT.toString() }
 
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
 
     private fun demoOutcomeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
 
     private fun homeShowsSameContentToggle(items: List<ListModel>): NameCaptionCheckboxListModel =
         items.filterIsInstance<NameCaptionCheckboxListModel>()
             .single {
-                it.name == SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
+                it.name == SampleStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
             }
 
     private fun resetDemoDataRow(items: List<ListModel>): NameCaptionListModel =
         items.filterIsInstance<NameCaptionListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
 
     private fun appVersionRow(items: List<ListModel>): LabelValueListModel =
         items.filterIsInstance<LabelValueListModel>()
-            .single { it.label == SettingsStringId.SETTINGS_LABEL_APP_VERSION.toString() }
+            .single { it.label == SampleStringId.SETTINGS_LABEL_APP_VERSION.toString() }
 
     private fun buildDateRow(items: List<ListModel>): LabelValueListModel =
         items.filterIsInstance<LabelValueListModel>()
-            .single { it.label == SettingsStringId.SETTINGS_LABEL_BUILD_DATE.toString() }
+            .single { it.label == SampleStringId.SETTINGS_LABEL_BUILD_DATE.toString() }
 
     private fun ListModel.clickAction(): SageAction = when (this) {
         is net.sigmabeta.sage.components.SingleTextListModel -> clickAction

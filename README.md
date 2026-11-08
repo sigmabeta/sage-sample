@@ -20,6 +20,7 @@ consumed through a Gradle composite build.
 `local.properties` must point at an Android SDK (`sdk.dir=...`). `settings.gradle.kts` copies it
 into the `sage/` submodule so both builds resolve the SDK.
 
+
 ## Getting started
 
 ```bash
@@ -45,12 +46,13 @@ CI is `.github/workflows/ci.yml`. Four jobs run on every push, pull request, and
 | Job | Command |
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
-| `unit-test` | `./gradlew test :core:bitmaps:jvmTest --continue` |
+| `unit-test` | `./gradlew test :core:bitmaps:jvmTest :core:strings:real:jvmTest --continue` |
 | `android` | `./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
 
 The compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
-Reports, JUnit XML, the desktop JVM jar, and the APKs are uploaded as workflow artifacts.
+Reports, JUnit XML, the desktop JVM jar, and the APKs are uploaded as
+workflow artifacts.
 
 Locally, `scripts/ci/verify.sh` runs the same tasks sequentially, keeps going after a failure so
 one run shows everything, and writes a summary with all reports to `build/verification/`:
@@ -62,13 +64,14 @@ scripts/ci/verify.sh static-analysis # just the named task(s)
 scripts/ci/verify.sh --list          # task names
 ```
 
+
 The release APK is unsigned: the sample has no release signing config, so `assembleRelease`
 produces an unsigned artifact that must be signed before installing.
 
 Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
 `:core:viewmodel`, and the desktop app; `:core:bitmaps` uses the KMP `jvmTest` source set;
 Android unit tests in `:apps:android` for app-owned logic such as route mapping, chrome derivation, and
-layout selection. No emulator is needed; there is no Paparazzi, device, or native target.
+layout selection. No emulator or device is needed; there is no native target.
 
 Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
 `scripts/dev/`:
@@ -109,44 +112,43 @@ apps/android/               Android application
   ui/SampleApp.kt           settings-driven theme + font + navigation host
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/navigation/
-    SampleDestination.kt    routes + tab metadata (SAGE RouteDescriptor)
     SampleScreens.kt        one Voyager Screen per destination
     SampleTabs.kt           per-tab retained Navigator, active-tab holder, shared Back local
     SampleNavHost.kt        TabNavigator shell: tab switch, pushed screens, Back application
     SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
-    SampleNavAction.kt      pure SageEvent -> ShowTopLevel / Push / Pop policy
-    SampleBackAction.kt     pure tab + canPop -> Pop / ShowTab / Outer policy
     SampleSystemBack.kt     platform Back seam (Android BackHandler; desktop no-op)
     SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
     SampleTopBar.kt         title/back from the active screen's SAGE title state
-    SampleChrome.kt         pure top-bar/width-class/layout derivation + locals
+    SampleChrome.kt         app-local Compose chrome controller + locals (policy is in :core:nav)
 apps/jvm/                   Compose Desktop application (shares the feature modules)
   Main.kt                   builds the desktop Metro graph and opens the window
   JvmBuildInfo.kt           generated version/build time for the About rows
-  SampleStrings.kt          desktop text, mirroring apps/android/src/main/res/values/strings.xml
-  SampleStringProvider.kt   feature SageStringId -> desktop text
   di/JvmSampleAppGraph.kt   desktop @DependencyGraph(AppScope::class) : ViewModelGraph
-  di/JvmSampleBindings.kt   JVM implementations of SAGE seams (strings, logging, dispatchers, storage)
+  di/JvmSampleBindings.kt   JVM implementations of SAGE seams (shared strings, logging, dispatchers, storage)
   di/JvmMetroViewModelFactory.kt  the factory behind metroViewModel() on desktop
   storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
   resources/fonts/inter_*.otf  bundled Inter weights for the Settings font picker
   ui/SampleApp.kt           settings-driven theme + font + navigation host
   ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
-  ui/navigation/            same destinations, chrome and back stack as :apps:android
+  ui/navigation/            Compose/Voyager shell over the shared :core:nav policy
 core/bitmaps/               KMP Compose module shared by both apps
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
+core/models/api/            pure-JVM domain models + Content detail route codec
+core/nav/                   shared destinations, route/Back/layout/chrome policy, screen keys
+core/strings/api/           SampleStringId: the one id vocabulary for all user-visible text
+core/strings/real/          SampleStringProvider: the single id -> English table
 core/ui/components/api/     KMP Compose renderer suite shared by both apps
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
-  SampleTypography.kt       shared Material 3 type scale, parameterised by the chosen font
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
   SearchContent.kt          Chipbox-style search: adaptive grid with the field and status scrim
   subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
+core/ui/theme/api/          SampleTheme + the shared Material 3 type scale
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   FontChoice.kt             standard platform family or bundled Inter
@@ -162,7 +164,6 @@ features/home/             pure-JVM feature module (no Android dependencies)
   HomeModuleDefinition.kt  registered row type: typeId, priority, instance factory
   HomeModuleFactory.kt     builds the stable or randomized 2–10 instance plan
   HomeModuleBindings.kt    Metro set of HomeModuleDefinitions (`@Binds @IntoSet`)
-  HomeStringId.kt          SageStringId keys; the app maps them to R.string
   modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
   DemoHomeRepository.kt    seeded catalog + generated:// artwork
 features/browse/            same shape; static destination rows (no loading/content)
@@ -189,7 +190,8 @@ module detail; this README is the cross-cutting architecture.
 
 ### Composite build
 
-`settings.gradle.kts` includes SAGE and its build logic, and reuses SAGE's version catalog:
+`settings.gradle.kts` includes SAGE, its build logic, and the sample's own build logic, and reuses
+SAGE's version catalog:
 
 ```kotlin
 includeBuild("sage/sage-build-logic")
@@ -219,6 +221,13 @@ plugins {
 
 `detekt-config.yml` at the repo root is required: the SAGE base plugins configure detekt with the
 consumer's `rootDir/detekt-config.yml`.
+
+### Shared modules
+
+`:core:strings:api`/`:real` own the `SampleStringId` vocabulary and the single English table;
+`:core:ui:theme:api` owns `SampleTheme`; `:core:models:api` owns the domain types and the Content
+detail route codec; `:core:nav` owns destinations plus the route/Back/layout/chrome policy and
+screen keys. Both apps consume them, so they cannot drift from each other.
 
 ### Dependency injection — Metro, not Hilt
 
@@ -259,8 +268,9 @@ SAGE splits a screen in two:
    `Pause` when it leaves. `SampleListViewModel.sendAction` coalesces those transitions,
    so SAGE's extra title-change `Resume` does not run feature side effects twice.
 
-Text goes through `StringProvider` and a feature-owned `SageStringId` enum, so feature modules stay
-platform-agnostic; `SampleBindings` is the only place that knows about `R.string`.
+Text goes through `StringProvider` and the shared `SampleStringId` enum (`:core:strings:api`), so
+feature modules stay platform-agnostic. `:core:strings:real` is the single id → text table; both
+apps bind it and install it at the composition root, and neither owns a copy.
 
 Home is module-driven, the way Chipbox's home screen is. `HomeModule` is the pluggable row
 contract: a stable id, a priority, an optional section header, and a
@@ -322,9 +332,9 @@ loading and error rows. If both calls come back empty, the screen shows its no-r
 
 The renderer suite is ported from Chipbox's `:cbox:common:ui:components:api` and keeps its shape:
 one module that re-exports SAGE's `ListModel` types and owns every non-Chipbox-specific renderer,
-plus `subs/` building blocks and `@Preview` harnesses. Accessibility labels are a module-owned
-`ComponentStringId : SageStringId`; both composition roots install their graph's `StringProvider`
-into `LocalComponentStringProvider`, so the renderers never touch `R.string`.
+plus `subs/` building blocks and `@Preview` harnesses. Accessibility labels are `SampleStringId`s
+from the shared strings module; both composition roots install the graph's `StringProvider` into
+`LocalSampleStringProvider`, so the renderers never touch `R.string`.
 
 ### Navigation
 
@@ -385,18 +395,16 @@ shell:
 ## Desktop app
 
 `apps/jvm` renders the same UI with Compose Multiplatform desktop. It reuses the feature modules,
-SAGE's `common` UI modules and Voyager directly; the app-owned port lives in `apps/jvm` because
-`:apps:android` is Android-only. Four platform seams differ:
+the shared `:core` modules and Voyager directly; the host lives in `apps/jvm` because
+`:apps:android` is Android-only. The platform seams differ:
 
-- **Text:** there are no Android resources. `SampleStrings` holds the same values as
-  `apps/android/src/main/res/values/strings.xml`, and `SampleStringProvider` maps feature `SageStringId`s
-  to them — the desktop twin of `SampleBindings`.
-- **Theme and font:** both composition roots wrap `MaterialTheme` with `lightColorScheme` /
-  `darkColorScheme`, selected by the persisted `ThemeMode` (light, dark, or follow the system),
-  and `sampleTypography(fontFamily)` from the shared component module. `FontChoice` selects
-  `FontFamily.Default` or Inter; each app loads its own copies of the Inter OTFs (Android
-  `res/font`, desktop classpath `fonts/`). Both choices live in `SampleSettingsManager`, outside
-  any screen's view model.
+- **Text:** both apps bind the shared `SampleStringProvider` from `:core:strings:real`; there is no
+  desktop text table and no id → `R.string` map.
+- **Theme and font:** both composition roots wrap `:core:ui:theme:api`'s
+  `SampleTheme(darkTheme, fontFamily)`, with `darkTheme` selected by the persisted `ThemeMode`
+  (light, dark, or follow the system). `FontChoice` selects `FontFamily.Default` or Inter; each app
+  loads its own copies of the Inter OTFs (Android `res/font`, desktop classpath `fonts/`). Both
+  choices live in `SampleSettingsManager`, outside any screen's view model.
 - **View model stores:** Voyager supplies per-screen `ViewModelStoreOwner`s only on Android.
   `WithPerScreenViewModelStore` hangs a store off a Voyager `ScreenModel`, so a screen keeps its
   view model while it stays in the back stack and clears it when popped. Each tab's inner navigator

@@ -1,4 +1,10 @@
 package net.sigmabeta.sage.sample.ui.navigation
+import net.sigmabeta.sage.sample.nav.topBarState
+import net.sigmabeta.sage.sample.nav.SampleTopBarState
+import net.sigmabeta.sage.sample.nav.SampleTopBarLeading
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.ui.components.api.text
+import net.sigmabeta.sage.sample.nav.SampleDestination
 
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,9 +15,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import net.sigmabeta.sage.sample.R
 import net.sigmabeta.sage.sample.ui.components.api.CrossfadeText
 import net.sigmabeta.sage.ui.Icon as SageIcon
 import net.sigmabeta.sage.ui.vector
@@ -50,14 +54,14 @@ fun SampleTopBar(
                 SampleTopBarLeading.MENU -> IconButton(onClick = onOpenSettings) {
                     Icon(
                         imageVector = SageIcon.Menu.vector(),
-                        contentDescription = stringResource(R.string.cd_open_settings),
+                        contentDescription = SampleStringId.NAV_OPEN_SETTINGS_DESCRIPTION.text(),
                     )
                 }
 
                 SampleTopBarLeading.BACK -> IconButton(onClick = onBack) {
                     Icon(
                         imageVector = SageIcon.Back.vector(),
-                        contentDescription = stringResource(R.string.cd_navigate_back),
+                        contentDescription = SampleStringId.NAV_BACK_DESCRIPTION.text(),
                     )
                 }
             }

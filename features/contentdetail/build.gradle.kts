@@ -8,6 +8,8 @@ plugins {
 }
 
 dependencies {
+    implementation(projects.core.strings.api)
+    api(projects.core.models.api)
     api(projects.core.viewmodel)
     // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
     api(libs.metrox.viewmodel)

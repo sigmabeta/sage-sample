@@ -46,9 +46,7 @@ SAGE's `ListModel` vocabulary and this module's renderers from one dependency.
 |---|---|
 | `SearchContent.kt` | Chipbox-style search: one adaptive `LazyVerticalGrid` with the field overlaid and a status-bar scrim. Full-width rows/headers span the grid; grid cells keep one lane. |
 | `SearchField.kt` | The search box chrome: back action, clear action, focus request, constant 48 dp control height. Not a `ListModel`; the caller owns the text and passes semantics strings. |
-| `SampleTypography.kt` | `sampleTypography(fontFamily)`: Material 3 type scale rendered in the chosen family. |
-| `ComponentStringId.kt` | Accessibility labels owned by the renderers (`ACCY_OCL_*`, `ACCY_ST_DESC_*`). |
-| `LocalComponentStringProvider.kt` | Composition-local `StringProvider` plus `SageStringId.text(...)` helpers. Both apps install their graph's provider. |
+| `LocalSampleStringProvider.kt` | Composition-local shared `StringProvider` plus `SampleStringId.text(...)` helpers. Both apps install their graph's provider. |
 | `subs/` | Drawing/effect building blocks: `CrossfadeImage` (Coil + crossfade + generated-art fallback), `FakeImage`, `Flasher`, `TintedText`, `TintedIcon`, `Rating`, `Elevated*`, `GridCellOffscreenLayerEnabled`, `PlatformImageModel` (`jvmSharedMain`), `TraceSection`. |
 | `utils/` | Focus-area padding, `ImageSize`, small math/lerp helpers. |
 | `previews/` (common) | Shared sizing constants: `BigImage`, `CoverArt`, `Notif`, `Square`, `WideItem`. |
@@ -89,8 +87,8 @@ LazyColumn {
   `android.graphics` goldens and a separate desktop gradient.
 - `TraceSection` is a structural no-op: this repo has no macrobenchmark target.
 - `StackFrameSummary` is a single common implementation; there is no JavaScript target here.
-- Accessibility text uses `ComponentStringId` + `LocalComponentStringProvider` instead of
-  Chipbox's string module.
+- Accessibility text uses `SampleStringId` + `LocalSampleStringProvider` from the shared strings
+  modules instead of Chipbox's string module. The type scale lives in `:core:ui:theme:api`.
 
 ## Module facts
 
@@ -107,6 +105,8 @@ LazyColumn {
 |---|---|
 | `sage.common.ui.components` (`api`) | SAGE `ListModel` types and reused building blocks |
 | `sage.common.ui.strings` (`api`) | `SageStringId`, `StringProvider` |
+| `:core:strings:api` (`api`) | The shared `SampleStringId` vocabulary |
+| `:core:strings:real` (`androidMain`) | The shared provider for `ComponentsPreview` |
 | `sage.common.appcomm` | `ActionSink` |
 | `sage.common.images` | `SourceInfo` |
 | `sage.common.ui.perfCompose` | `WithMeasurementComponent` |
@@ -118,7 +118,7 @@ LazyColumn {
 
 ## Conventions
 
-- Renderers never read `R.string`. Accessibility text goes through `ComponentStringId` and
-  `LocalComponentStringProvider`.
+- Renderers never read `R.string`. Accessibility text goes through `SampleStringId` and
+  `LocalSampleStringProvider`; the strings module owns the values.
 - Keep renderers model-generic. Chipbox-specific models do not belong here; the sample has none.
 - This module has no tests: it is exercised through the app modules' render tests and previews.

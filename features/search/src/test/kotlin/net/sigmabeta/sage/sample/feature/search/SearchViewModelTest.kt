@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.SearchResult
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,7 +27,6 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.SearchHistoryListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
 import org.junit.Assert.assertEquals

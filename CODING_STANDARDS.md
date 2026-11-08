@@ -27,9 +27,11 @@ of the same `NavigateTo`; one test per branch.
 
 ## Text ownership
 
-User-visible text — including demo or repository content — goes through a `SageStringId` enum
-and `StringProvider`; only the app maps ids to `R.string`. Repository diagnostics (exception
-messages) are not UI text and may stay literals.
+User-visible text — including demo or repository content — goes through `SampleStringId`
+(`:core:strings:api`) and the shared `StringProvider` from `:core:strings:real`. No feature,
+renderer or app keeps its own id → text table; the Android app's only string
+resource is `app_name` for the manifest. Repository diagnostics (exception messages) are not UI text
+and may stay literals.
 
 ## Comments describe the code
 

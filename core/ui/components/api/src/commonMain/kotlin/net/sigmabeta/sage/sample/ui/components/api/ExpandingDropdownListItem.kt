@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.ui.components.api
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
@@ -16,7 +17,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.sample.ui.components.api.subs.LabeledThingy
 import net.sigmabeta.sage.sample.ui.components.api.utils.FocusAreaShape
-import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.DropdownSettingListModel
@@ -91,7 +91,7 @@ fun ExpandingDropdownListItem(
                     )
                 },
                 onClick = { actionSink.sendAction(model.onExpandClicked) },
-                onClickLabel = ComponentStringId.ACCY_OCL_DROPDOWN.text(),
+                onClickLabel = SampleStringId.ACCY_OCL_DROPDOWN.text(),
                 modifier = Modifier.padding(horizontal = contentPadding),
                 padding = padding,
             )

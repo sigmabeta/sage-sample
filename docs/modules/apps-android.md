@@ -23,33 +23,30 @@ generation). Both build types are unminified; release is unsigned.
 | File | Role |
 |---|---|
 | `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug. |
-| `MainActivity.kt` | Installs `LocalMetroViewModelFactory` and `LocalComponentStringProvider` above `SampleApp`, and supplies `finish()` as the outer Back action. |
+| `MainActivity.kt` | Installs `LocalMetroViewModelFactory` and `LocalSampleStringProvider` above `SampleApp`, and supplies `finish()` as the outer Back action. |
 | `di/SampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`. Exposes `settingsManager` and `stringProvider`; provides the application `Context`. |
-| `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — string provider (the only `R.string` map), `Hatchet`, `Analytics`, `Storage` (DataStore), `AppInfo`. |
+| `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), `AppInfo`. The app owns no text table. |
 | `di/SampleMetroViewModelFactory.kt` | `MetroViewModelFactory` backed by the graph's ViewModel map; installed as `LocalMetroViewModelFactory`. |
 | `storage/PreferencesStorage.kt` | Android `Storage` over Preferences DataStore (`sage_sample_settings`); disk-dispatched writes, flow reads. |
 
 ## UI shell
 
-`ui/SampleApp.kt` is the composition root: it collects `themeMode` and `fontChoice`, wraps Material 3
-in the selected color scheme and `sampleTypography(fontFamily)`, then renders `SampleNavHost`.
-Inter ships as three OTF weights in `res/font`.
+`ui/SampleApp.kt` is the composition root: it collects `themeMode` and `fontChoice`, wraps
+`:core:ui:theme:api`'s `SampleTheme(darkTheme, fontFamily)`, then renders `SampleNavHost`. Inter
+ships as three OTF weights in `res/font`.
 
-`ui/navigation/` holds the app's whole navigation policy, split into pure functions and Compose
-glue:
+`ui/navigation/` holds the Compose/Voyager host. The destinations, route mapping, Back policy,
+layout selection, chrome derivation and screen keys live in the shared `:core:nav` module:
 
 | File | Role |
 |---|---|
-| `SampleDestination.kt` | Destinations as SAGE `RouteDescriptor`s; top-level flag, label resource, icon. `fromRoute` resolves feature routes, including every `content-detail/...` route. |
 | `SampleScreens.kt` | One Voyager `Screen` per destination, each resolving its own view model with `metroViewModel<...>()` and reporting title/layout/lifecycle through the shared renderer. |
 | `SampleTabs.kt` | Home/Browse/Search tabs, each owning a retained inner `Navigator`; active-tab registration; shared Back handler; `screenFor`. |
 | `SampleNavHost.kt` | `TabNavigator` shell: tab switching (`popAll` on the outgoing tab), pushed screens, width class, chrome reset, Back application. |
 | `SampleNavEffects.kt` | `LocalSampleNavEffects`: forwards a feature `SageEvent` into the app. |
-| `SampleNavAction.kt` | Pure `navActionFor`: `ShowTopLevel`, `Push` (with optional `ContentId`), `Pop`. Unknown routes/events are ignored. |
-| `SampleBackAction.kt` | Pure `backActionFor(tab, canPop)`: `Pop`, `ShowTab(Home)`, or `Outer`. |
 | `SampleSystemBack.kt` | Android `BackHandler` → the shared Back handler. |
 | `SampleNavScaffold.kt` / `SampleTopBar.kt` | Bottom bar vs. rail by width class; top bar title and leading affordance from the active screen's SAGE title state. |
-| `SampleChrome.kt` | Pure chrome/layout derivation (`topBarState`, `screenLayoutFor`, `widthClassFromDp`, route keys). Search uses it to hide the top bar. |
+| `SampleChrome.kt` | App-local Compose state: `SampleChromeController`, the title-bar/width/chrome locals. The pure derivation lives in `:core:nav`. |
 | `ScreenLifecycle.kt` | Sends exactly one foreground `Resume`/`Pause` pair for the visible, foregrounded screen. |
 
 Navigation facts worth knowing:
@@ -57,14 +54,15 @@ Navigation facts worth knowing:
 - Popping the tab root pops the shell (Android finishes the activity).
 - Search hides the top bar; `SampleNavHost` resets chrome on every route change, so Search does not
   restore it on disposal.
-- `ContentDetailScreen` keys its Voyager screen by the full `ContentId`, so each ID gets its own view
-  model and load.
-- Layout is derived: `ColumnType.One` or at most one computed column renders `ListScreen`; more
-  columns renders `GridScreen` (staggered when the column type asks).
+- `ContentDetailScreen` keys its Voyager screen with `:core:nav`'s `contentDetailScreenKey`, so each
+  ID gets its own view model and load.
+- Layout is derived by `screenLayoutFor`: `ColumnType.One` or at most one computed column renders
+  `ListScreen`; more columns renders `GridScreen` (staggered when the column type asks).
 
 ## Dependencies
 
-All six feature modules plus `:core:viewmodel`, `:core:settings`, `:core:ui:components:api` and
+All six feature modules plus `:core:nav`, `:core:models:api`, `:core:strings:real`,
+`:core:ui:theme:api`, `:core:viewmodel`, `:core:settings`, `:core:ui:components:api` and
 `:core:bitmaps`. Notable platform/SAGE extras: `metrox-viewmodel(-compose)`, SAGE nav/icons/list/
 strings/storage/logging/coroutines/perf, AndroidX DataStore Preferences, Compose BOM + material3 +
 foundation + activity-compose + lifecycle-runtime-compose, Coil 3, Voyager navigator/tab-navigator/
@@ -72,14 +70,15 @@ transitions, `kotlinx-collections-immutable`, JUnit 4.
 
 ## Tests
 
-Android unit tests for app-owned logic only (no emulator):
+Local JVM tests in the Android module (no emulator, no `src/androidTest`):
 
-- `SampleDestinationTest` — route mapping, top-level set, Content-detail prefix.
-- `SampleNavActionTest` — every reachable route and handled event type.
-- `SampleBackActionTest` — each tab/`canPop` branch.
-- `SampleChromeTest` / `SampleTopBarStateTest` / `SampleScreenLayoutTest` — derivation tables.
-- `SampleTabsTest`, `SampleContentDetailScreenTest`, `ScreenLifecycleTest` — screen keys, active-tab
-  registration, foreground pair.
+- `SampleChromeTest` — the app-local Compose chrome controller.
+- `SampleTabsTest` — Voyager tab roots/instances.
+
+The pure shell policy tests (`SampleDestinationTest`, `SampleNavActionTest`, `SampleBackActionTest`,
+`SampleScreenLayoutTest`, `SampleTopBarStateTest`, `SampleChromePolicyTest`,
+`SampleContentDetailScreenKeyTest`, `ScreenLifecycleTest`) live once in `:core:nav`, shared by both
+apps.
 
 ## Verify
 

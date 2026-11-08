@@ -1,4 +1,11 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
+import net.sigmabeta.sage.sample.models.ContentDetail
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.nav.screenLayoutFor
+import net.sigmabeta.sage.sample.nav.SampleScreenLayout
+import net.sigmabeta.sage.sample.nav.SampleScreenChrome
+import net.sigmabeta.sage.sample.nav.SampleDestination
+import net.sigmabeta.sage.sample.nav.contentDetailScreenKey
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,12 +28,11 @@ import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
 import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailViewModel
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.feature.home.HomeViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
-import net.sigmabeta.sage.sample.feature.search.SearchStringId
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
 import net.sigmabeta.sage.sample.ui.components.api.Content
@@ -93,9 +99,9 @@ data object SearchScreen : SampleScreen {
             SearchContent(
                 listItems = state.listItems,
                 query = fieldText,
-                hint = SearchStringId.SEARCH_HINT.text(),
-                clearContentDescription = SearchStringId.SEARCH_CLEAR_DESCRIPTION.text(),
-                backContentDescription = SearchStringId.SEARCH_BACK_DESCRIPTION.text(),
+                hint = SampleStringId.SEARCH_HINT.text(),
+                clearContentDescription = SampleStringId.SEARCH_CLEAR_DESCRIPTION.text(),
+                backContentDescription = SampleStringId.SEARCH_BACK_DESCRIPTION.text(),
                 onQueryChange = { newText ->
                     fieldText = newText
                     viewModel.sendAction(SageAction.SearchQueryEntered(newText))
@@ -152,7 +158,7 @@ data object GridOfImagesScreen : SampleScreen {
 data class ContentDetailScreen(val contentId: ContentId?) : SampleScreen {
     override val destination = SampleDestination.CONTENT_DETAIL
 
-    override val key: ScreenKey = "ContentDetail:${contentId?.value ?: NOT_FOUND_KEY}"
+    override val key: ScreenKey = contentDetailScreenKey(contentId)
 
     @Composable
     override fun Content() {
@@ -163,10 +169,6 @@ data class ContentDetailScreen(val contentId: ContentId?) : SampleScreen {
         }
 
         SampleListScreen(viewModel)
-    }
-
-    private companion object {
-        const val NOT_FOUND_KEY = "none"
     }
 }
 

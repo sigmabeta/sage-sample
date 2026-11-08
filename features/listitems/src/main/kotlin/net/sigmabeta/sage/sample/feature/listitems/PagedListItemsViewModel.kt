@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job

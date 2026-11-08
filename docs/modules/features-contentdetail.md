@@ -1,8 +1,8 @@
 # `:features:contentdetail`
 
 A generic detail screen driven entirely by generated content: hero art, generated call-to-action
-rows, label/value rows, a horizontally scrolling related row, and image/name/caption items. It also
-owns the **content route codec** shared by every feature that links to a detail.
+rows, label/value rows, a horizontally scrolling related row, and image/name/caption items. The
+domain types and the **content route codec** it speaks live in `:core:models:api`.
 
 ```kotlin
 plugins {
@@ -11,10 +11,11 @@ plugins {
 }
 ```
 
-## The route codec (`ContentDetailRoute.kt`)
+## The route codec (`:core:models:api`)
 
-This is the module's most widely consumed piece — Browse, Home, List Items, List Items with Images,
-Grid of Images and Search all navigate through it.
+This is the shared navigation contract — Browse, Home, List Items, List Items with Images, Grid of
+Images and Search all navigate through it. It lives with `ContentId` in `:core:models:api` so
+`:core:nav` can decode a route without depending on this feature.
 
 - `ContentId` — `@JvmInline value class` whose constructor validates `[A-Za-z0-9_.:-]`; a value always
   fits in a route.
@@ -72,12 +73,15 @@ Artwork URLs are built with `GeneratedImageFetcher.urlFor` and namespaced seeds
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
+| `:core:models:api` (`api`) | `ContentDetail`, `ContentId` and the route codec |
+| `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `GeneratedImageFetcher.urlFor` |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` (`StringGenerator`) | State/models, actions, analytics, seeded fake data |
 
 ## Tests
 
-`ContentDetailRouteTest` (validation, encoding/decoding, known namespaces), `ContentDetailStateTest`
+`ContentDetailRouteTest` lives with the codec in `:core:models:api` (validation, encoding/decoding,
+known namespaces). `ContentDetailStateTest`
 (each section and loading/error/not-found shape), `ContentDetailViewModelTest` (init/cancel,
 navigation chain, snackbars), `DemoContentDetailRepositoryTest` (determinism, unknown IDs).

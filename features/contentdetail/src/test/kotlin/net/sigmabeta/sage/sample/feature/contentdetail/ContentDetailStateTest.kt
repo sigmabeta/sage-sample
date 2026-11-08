@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.models.ContentDetailField
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.CtaListModel

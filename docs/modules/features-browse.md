@@ -17,7 +17,6 @@ plugins {
 | `BrowseState.kt` | `data object BrowseState : ListState`. Title `shouldShowBack = false` (top-level tab). Emits four `SingleTextListModel` rows with stable data ids 100–103. |
 | `BrowseAction.kt` | `OpenListItems`, `OpenListItemsWithImages`, `OpenGridOfImages`, `OpenContentDetail`. |
 | `BrowseViewModel.kt` | Metro-contributed `SampleListViewModel<BrowseState>`. Each action becomes a one-shot `SageEvent.NavigateTo`. |
-| `BrowseStringId.kt` | Title and row labels. |
 
 ## Navigation contract
 
@@ -30,16 +29,17 @@ The view model emits route strings that must stay in sync with `SampleDestinatio
 | `OpenGridOfImages` | `grid-of-images` |
 | `OpenContentDetail` | `content-detail/<DEFAULT_CONTENT_ID>` via `contentDetailRoute` |
 
-The Content-detail route uses `:features:contentdetail`'s codec (`DEFAULT_CONTENT_ID =
-ContentId("browse:featured")`) so Browse does not invent its own encoding. `SampleDestinationTest`
-guards the mapping, so changing one side alone fails a test.
+The Content-detail route uses `:core:models:api`'s codec (`DEFAULT_CONTENT_ID =
+ContentId("browse:featured")`) so Browse does not invent its own encoding. `:core:nav`'s
+`SampleDestinationTest` guards the mapping, so changing one side alone fails a test.
 
 ## Dependencies
 
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
-| `:features:contentdetail` | `contentDetailRoute`, `DEFAULT_CONTENT_ID` |
+| `:core:models:api` | `contentDetailRoute`, `DEFAULT_CONTENT_ID`, `ContentId` |
+| `:core:strings:api` | `SampleStringId` vocabulary |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | `ListState`, actions/events, analytics, models, strings |
 

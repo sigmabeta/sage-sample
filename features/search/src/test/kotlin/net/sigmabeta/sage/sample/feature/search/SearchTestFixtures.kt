@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.models.SearchResult
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow

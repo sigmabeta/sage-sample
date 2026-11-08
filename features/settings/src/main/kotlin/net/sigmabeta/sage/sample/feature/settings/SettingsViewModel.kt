@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.settings
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -131,7 +132,7 @@ class SettingsViewModel(
      */
     @Suppress("TooGenericExceptionCaught")
     private fun resetDemoData() {
-        val operationName = stringProvider.getString(SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA)
+        val operationName = stringProvider.getString(SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA)
         if (internalUiState.value.resetStatus is LCE.Loading) {
             return
         }
@@ -142,14 +143,14 @@ class SettingsViewModel(
         viewModelScope.launch(dispatchers.disk) {
             val outcome = try {
                 demoDataResetter.reset()
-                ResetOutcome(LCE.Content(Unit), SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS)
+                ResetOutcome(LCE.Content(Unit), SampleStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS)
             } catch (ex: CancellationException) {
                 // The screen is going away; a failure snackbar would be noise.
                 throw ex
             } catch (ex: Throwable) {
                 ResetOutcome(
                     LCE.Error(operationName, ex),
-                    SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE,
+                    SampleStringId.SETTINGS_RESET_DEMO_DATA_FAILURE,
                 )
             }
 
@@ -170,7 +171,7 @@ class SettingsViewModel(
 
     private data class ResetOutcome(
         val status: LCE<Unit>,
-        val snackbarId: SettingsStringId,
+        val snackbarId: SampleStringId,
     )
 
     private fun collapseDropdown() = updateState { it.copy(expandedDropdownId = null) }

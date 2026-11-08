@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlin.random.Random
 import kotlinx.coroutines.flow.emptyFlow

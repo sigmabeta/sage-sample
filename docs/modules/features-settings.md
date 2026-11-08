@@ -40,7 +40,7 @@ straight back to a value. At most one dropdown is expanded; re-tapping the open 
 
 ## Strings
 
-`SettingsStringId` covers titles, section headers, every dropdown option, the checkbox label and
+`SampleStringId` covers titles, section headers, every dropdown option, the checkbox label and
 caption, reset label/caption/snackbars, and the two About labels.
 
 ## Dependencies

@@ -28,7 +28,7 @@ interface JvmSampleAppGraph : ViewModelGraph {
 
     /**
      * Installed into
-     * [net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider] at the composition
+     * [net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider] at the composition
      * root so the shared component renderers can resolve their accessibility labels.
      */
     val stringProvider: StringProvider

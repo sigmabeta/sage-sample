@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import java.util.Random
 import net.sigmabeta.sage.ui.StringGenerator

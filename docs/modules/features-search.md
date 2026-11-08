@@ -65,7 +65,7 @@ not type.
 
 ## String IDs
 
-`SearchStringId` holds the title, hint, back/clear accessibility labels, prompt, no-results
+`SampleStringId` holds the title, hint, back/clear accessibility labels, prompt, no-results
 template, and the two section headers. `SEARCH_NO_RESULTS` takes one argument (the query).
 
 ## Dependencies
@@ -74,7 +74,8 @@ template, and the two section headers. `SEARCH_NO_RESULTS` takes one argument (t
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
 | `:core:settings` (`api`) | `SearchHistoryManager` |
-| `:features:contentdetail` | Route codec |
+| `:core:models:api` | `SearchResult` + the route codec |
+| `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `generated://` URLs |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringGenerator` |

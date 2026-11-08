@@ -1,9 +1,6 @@
 package net.sigmabeta.sage.sample.jvm.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -17,7 +14,7 @@ import net.sigmabeta.sage.sample.jvm.ui.navigation.LocalPlatformBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.SampleNavHost
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
-import net.sigmabeta.sage.sample.ui.components.api.sampleTypography
+import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
 
 /**
  * Composition root. The theme wraps the navigation host; everything below it is a destination.
@@ -41,13 +38,9 @@ fun SampleApp(
     val fontFamily = remember(fontChoice) { fontFamilyFor(fontChoice) }
 
     CompositionLocalProvider(LocalPlatformBackKeys provides platformBackKeys) {
-        MaterialTheme(
-            colorScheme = if (themeMode.isDark(isSystemInDarkTheme())) {
-                darkColorScheme()
-            } else {
-                lightColorScheme()
-            },
-            typography = sampleTypography(fontFamily),
+        SampleTheme(
+            darkTheme = themeMode.isDark(isSystemInDarkTheme()),
+            fontFamily = fontFamily,
         ) {
             SampleNavHost(onOuterBack = onOuterBack)
         }

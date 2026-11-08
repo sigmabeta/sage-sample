@@ -8,6 +8,7 @@ plugins {
 }
 
 dependencies {
+    implementation(projects.core.strings.api)
     api(projects.core.viewmodel)
     // The persisted preferences the screen edits; also exposes the delay seam.
     api(projects.core.settings)

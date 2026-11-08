@@ -1,4 +1,9 @@
 package net.sigmabeta.sage.sample.ui.navigation
+import net.sigmabeta.sage.sample.ui.components.api.text
+import net.sigmabeta.sage.sample.nav.widthClassFromDp
+import net.sigmabeta.sage.sample.nav.SampleTopBarState
+import net.sigmabeta.sage.sample.nav.SampleScreenChrome
+import net.sigmabeta.sage.sample.nav.SampleDestination
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
@@ -28,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.stringResource
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.ui.vector
 
@@ -95,7 +99,7 @@ fun SampleNavScaffold(
                         selected = item == selectedDestination,
                         onClick = { onSelectDestination(item) },
                         icon = { DestinationIcon(item) },
-                        label = { Text(stringResource(item.labelRes)) },
+                        label = { Text(item.label.text()) },
                     )
                 }
             }
@@ -131,7 +135,7 @@ fun SampleNavScaffold(
                                 selected = item == selectedDestination,
                                 onClick = { onSelectDestination(item) },
                                 icon = { DestinationIcon(item) },
-                                label = { Text(stringResource(item.labelRes)) },
+                                label = { Text(item.label.text()) },
                             )
                         }
                     }

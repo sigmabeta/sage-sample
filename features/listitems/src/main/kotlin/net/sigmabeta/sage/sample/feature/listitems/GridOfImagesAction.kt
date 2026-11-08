@@ -1,7 +1,7 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.ContentId
 
 import net.sigmabeta.sage.appcomm.SageAction
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 
 /**
  * Actions the Grid of Images cells carry.

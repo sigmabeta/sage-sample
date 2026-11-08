@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home.modules
+import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlin.random.Random
 import kotlinx.collections.immutable.toImmutableList
@@ -13,7 +14,6 @@ import net.sigmabeta.sage.sample.feature.home.FakeHomeRepository
 import net.sigmabeta.sage.sample.feature.home.FakeHomeSettingsManager
 import net.sigmabeta.sage.sample.feature.home.FakeStringProvider
 import net.sigmabeta.sage.sample.feature.home.HomeAction
-import net.sigmabeta.sage.sample.feature.home.HomeItem
 import net.sigmabeta.sage.sample.feature.home.HomeModuleFactory
 import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.feature.home.HomeRepository

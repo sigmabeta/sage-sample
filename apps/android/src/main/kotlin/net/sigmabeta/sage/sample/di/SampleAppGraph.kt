@@ -33,7 +33,7 @@ interface SampleAppGraph : ViewModelGraph {
 
     /**
      * The composition root installs this app-scoped provider into
-     * [net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider], so the shared
+     * [net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider], so the shared
      * component renderers can resolve accessibility labels without reaching into DI.
      */
     val stringProvider: StringProvider

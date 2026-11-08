@@ -1,4 +1,9 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
+import net.sigmabeta.sage.sample.ui.components.api.text
+import net.sigmabeta.sage.sample.nav.widthClassFromDp
+import net.sigmabeta.sage.sample.nav.SampleTopBarState
+import net.sigmabeta.sage.sample.nav.SampleScreenChrome
+import net.sigmabeta.sage.sample.nav.SampleDestination
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animate
@@ -94,7 +99,7 @@ fun SampleNavScaffold(
                         selected = item == selectedDestination,
                         onClick = { onSelectDestination(item) },
                         icon = { DestinationIcon(item) },
-                        label = { Text(item.label) },
+                        label = { Text(item.label.text()) },
                     )
                 }
             }
@@ -130,7 +135,7 @@ fun SampleNavScaffold(
                                 selected = item == selectedDestination,
                                 onClick = { onSelectDestination(item) },
                                 icon = { DestinationIcon(item) },
-                                label = { Text(item.label) },
+                                label = { Text(item.label.text()) },
                             )
                         }
                     }

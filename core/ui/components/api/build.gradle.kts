@@ -15,6 +15,7 @@ kotlin {
                 // renderers from one dependency.
                 api(libs.sage.common.ui.components)
                 api(libs.sage.common.ui.strings)
+                api(projects.core.strings.api)
 
                 implementation(libs.sage.common.appcomm)
                 implementation(libs.sage.common.images)
@@ -38,5 +39,6 @@ dependencies {
     // the AndroidX BOM uses Gradle's `platform()`, not the KMP source-set DSL's deprecated one.
     add("androidMainImplementation", platform(libs.androidx.compose.bom))
     add("androidMainImplementation", libs.androidx.compose.ui.tooling.preview)
+    add("androidMainImplementation", projects.core.strings.real)
     add("androidMainImplementation", libs.androidx.compose.ui.tooling)
 }

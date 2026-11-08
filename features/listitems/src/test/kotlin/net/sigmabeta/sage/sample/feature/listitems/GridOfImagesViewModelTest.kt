@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,7 +20,6 @@ import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import org.junit.After
 import org.junit.Assert.assertEquals

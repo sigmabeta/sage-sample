@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.ui.components.api
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import net.sigmabeta.sage.sample.ui.components.api.subs.LabeledThingy
-import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
@@ -22,7 +22,7 @@ fun LabelNoThingyItem(
 ) {
     val action = model.clickAction
     val onClickLabel = if (action !is SageAction.Noop) {
-        ComponentStringId.ACCY_OCL_SINGLE_LINE.text(model.name)
+        SampleStringId.ACCY_OCL_SINGLE_LINE.text(model.name)
     } else {
         null
     }

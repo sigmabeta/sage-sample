@@ -75,7 +75,8 @@ without a restart.
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
-| `:features:contentdetail` | Content-detail route codec |
+| `:core:models:api` | `HomeItem` + the Content-detail route codec |
+| `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `generated://` URLs |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | `kotlinx-collections-immutable` | Section item lists |

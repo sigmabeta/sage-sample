@@ -1,4 +1,16 @@
 package net.sigmabeta.sage.sample.ui.navigation
+import net.sigmabeta.sage.sample.ui.components.api.text
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.nav.widthClassFromDp
+import net.sigmabeta.sage.sample.nav.activeScreenFor
+import net.sigmabeta.sage.sample.nav.routeKeyFor
+import net.sigmabeta.sage.sample.nav.topBarState
+import net.sigmabeta.sage.sample.nav.SampleScreenChrome
+import net.sigmabeta.sage.sample.nav.backActionFor
+import net.sigmabeta.sage.sample.nav.SampleBackAction
+import net.sigmabeta.sage.sample.nav.navActionFor
+import net.sigmabeta.sage.sample.nav.SampleNavAction
+import net.sigmabeta.sage.sample.nav.SampleDestination
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
@@ -26,7 +37,6 @@ import kotlinx.coroutines.launch
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.WidthClass
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import kotlin.math.roundToInt
 
 /**
@@ -62,7 +72,8 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
     val currentTab = tabNavigator.current as SampleTab
     val activeNavigator = activeTabNavigator.navigatorFor(currentTab.key)
     val activeScreen = activeScreenFor(
-        currentTab = currentTab,
+        currentTabKey = currentTab.key,
+        currentTabRoot = currentTab.root,
         registeredTabKey = activeTabNavigator.tabKey,
         registeredScreen = activeNavigator?.lastItem as? SampleScreen,
     )
@@ -92,7 +103,7 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
 
     val topBar = topBarState(
         titleBar = titleBar,
-        destinationLabel = stringResource(activeScreen.destination.labelRes),
+        destinationLabel = activeScreen.destination.label.text(),
         isTopLevel = activeScreen.destination.isTopLevel,
     )
 

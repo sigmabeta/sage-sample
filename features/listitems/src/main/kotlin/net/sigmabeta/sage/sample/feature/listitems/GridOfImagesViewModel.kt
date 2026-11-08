@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.contentDetailRoute
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import androidx.lifecycle.ViewModel
 import dev.zacsweers.metro.ContributesIntoMap
@@ -13,7 +15,6 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
-import net.sigmabeta.sage.sample.feature.contentdetail.contentDetailRoute
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.ui.StringProvider
 

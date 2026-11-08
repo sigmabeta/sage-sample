@@ -8,9 +8,9 @@ plugins {
 }
 
 dependencies {
+    implementation(projects.core.strings.api)
+    api(projects.core.models.api)
     api(projects.core.viewmodel)
-    // The Content detail route codec: features that emit a detail link share one encoding.
-    implementation(projects.features.contentdetail)
     // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
     api(libs.metrox.viewmodel)
 

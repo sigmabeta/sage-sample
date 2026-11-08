@@ -8,9 +8,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.ui.Icon
-import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.vector
 
 private val MIN_CLICKABLE_SIZE = 48.dp
@@ -18,7 +18,7 @@ private val MIN_CLICKABLE_SIZE = 48.dp
 @Composable
 fun MenuActionIcon(
     icon: Icon,
-    contentDescription: SageStringId,
+    contentDescription: SampleStringId,
     onClick: () -> Unit,
 ) {
     Icon(

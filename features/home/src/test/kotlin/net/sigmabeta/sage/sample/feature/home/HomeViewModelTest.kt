@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.models.ContentId
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +24,6 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.images.SourceInfo
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager

@@ -40,7 +40,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 - **A screen ViewModel lives in its Voyager screen's store**, not the app graph: no `@SingleIn`
   on a screen VM. Popping and re-pushing builds a fresh one; a tab root survives tab switches
   because each tab owns a retained inner `Navigator` (`TabNavigator`).
-- **Features emit `SageEvent`s; the app owns navigation.** `SampleNavEffects` →
+- **Features emit `SageEvent`s; the app owns navigation.** The pure policy lives in `:core:nav`:
   `navActionFor` decides `ShowTopLevel` (select that tab, clearing the outgoing tab's stack),
   `Push` (onto the active tab), or `Pop` (the shared Back policy). Don't navigate from a feature
   module.
@@ -54,27 +54,28 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   zero columns and uses `GridScreen` (staggered when the column type asks) above that.
 - **One foreground pair:** the shared screen sends `Resume`/`Pause`; SAGE's list screens also
   send `Resume` on title change, coalesced in `SampleListViewModel.sendAction`.
-- **Text never touches `R.string` in a feature or shared UI module.** Use a `SageStringId` enum +
-  `StringProvider`; `SampleBindings` (Android) and `SampleStringProvider` (desktop) are the only
-  id → text mappings. Demo/repository content included. The shared renderer suite owns
-  `ComponentStringId` for accessibility labels and reads them from `LocalComponentStringProvider`,
-  which the composition roots install from the graph's `StringProvider`.
+- **Text lives in `:core:strings:real`.** Every UI-bearing module emits a `SampleStringId`
+  (`:core:strings:api`); `SampleStringProvider` is the single id → text table. Demo/repository
+  content included. The apps bind it into their graph and install it as
+  `LocalSampleStringProvider`; they own no text table (Android keeps only `app_name` for the
+  manifest). The renderer suite's accessibility labels are `SampleStringId`s in the same enum.
 - **Renderers are shared, not per-app.** `:core:ui:components:api` is the KMP Compose suite ported
   from Chipbox: `ListModel.Content` dispatches every non-Chipbox-specific SAGE model to its
   renderer, and it re-exports `libs.sage.common.ui.components`. Both apps supply
   `ListModel.Content` to `ListScreen`/`GridScreen`; don't reintroduce app-local `ListItemContent`.
-- **Module plugins:** `:features:*` and `:core:viewmodel` apply `sage.jvm` (features also
-  `sage.di`; `:core:settings` applies both); `:core:bitmaps` and `:core:ui:components:api` apply
-  `sage.kmp` + `sage.compose.kmp` because their Compose rendering is shared by both apps; `:apps:jvm` applies
-  `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler and JetBrains Compose plugins);
-  `:apps:android` applies `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly. Add
-  SAGE dependencies through `libs.sage.*`, never a local version.
+- **Module plugins:** `:features:*`, `:core:models:api`, `:core:nav`, `:core:viewmodel` and
+  `:core:settings` apply `sage.jvm` (features and `:core:settings` also `sage.di`);
+  `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api` and
+  `:core:ui:theme:api` apply `sage.kmp` (the UI/renderer modules also `sage.compose.kmp`);
+  `:apps:jvm` applies `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler and JetBrains
+  Compose plugins); `:apps:android` applies `android.application`, Compose, `metro`, `detekt`, and
+  `ktlint` directly. Add SAGE dependencies through `libs.sage.*`, never a local version.
 - **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
   convention plugins — don't delete either.
 - **Tests live beside their module:** feature/core and `:apps:jvm` are pure JVM (JUnit);
   `:core:bitmaps` tests the seeded `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
-  `:apps:android` uses Android unit tests for app-owned logic. No emulator, device suite, Paparazzi, or
-  native code.
+  `:core:nav` owns the once-duplicated shell policy tests; the apps keep only host-local tests in
+  their local JVM source sets. No emulator, device suite, or native code.
 - **Generated bitmaps are placeholder art:** `:core:bitmaps` serves `@Preview`s and
   `generated://` Coil requests (seeded by the URL's scheme/authority/path; `?width=&height=`
   picks the size without changing the art). Don't treat them as real image content; add a

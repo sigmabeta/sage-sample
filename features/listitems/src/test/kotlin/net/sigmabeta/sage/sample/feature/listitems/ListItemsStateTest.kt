@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.EmptyStateListModel

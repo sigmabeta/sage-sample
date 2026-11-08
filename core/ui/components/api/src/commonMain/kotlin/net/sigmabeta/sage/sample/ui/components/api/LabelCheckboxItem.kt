@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.ui.components.api
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.sample.ui.components.api.subs.LabeledThingy
-import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.CheckableListModel
@@ -24,9 +24,9 @@ fun LabelCheckboxItem(
     padding: PaddingValues,
 ) {
     val accyStateDescription = when (model.checked) {
-        true -> ComponentStringId.ACCY_ST_DESC_CHECKED.text()
-        false -> ComponentStringId.ACCY_ST_DESC_UNCHECKED.text()
-        null -> ComponentStringId.ACCY_ST_DESC_LOADING.text()
+        true -> SampleStringId.ACCY_ST_DESC_CHECKED.text()
+        false -> SampleStringId.ACCY_ST_DESC_UNCHECKED.text()
+        null -> SampleStringId.ACCY_ST_DESC_LOADING.text()
     }
 
     LabeledThingy(
@@ -52,7 +52,7 @@ fun LabelCheckboxItem(
             }
         },
         onClick = { actionSink.sendAction(model.clickAction) },
-        onClickLabel = ComponentStringId.ACCY_OCL_CHECKBOX.text(),
+        onClickLabel = SampleStringId.ACCY_OCL_CHECKBOX.text(),
         accyStateDescription = accyStateDescription,
         modifier = modifier,
         padding = padding,

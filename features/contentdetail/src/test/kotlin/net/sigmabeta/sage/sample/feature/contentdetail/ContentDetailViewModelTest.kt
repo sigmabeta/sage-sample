@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.models.ContentId
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

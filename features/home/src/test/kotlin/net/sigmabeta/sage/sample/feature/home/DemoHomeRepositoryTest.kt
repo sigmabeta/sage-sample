@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.test.runTest

@@ -19,9 +19,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
 import net.sigmabeta.sage.sample.jvm.ui.SampleApp
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.jvm.ui.navigation.HeldBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
-import net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
 
 /**
  * Desktop entry point: builds the app-scoped Metro graph once and opens the Compose window.
@@ -48,7 +50,7 @@ fun main() {
         val heldBackKeys = remember { HeldBackKeys() }
         Window(
             onCloseRequest = ::exitApplication,
-            title = SampleStrings.APP_NAME,
+            title = SampleStringProvider.string(SampleStringId.APP_NAME),
             state = rememberWindowState(size = DpSize(1000.dp, 800.dp)),
             onKeyEvent = { event ->
                 when {
@@ -79,7 +81,7 @@ fun main() {
 
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
-                LocalComponentStringProvider provides graph.stringProvider,
+                LocalSampleStringProvider provides graph.stringProvider,
             ) {
                 SampleApp(
                     settingsManager = graph.settingsManager,

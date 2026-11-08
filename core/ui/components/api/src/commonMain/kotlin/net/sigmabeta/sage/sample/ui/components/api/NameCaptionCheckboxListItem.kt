@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.ui.components.api
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
@@ -28,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.sample.ui.components.api.utils.FocusAreaShape
 import net.sigmabeta.sage.sample.ui.components.api.utils.innerFocusPadding
 import net.sigmabeta.sage.sample.ui.components.api.utils.outerFocusPadding
-import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
@@ -41,9 +41,9 @@ fun NameCaptionCheckboxListItem(
     padding: PaddingValues,
 ) {
     val accyStateDescription = when (model.checked) {
-        true -> ComponentStringId.ACCY_ST_DESC_CHECKED.text()
-        false -> ComponentStringId.ACCY_ST_DESC_UNCHECKED.text()
-        null -> ComponentStringId.ACCY_ST_DESC_LOADING.text()
+        true -> SampleStringId.ACCY_ST_DESC_CHECKED.text()
+        false -> SampleStringId.ACCY_ST_DESC_UNCHECKED.text()
+        null -> SampleStringId.ACCY_ST_DESC_LOADING.text()
     }
 
     Row(
@@ -54,7 +54,7 @@ fun NameCaptionCheckboxListItem(
             .clip(FocusAreaShape)
             .clickable(
                 onClick = { actionSink.sendAction(model.clickAction) },
-                onClickLabel = ComponentStringId.ACCY_OCL_CHECKBOX.text(),
+                onClickLabel = SampleStringId.ACCY_OCL_CHECKBOX.text(),
             )
             .padding(padding.innerFocusPadding())
             // The whole row carries the checked/unchecked/loading state; the inner Checkbox clears

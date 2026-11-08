@@ -1,4 +1,9 @@
 package net.sigmabeta.sage.sample.ui.navigation
+import net.sigmabeta.sage.sample.ui.components.api.text
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.nav.activeScreenFor
+import net.sigmabeta.sage.sample.nav.backActionFor
+import net.sigmabeta.sage.sample.nav.SampleDestination
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -8,13 +13,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.res.stringResource
 import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.transitions.SlideTransition
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.ui.vector
 
 /**
@@ -35,7 +38,7 @@ sealed class SampleTab(
     override val options: TabOptions
         @Composable get() = TabOptions(
             index = index,
-            title = stringResource(destination.labelRes),
+            title = destination.label.text(),
             icon = rememberVectorPainter(destination.icon.vector()),
         )
 

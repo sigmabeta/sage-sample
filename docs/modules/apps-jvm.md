@@ -30,9 +30,8 @@ build's, not a stale cached one.
 |---|---|
 | `Main.kt` | Creates `JvmSampleAppGraph`, registers `generatedImageLoader` as Coil's singleton, opens a 1000×800 window. Window-level Escape/Backspace handling emits into a `MutableSharedFlow` and runs the shared Back policy once per physical press (`HeldBackKeys`). |
 | `di/JvmSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager` and `stringProvider`. |
-| `di/JvmSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: `SampleStringProvider`, `BluntHatchet`, `NoopAnalytics`, `AppInfo`, `JvmStorage`, `SageDispatchers` (main = `Dispatchers.Main`, backed by the Swing artifact), and an app-lifetime `CoroutineScope`. |
+| `di/JvmSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: the shared `SampleStringProvider`, `BluntHatchet`, `NoopAnalytics`, `AppInfo`, `JvmStorage`, `SageDispatchers` (main = `Dispatchers.Main`, backed by the Swing artifact), and an app-lifetime `CoroutineScope`. |
 | `di/JvmMetroViewModelFactory.kt` | Desktop `MetroViewModelFactory`, installed as `LocalMetroViewModelFactory`. |
-| `SampleStrings.kt` / `SampleStringProvider.kt` | Desktop text table mirroring Android's `strings.xml`; maps every feature `SageStringId` and `ComponentStringId`. Unmapped IDs fail loudly. |
 | `storage/JvmStorage.kt` | `Storage` over a properties file (`~/.sage-sample/settings.properties`, overridable with `-Dsage.sample.settingsFile`). Type-namespaced keys, reactive `MutableStateFlow`s, atomic temp-file + move writes. |
 | `JvmBuildInfo.kt` | Reads the generated properties into version/build-time constants. |
 
@@ -47,15 +46,17 @@ build's, not a stale cached one.
   so the foreground `Resume`/`Pause` pair follows window focus.
 - **Back keys.** `PlatformBackKeys.kt` / `BackMouseButton.kt` feed Escape/Backspace and mouse Back
   into the same `SampleSystemBack` seam as Android's `BackHandler`.
-- **Chrome and layout.** `ui/navigation/` mirrors the Android shell (`SampleDestination`,
-  `SampleTabs`, `SampleNavHost`, `SampleNavAction`, `SampleChrome`, …); top bar vs. rail and
-  list vs. grid derive from the same width classes.
-- **Theme/font.** `ui/SampleApp.kt` applies `ThemeMode` and `FontChoice` exactly as Android does, but
-  loads Inter from the classpath (`resources/fonts/`) rather than `res/font`.
+- **Chrome and layout.** `ui/navigation/` hosts the Compose/Voyager shell, but its policy comes from
+  the shared `:core:nav` (`SampleDestination`, `navActionFor`, `backActionFor`, `topBarState`,
+  `screenLayoutFor`, route/screen keys); top bar vs. rail and list vs. grid use the same width
+  classes.
+- **Theme/font.** `ui/SampleApp.kt` uses `:core:ui:theme:api`'s `SampleTheme`, loading Inter from the
+  classpath (`resources/fonts/`) rather than `res/font`.
 
 ## Dependencies
 
-Same feature/core set as Android. Desktop-specific: JetBrains Compose runtime/foundation/material3/ui
+Same feature/core set as Android, including shared `:core:nav`, `:core:strings:real` and
+`:core:ui:theme:api`. Desktop-specific: JetBrains Compose runtime/foundation/material3/ui
 plus `compose.desktop.currentOs`, `androidx.lifecycle` viewmodel/viewModelCompose/runtimeCompose,
 `kotlinx-coroutines-swing` (provides `Dispatchers.Main` on the AWT event queue), Voyager
 navigator/screenmodel/tab-navigator/transitions, Coil 3, JUnit 4.
@@ -65,11 +66,12 @@ navigator/screenmodel/tab-navigator/transitions, Coil 3, JUnit 4.
 Pure JVM tests beside the module:
 
 - `JvmSampleAppGraphTest` — the graph resolves its entry points and ViewModel factory.
-- `SampleStringProviderTest` — every feature/component ID has desktop text.
 - `InterFontResourcesTest` — bundled font resources are present.
-- Navigation twins of the Android tests: destination, nav action, back action, chrome, top bar,
-  layout, tabs, content-detail screen key, screen lifecycle.
+- `SampleChromeTest` / `SampleTabsTest` — the host-local Compose controller and Voyager tabs.
 - `HeldBackKeysTest` / `SampleBackKeyTest` — one Back per press, auto-repeat and focus-loss handling.
+
+The shared provider completeness test and the shell policy tests live once in `:core:strings:real`
+and `:core:nav`.
 
 ## Run
 

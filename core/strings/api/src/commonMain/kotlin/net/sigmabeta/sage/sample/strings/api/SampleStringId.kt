@@ -1,0 +1,115 @@
+package net.sigmabeta.sage.sample.strings.api
+
+import net.sigmabeta.sage.ui.SageStringId
+
+/**
+ * Every string the sample renders.
+ *
+ * One vocabulary for features, the shared renderer suite and the app shell. Values live in
+ * `:core:strings:real`; neither the features nor the renderers know about `R.string`, and the apps
+ * are no longer string owners. The two apps install the shared [net.sigmabeta.sage.ui.StringProvider]
+ * into `LocalSampleStringProvider`, and the composition roots only load the chosen font.
+ *
+ * The constant names are stable: `:core:strings:real` maps every entry, and a feature emits one of
+ * these ids rather than a literal.
+ */
+enum class SampleStringId : SageStringId {
+    APP_NAME,
+
+    // Navigation shell.
+    NAV_HOME,
+    NAV_BROWSE,
+    NAV_SEARCH,
+    NAV_LIST_ITEMS,
+    NAV_LIST_ITEMS_WITH_IMAGES,
+    NAV_GRID_OF_IMAGES,
+    NAV_CONTENT_DETAIL,
+    NAV_SETTINGS,
+    NAV_OPEN_SETTINGS_DESCRIPTION,
+    NAV_BACK_DESCRIPTION,
+
+    // Accessibility text owned by the shared renderer suite.
+    ACCY_OCL_CHECKBOX,
+    ACCY_OCL_DROPDOWN,
+    ACCY_OCL_RATING,
+    ACCY_OCL_SINGLE_LINE,
+    ACCY_OCL_VALUE,
+    ACCY_ST_DESC_CHECKED,
+    ACCY_ST_DESC_LOADING,
+    ACCY_ST_DESC_UNCHECKED,
+
+    // Home.
+    HOME_TITLE,
+    HOME_SECTION_BIG_IMAGE,
+    HOME_SECTION_GRID_IMAGES,
+    HOME_EMPTY,
+    HOME_ALL_ERROR,
+
+    // Browse.
+    BROWSE_TITLE,
+    BROWSE_OPEN_LIST_ITEMS,
+    BROWSE_OPEN_LIST_ITEMS_WITH_IMAGES,
+    BROWSE_OPEN_GRID_OF_IMAGES,
+    BROWSE_OPEN_CONTENT_DETAIL,
+
+    // Content detail.
+    CONTENT_DETAIL_TITLE,
+    CONTENT_DETAIL_SECTION_DETAILS,
+    CONTENT_DETAIL_SECTION_RELATED,
+    CONTENT_DETAIL_SECTION_ITEMS,
+    CONTENT_DETAIL_ITEM_CLICKED,
+    CONTENT_DETAIL_NOT_FOUND,
+
+    // List Items, List Items with Images and Grid of Images.
+    LIST_ITEMS_TITLE,
+    LIST_ITEMS_ITEM_CLICKED,
+    LIST_ITEMS_EMPTY,
+    LIST_ITEMS_ERROR,
+    LIST_ITEMS_WITH_IMAGES_TITLE,
+    LIST_ITEMS_WITH_IMAGES_ITEM_CLICKED,
+    LIST_ITEMS_WITH_IMAGES_EMPTY,
+    LIST_ITEMS_WITH_IMAGES_ERROR,
+    GRID_OF_IMAGES_TITLE,
+    GRID_OF_IMAGES_EMPTY,
+    GRID_OF_IMAGES_ERROR,
+
+    // Search.
+    SEARCH_TITLE,
+    SEARCH_HINT,
+    SEARCH_CLEAR_DESCRIPTION,
+    SEARCH_BACK_DESCRIPTION,
+    SEARCH_PROMPT,
+    SEARCH_NO_RESULTS,
+    SEARCH_SECTION_LIST,
+    SEARCH_SECTION_GRID,
+
+    // Settings.
+    SETTINGS_TITLE,
+    SETTINGS_SECTION_APPEARANCE,
+    SETTINGS_LABEL_THEME,
+    SETTINGS_THEME_LIGHT,
+    SETTINGS_THEME_DARK,
+    SETTINGS_THEME_SYSTEM,
+    SETTINGS_LABEL_FONT,
+    SETTINGS_FONT_STANDARD,
+    SETTINGS_FONT_INTER,
+    SETTINGS_SECTION_SIMULATION,
+    SETTINGS_LABEL_SIMULATE_DELAY,
+    SETTINGS_DELAY_NONE,
+    SETTINGS_DELAY_ONE_SECOND,
+    SETTINGS_DELAY_TWO_SECONDS,
+    SETTINGS_DELAY_FIVE_SECONDS,
+    SETTINGS_LABEL_DEMO_OUTCOME,
+    SETTINGS_DEMO_OUTCOME_CONTENT,
+    SETTINGS_DEMO_OUTCOME_EMPTY,
+    SETTINGS_DEMO_OUTCOME_ERROR,
+    SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT,
+    SETTINGS_CAPTION_HOME_SHOWS_SAME_CONTENT,
+    SETTINGS_LABEL_RESET_DEMO_DATA,
+    SETTINGS_CAPTION_RESET_DEMO_DATA,
+    SETTINGS_RESET_DEMO_DATA_SUCCESS,
+    SETTINGS_RESET_DEMO_DATA_FAILURE,
+    SETTINGS_SECTION_ABOUT,
+    SETTINGS_LABEL_APP_VERSION,
+    SETTINGS_LABEL_BUILD_DATE,
+}

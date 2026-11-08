@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import net.sigmabeta.sage.sample.ui.SampleApp
-import net.sigmabeta.sage.sample.ui.components.api.LocalComponentStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
-                LocalComponentStringProvider provides graph.stringProvider,
+                LocalSampleStringProvider provides graph.stringProvider,
             ) {
                 // Back at a tab root leaves the tabbed shell: finish the activity, which is the
                 // platform's default Back behaviour.

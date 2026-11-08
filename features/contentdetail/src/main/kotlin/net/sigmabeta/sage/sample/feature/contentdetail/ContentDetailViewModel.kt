@@ -1,4 +1,8 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.contentIdOrNull
+import net.sigmabeta.sage.sample.models.contentDetailRoute
+import net.sigmabeta.sage.sample.models.ContentId
 
 import androidx.lifecycle.ViewModel
 import dev.zacsweers.metro.ContributesIntoMap
@@ -121,7 +125,7 @@ class ContentDetailViewModel(
         emitEvent(
             SageEvent.ShowSnackbar(
                 message = stringProvider.getStringOneArg(
-                    ContentDetailStringId.CONTENT_DETAIL_ITEM_CLICKED,
+                    SampleStringId.CONTENT_DETAIL_ITEM_CLICKED,
                     name,
                 ),
                 withDismissAction = false,

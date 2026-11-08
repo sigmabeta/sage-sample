@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.models.HomeItem
 
 import net.sigmabeta.sage.images.SourceInfo
 import net.sigmabeta.sage.sample.bitmaps.GeneratedImageFetcher

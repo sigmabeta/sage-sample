@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.SearchResult
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.EmptyStateListModel
@@ -45,7 +47,7 @@ data class SearchState(
 ) : ListState() {
     override fun title(stringProvider: StringProvider) =
         TitleBarModel(
-            title = stringProvider.getString(SearchStringId.SEARCH_TITLE),
+            title = stringProvider.getString(SampleStringId.SEARCH_TITLE),
             shouldShowBack = false,
         )
 
@@ -63,7 +65,7 @@ data class SearchState(
                 EmptyStateListModel(
                     icon = Icon.Search,
                     explanation = stringProvider.getStringOneArg(
-                        SearchStringId.SEARCH_NO_RESULTS,
+                        SampleStringId.SEARCH_NO_RESULTS,
                         submitted,
                     ),
                     showCrossOut = false,
@@ -98,7 +100,7 @@ data class SearchState(
         query: String,
     ): List<ListModel> = section(
         results = listResults,
-        header = stringProvider.getString(SearchStringId.SEARCH_SECTION_LIST),
+        header = stringProvider.getString(SampleStringId.SEARCH_SECTION_LIST),
         operationName = SEARCH_LIST_OPERATION_NAME,
         loadingType = LoadingType.TEXT_CAPTION_IMAGE,
     ) { result ->
@@ -119,7 +121,7 @@ data class SearchState(
         query: String,
     ): List<ListModel> = section(
         results = gridResults,
-        header = stringProvider.getString(SearchStringId.SEARCH_SECTION_GRID),
+        header = stringProvider.getString(SampleStringId.SEARCH_SECTION_GRID),
         operationName = SEARCH_GRID_OPERATION_NAME,
         loadingType = LoadingType.SQUARE,
     ) { result ->
@@ -178,7 +180,7 @@ data class SearchState(
     private fun prompt(stringProvider: StringProvider): ListModel =
         EmptyStateListModel(
             icon = Icon.Search,
-            explanation = stringProvider.getString(SearchStringId.SEARCH_PROMPT),
+            explanation = stringProvider.getString(SampleStringId.SEARCH_PROMPT),
             showCrossOut = false,
         )
 

@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.models.SearchResult
 
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.Inject

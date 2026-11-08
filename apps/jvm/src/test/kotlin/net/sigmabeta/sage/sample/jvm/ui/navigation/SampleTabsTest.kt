@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.jvm.ui.navigation
+import net.sigmabeta.sage.sample.nav.SampleDestination
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -52,6 +53,13 @@ class SampleTabsTest {
     fun `pushed destinations do not own a tab`() {
         SampleDestination.entries.filterNot { it.isTopLevel }.forEach { destination ->
             assertNull("$destination must be pushed onto the active tab", tabFor(destination))
+        }
+    }
+
+    @Test
+    fun `every destination maps to a screen that keeps it`() {
+        SampleDestination.entries.forEach { destination ->
+            assertEquals(destination, screenFor(destination).destination)
         }
     }
 }

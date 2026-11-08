@@ -1,7 +1,7 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.models.ContentId
 
 import net.sigmabeta.sage.appcomm.SageAction
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 
 /**
  * Actions the Search screen's result rows carry.

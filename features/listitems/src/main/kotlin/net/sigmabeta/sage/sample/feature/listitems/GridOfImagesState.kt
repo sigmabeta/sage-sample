@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.EmptyStateListModel
@@ -50,7 +52,7 @@ data class GridOfImagesState(
 
     override fun title(stringProvider: StringProvider) =
         TitleBarModel(
-            title = stringProvider.getString(ListItemsStringId.GRID_OF_IMAGES_TITLE),
+            title = stringProvider.getString(SampleStringId.GRID_OF_IMAGES_TITLE),
             shouldShowBack = true,
         )
 
@@ -59,7 +61,7 @@ data class GridOfImagesState(
             is LCE.Error -> listOf(
                 ErrorStateListModel(
                     failedOperationName = GRID_OF_IMAGES_OPERATION_NAME,
-                    errorString = stringProvider.getString(ListItemsStringId.GRID_OF_IMAGES_ERROR),
+                    errorString = stringProvider.getString(SampleStringId.GRID_OF_IMAGES_ERROR),
                     error = loaded.error,
                 ),
             )
@@ -106,7 +108,7 @@ data class GridOfImagesState(
 
     private fun emptyState(stringProvider: StringProvider) = EmptyStateListModel(
         icon = Icon.Album,
-        explanation = stringProvider.getString(ListItemsStringId.GRID_OF_IMAGES_EMPTY),
+        explanation = stringProvider.getString(SampleStringId.GRID_OF_IMAGES_EMPTY),
         showCrossOut = false,
     )
 

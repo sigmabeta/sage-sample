@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.ContentDetail
 
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest

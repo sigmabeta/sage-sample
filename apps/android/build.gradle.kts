@@ -66,6 +66,9 @@ ktlint {
 
 dependencies {
     implementation(projects.core.bitmaps)
+    implementation(projects.core.nav)
+    implementation(projects.core.strings.real)
+    implementation(projects.core.ui.theme.api)
     implementation(projects.core.settings)
     implementation(projects.core.ui.components.api)
     implementation(projects.core.viewmodel)

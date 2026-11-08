@@ -60,7 +60,7 @@ Each screen supplies six small hooks: `pageSize`, `fetchPage`, `contentOf`, `win
 
 ## Strings
 
-`ListItemsStringId` covers titles, empty and error text for all three screens. The item-clicked
+`SampleStringId` covers titles, empty and error text for all three screens. The item-clicked
 string exists in the enum but the screens currently navigate instead of showing a snackbar.
 
 ## Dependencies
@@ -68,7 +68,8 @@ string exists in the enum but the screens currently navigate instead of showing 
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base classes |
-| `:features:contentdetail` | Route codec |
+| `:core:models:api` | `SampleItem` + the route codec |
+| `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `generated://` URLs |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringGenerator` |

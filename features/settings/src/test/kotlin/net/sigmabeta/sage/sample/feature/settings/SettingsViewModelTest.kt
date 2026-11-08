@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.settings
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -181,7 +182,7 @@ class SettingsViewModelTest {
 
         assertEquals(1, resetter.resetCalls)
         val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals(SettingsStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS.toString(), snackbar.message)
+        assertEquals(SampleStringId.SETTINGS_RESET_DEMO_DATA_SUCCESS.toString(), snackbar.message)
         assertEquals(RESET_ROW_ACTION, resetDemoDataRow(viewModel.uiStateActual.value.listItems).clickAction)
         assertTrue(viewModel.uiStateActual.value.listItems.none { it is LoadingItemListModel })
     }
@@ -200,7 +201,7 @@ class SettingsViewModelTest {
 
         assertEquals(1, resetter.resetCalls)
         val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
-        assertEquals(SettingsStringId.SETTINGS_RESET_DEMO_DATA_FAILURE.toString(), snackbar.message)
+        assertEquals(SampleStringId.SETTINGS_RESET_DEMO_DATA_FAILURE.toString(), snackbar.message)
         assertEquals(RESET_ROW_ACTION, resetDemoDataRow(viewModel.uiStateActual.value.listItems).clickAction)
         assertTrue(viewModel.uiStateActual.value.listItems.none { it is LoadingItemListModel })
     }
@@ -254,35 +255,35 @@ class SettingsViewModelTest {
 
     private fun themeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_THEME.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_THEME.toString() }
 
     private fun fontDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_FONT.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_FONT.toString() }
 
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
 
     private fun demoOutcomeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
 
     private fun homeShowsSameContentToggle(items: List<ListModel>): NameCaptionCheckboxListModel =
         items.filterIsInstance<NameCaptionCheckboxListModel>()
             .single {
-                it.name == SettingsStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
+                it.name == SampleStringId.SETTINGS_LABEL_HOME_SHOWS_SAME_CONTENT.toString()
             }
 
     private fun resetDemoDataRow(items: List<ListModel>): NameCaptionListModel =
         items.filterIsInstance<NameCaptionListModel>()
-            .single { it.name == SettingsStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
+            .single { it.name == SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
 
     private companion object {
-        val THEME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_THEME.name
-        val FONT_SETTING_ID = SettingsStringId.SETTINGS_LABEL_FONT.name
-        val DELAY_SETTING_ID = SettingsStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
-        val DEMO_OUTCOME_SETTING_ID = SettingsStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
+        val THEME_SETTING_ID = SampleStringId.SETTINGS_LABEL_THEME.name
+        val FONT_SETTING_ID = SampleStringId.SETTINGS_LABEL_FONT.name
+        val DELAY_SETTING_ID = SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
+        val DEMO_OUTCOME_SETTING_ID = SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
         val RESET_ROW_ACTION = SettingsAction.ResetDemoDataClicked
     }
 }

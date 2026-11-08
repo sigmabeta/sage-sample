@@ -14,7 +14,7 @@ import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.logging.BluntHatchet
 import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.jvm.JvmBuildInfo
-import net.sigmabeta.sage.sample.jvm.SampleStringProvider
+import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.jvm.storage.JvmStorage
 import net.sigmabeta.sage.storage.common.Storage
 import net.sigmabeta.sage.ui.StringProvider

@@ -1,7 +1,8 @@
 package net.sigmabeta.sage.sample.feature.search
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.SearchResult
 
 import java.util.Random
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.ui.StringGenerator
 
 /** The two independent result sets a query returns. */

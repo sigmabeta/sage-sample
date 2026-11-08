@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.ui.components.api
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -20,7 +21,6 @@ import net.sigmabeta.sage.sample.ui.components.api.subs.Flasher
 import net.sigmabeta.sage.sample.ui.components.api.subs.LabeledThingy
 import net.sigmabeta.sage.sample.ui.components.api.subs.TintedText
 import net.sigmabeta.sage.sample.ui.components.api.utils.nextPercentageFloat
-import net.sigmabeta.sage.sample.ui.components.api.ComponentStringId
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.appcomm.SageAction
@@ -44,7 +44,7 @@ fun LabelValueListItem(
     }
     val action = model.clickAction
     val onClickLabel = if (action !is SageAction.Noop) {
-        ComponentStringId.ACCY_OCL_VALUE.text()
+        SampleStringId.ACCY_OCL_VALUE.text()
     } else {
         null
     }

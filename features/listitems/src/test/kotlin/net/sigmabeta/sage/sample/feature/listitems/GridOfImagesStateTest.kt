@@ -1,4 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.EmptyStateListModel
@@ -8,7 +10,6 @@ import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.list.ColumnType
 import net.sigmabeta.sage.list.PaginationType
-import net.sigmabeta.sage.sample.feature.contentdetail.ContentId
 import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

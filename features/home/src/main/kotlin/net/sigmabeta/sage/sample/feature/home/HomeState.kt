@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
 
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -26,7 +27,7 @@ data class HomeState(
 ) : ListState() {
     override fun title(stringProvider: StringProvider) =
         TitleBarModel(
-            title = stringProvider.getString(HomeStringId.HOME_TITLE),
+            title = stringProvider.getString(SampleStringId.HOME_TITLE),
             shouldShowBack = false,
         )
 
@@ -49,7 +50,7 @@ data class HomeState(
             sections.isNotEmpty() && sections.all { it.lce is LCE.Error } -> listOf(
                 ErrorStateListModel(
                     failedOperationName = HOME_LOAD_OPERATION,
-                    errorString = stringProvider.getString(HomeStringId.HOME_ALL_ERROR),
+                    errorString = stringProvider.getString(SampleStringId.HOME_ALL_ERROR),
                     error = (sections.first().lce as LCE.Error).error,
                 ),
             )
@@ -57,7 +58,7 @@ data class HomeState(
             sections.all { it.lce.resolvesToNoItems() } -> listOf(
                 EmptyStateListModel(
                     icon = Icon.Home,
-                    explanation = stringProvider.getString(HomeStringId.HOME_EMPTY),
+                    explanation = stringProvider.getString(SampleStringId.HOME_EMPTY),
                     showCrossOut = false,
                 ),
             )
