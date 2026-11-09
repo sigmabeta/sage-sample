@@ -46,7 +46,7 @@ internal const val SEARCH_HISTORY_RECORD_DELAY_MILLIS = 3_000L
  * Search's view model.
  *
  * Query entry uses SAGE's shared [SageAction.SearchQueryEntered] / [SageAction.SearchClearClicked]
- * actions, like the other SAGE apps. Typing only updates [SearchState.query], so the results
+ * actions. Typing only updates [SearchState.query], so the results
  * already on screen stay visible while the next query is being edited.
  *
  * [observeQuery] waits [SEARCH_DEBOUNCE_MILLIS] and then submits a settled query of at least
@@ -271,6 +271,6 @@ private fun LCE<List<*>>.isTerminal(): Boolean = this is LCE.Content || this is 
 private fun SearchState.hasSettled(query: String): Boolean =
     submittedQuery == query && listResults.isTerminal() && gridResults.isTerminal()
 
-/** Whether any result section has at least one row, Chipbox's guard for recording history. */
+/** Whether any result section has at least one row; history is only recorded on results. */
 private fun SearchState.hasAnyResults(): Boolean =
     listResults.hasContent() || gridResults.hasContent()

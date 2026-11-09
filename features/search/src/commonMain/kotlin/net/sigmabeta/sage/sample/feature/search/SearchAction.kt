@@ -7,7 +7,7 @@ import net.sigmabeta.sage.appcomm.SageAction
  * Actions the Search screen's result rows carry.
  *
  * Query entry and clearing use SAGE's shared [SageAction.SearchQueryEntered] and
- * [SageAction.SearchClearClicked], matching the other SAGE apps. A result tap is feature
+ * [SageAction.SearchClearClicked]. A result tap is feature
  * vocabulary, so the sample defines it here; [ResultClicked.contentId] is the stable address of
  * the detail screen the row opens.
  */

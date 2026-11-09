@@ -29,8 +29,8 @@ import net.sigmabeta.sage.ui.StringProvider
  * [instanceNumber] and [dataIdBase] come from [net.sigmabeta.sage.sample.feature.home.HomeModuleFactory]:
  * multiple GridImages rows can share the screen without colliding in the section header or item
  * ids. The repository also takes this module's [id] as its content seed, so each instance gets
- * its own catalog and artwork. Based on Chipbox's `MostPlayedGamesHomeModule`; the sample has no
- * playback history, so the generated catalog stands in for the play-count join.
+ * its own catalog and artwork. The sample has no playback history, so the generated catalog stands
+ * in for the play-count join.
  */
 class GridImagesModule(
     override val id: String,

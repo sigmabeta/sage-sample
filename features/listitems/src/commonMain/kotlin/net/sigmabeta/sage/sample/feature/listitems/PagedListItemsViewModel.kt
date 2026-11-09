@@ -18,11 +18,10 @@ import net.sigmabeta.sage.ui.StringProvider
 /**
  * Shared paging behaviour for the sample's paginated List Items screens.
  *
- * It mirrors Chipbox's `BrowseAllTracksViewModel`: the screen opens one window at an offset, then
- * grows it in both directions. A single [pageJob] serializes requests, so the burst of scroll
- * signals SAGE emits while a page is in flight is coalesced into one fetch. Appends keep the
- * existing rows on failure and dedupe by [SampleItem.id]; a short or empty page marks the window's
- * end so no further requests are made.
+ * The screen opens one window at an offset, then grows it in both directions. A single [pageJob]
+ * serializes requests, so the burst of scroll signals SAGE emits while a page is in flight is
+ * coalesced into one fetch. Appends keep the existing rows on failure and dedupe by
+ * [SampleItem.id]; a short or empty page marks the window's end so no further requests are made.
  *
  * The state-specific parts are the four small hooks below: how to read the LCE content, window
  * start and end-of-content flag, and how to copy a new window into the concrete state.

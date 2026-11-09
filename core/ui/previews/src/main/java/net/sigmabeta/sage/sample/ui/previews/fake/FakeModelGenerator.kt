@@ -14,8 +14,7 @@ import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringGenerator
 
 /**
- * Deterministic domain-model generator for screenshot previews — the sample's analogue of
- * Chipbox's `FakeModelGenerator`.
+ * Deterministic domain-model generator for screenshot previews.
  *
  * Self-contained: given a [seed], every call produces identical [SampleItem], [SearchResult],
  * [HomeItem] and [ContentDetail] data, so Paparazzi snapshots are stable across runs. It owns its

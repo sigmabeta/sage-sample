@@ -179,7 +179,7 @@ core/ui/components/api/     KMP Compose renderer suite shared by every app
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
-  SearchContent.kt          Chipbox-style search: adaptive grid with the field and status scrim
+  SearchContent.kt          app-owned search: adaptive grid with the field and status scrim
   subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
@@ -349,7 +349,7 @@ Text goes through `StringProvider` and the shared `SampleStringId` enum (`:core:
 feature modules stay platform-agnostic. `:core:strings:real` is the single id → text table; every
 app binds it and installs it at the composition root, and none owns a copy.
 
-Home is module-driven, the way Chipbox's home screen is. `HomeModule` is the pluggable row
+Home is module-driven. `HomeModule` is the pluggable row
 contract: a stable id, a priority, an optional section header, and a
 `Flow<LCE<HomeModuleSection>>`. Row types register as `HomeModuleDefinition`s; `HomeModuleBindings`
 contributes them through Metro's `@Multibinds Set` + `@Binds @IntoSet`, so adding a row is one
@@ -394,14 +394,14 @@ seed derived from the ID, so the content is random-looking but identical on ever
 "randomized content, predetermined seed" contract. The only fixed text on the screen is section
 chrome and the click snackbar; titles, labels, CTA text, names and captions are generated.
 
-Search keeps the same feature-state / app-rendering split, with a Chipbox-style search shell: the
+Search keeps the same feature-state / app-rendering split, with a search shell: the
 shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim
 and a back action in the bar. Because the field replaces the top bar, `SearchScreen` sets
 `SampleScreenChrome(showTopBar = false)` on the app-owned `SampleChromeController`; the scaffold
 animates the top bar away, and `SampleNavHost` resets the chrome to `Default` on every destination
 change, so Search does not restore it on disposal. The field sends SAGE's `SearchQueryEntered` and
 `SearchClearClicked`; `SearchViewModel` waits 300 ms after typing and ignores queries shorter than
-three characters, matching the other SAGE apps.
+three characters.
 A settled query then runs two independent repository calls. The demo `SearchRepository` seeds
 each call from the trimmed, lowercased query plus a list/grid salt, so the same query always produces
 the same rows and `generated://` artwork, while each call independently picks a random count from
@@ -429,9 +429,9 @@ land on Home and are canonicalised. `BrowserHistoryNavigation` mirrors forward n
 `history.back()` whenever an app entry exists behind the current URL. Android and desktop pass no
 browser bridge, so their navigation behaviour is unchanged.
 
-The renderer suite is ported from Chipbox's `:cbox:common:ui:components:api` and keeps its shape:
-one module that re-exports SAGE's `ListModel` types and owns every non-Chipbox-specific renderer,
-plus `subs/` building blocks and `@Preview` harnesses. Accessibility labels are `SampleStringId`s
+The renderer suite keeps one module that re-exports SAGE's `ListModel` types and owns a renderer
+for every SAGE model the sample uses, plus `subs/` building blocks and `@Preview` harnesses.
+Accessibility labels are `SampleStringId`s
 from the shared strings module; both composition roots install the graph's `StringProvider` into
 `LocalSampleStringProvider`, so the renderers never touch `R.string`.
 

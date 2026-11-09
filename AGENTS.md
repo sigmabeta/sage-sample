@@ -74,9 +74,9 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   content included. The apps bind it into their graph and install it as
   `LocalSampleStringProvider`; they own no text table (Android keeps only `app_name` for the
   manifest). The renderer suite's accessibility labels are `SampleStringId`s in the same enum.
-- **Renderers are shared, not per-app.** `:core:ui:components:api` is the KMP Compose suite ported
-  from Chipbox: `ListModel.Content` dispatches every non-Chipbox-specific SAGE model to its
-  renderer, and it re-exports `libs.sage.common.ui.components`. Both apps supply
+- **Renderers are shared, not per-app.** `:core:ui:components:api` is the sample's KMP Compose
+  suite: `ListModel.Content` dispatches every SAGE model it knows to a renderer, and it re-exports
+  `libs.sage.common.ui.components`. Both apps supply
   `ListModel.Content` to `ListScreen`/`GridScreen`; don't reintroduce app-local `ListItemContent`.
 - **The composition root and Compose/Voyager shell live in `:core:ui:shell`.** That module owns
   `SampleApp`, the tabs, screens, nav host/scaffold/top bar, chrome and screen lifecycle. An app

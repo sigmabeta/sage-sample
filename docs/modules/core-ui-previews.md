@@ -41,7 +41,7 @@ are intentionally not snapshot.
 |---|---|
 | `DevicePreviews.kt` | `@DevicePreviews`: light/dark × phone/foldable/tablet Compose previews for the IDE gutter. |
 | `PreviewTestUtils.kt` | `INTERESTING_DEVICES` (six devices × light/dark), the parameterized-test name format, and `DeviceConfig.toWidthClass()` mapped onto SAGE's 600 dp / 840 dp breakpoints. |
-| `fake/FakeModelGenerator.kt` | Deterministic `HomeItem` / `SampleItem` / `SearchResult` / `ContentDetail` generator seeded once per call, the sample's analogue of Chipbox's generator. |
+| `fake/FakeModelGenerator.kt` | Deterministic `HomeItem` / `SampleItem` / `SearchResult` / `ContentDetail` generator seeded once per call. |
 
 ## Using it
 

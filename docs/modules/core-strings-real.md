@@ -22,7 +22,7 @@ copy any more — the only app-owned string resource is `app_name` for the manif
 | `SampleStringProvider.string(id)` | Non-composable lookup for fixtures and the desktop window title. |
 
 Values are a plain Kotlin map rather than Compose resources. The sample has a small, static,
-English-only table and no resource-codegen need; Chipbox's `composeResources` pipeline (and its
+English-only table and no resource-codegen need; a `composeResources` pipeline (and its
 Paparazzi classpath workaround) would add build complexity without changing what the goldens pin.
 
 ## Tests

@@ -84,7 +84,7 @@ data object SearchScreen : SampleScreen {
         val navEffects = LocalSampleNavEffects.current
         val chromeController = LocalSampleChromeController.current
 
-        // Chipbox's search chrome: the in-screen field replaces the app top bar. The next
+        // The search chrome: the in-screen field replaces the app top bar. The next
         // destination resets the controller, so there is nothing to restore on disposal.
         LaunchedEffect(Unit) {
             chromeController.set(SampleScreenChrome(showTopBar = false))

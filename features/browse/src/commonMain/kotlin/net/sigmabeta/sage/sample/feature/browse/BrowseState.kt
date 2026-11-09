@@ -54,7 +54,7 @@ data object BrowseState : ListState() {
             dataId = OPEN_GRID_OF_IMAGES_DATA_ID,
         )
 
-    /** The Chipbox-style detail screen over generated content. */
+    /** The detail screen over generated content. */
     private fun openContentDetailRow(stringProvider: StringProvider): ListModel =
         SingleTextListModel(
             name = stringProvider.getString(SampleStringId.BROWSE_OPEN_CONTENT_DETAIL),

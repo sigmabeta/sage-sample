@@ -46,7 +46,7 @@ Cells are `GridImageListModel` with `grid-of-images/<id>` art. Taps navigate to
 
 ## Shared paging — `PagedListItemsViewModel`
 
-Abstract base for the two paginated screens. Mirrors Chipbox's `BrowseAllTracksViewModel`:
+Abstract base for the two paginated screens:
 
 - one `pageJob` serializes requests, coalescing scroll-signal bursts;
 - `InitNoArgs` opens a page at offset 0; `InitWithPageNumber` opens at a page offset (a hook for

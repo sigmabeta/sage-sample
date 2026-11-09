@@ -38,7 +38,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * The view model owns the other SAGE apps' search timing: queries shorter than the minimum never
+ * The view model owns the search timing: queries shorter than the minimum never
  * run, and a settled query runs two repository calls once after the debounce. The repository
  * records submissions per query, so these tests assert on what actually reached it rather than
  * on internal timing machinery.

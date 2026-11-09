@@ -16,7 +16,7 @@ string module.
 
 ## Why one enum
 
-Chipbox keeps a single `ChipboxStringId`; the sample follows the same shape. A single vocabulary:
+One `SampleStringId` enum is the whole vocabulary:
 
 - makes `:core:strings:real` one exhaustive map with a completeness test,
 - lets `:core:nav` name navigation labels as ids instead of Android resources,

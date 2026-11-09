@@ -30,8 +30,8 @@ import kotlin.time.ExperimentalTime
  * [instanceNumber] and [dataIdBase] come from [net.sigmabeta.sage.sample.feature.home.HomeModuleFactory]:
  * multiple BigImage rows can share the screen without colliding in the section header or item
  * ids. The repository also takes this module's [id] as its content seed, so each instance gets
- * its own catalog and artwork. Based on Chipbox's `GameOfTheDayHomeModule`; the catalog is the
- * sample's generated [HomeRepository] instead of a library database.
+ * its own catalog and artwork. The catalog is the sample's generated [HomeRepository] instead of a
+ * library database.
  */
 class BigImageModule(
     override val id: String,

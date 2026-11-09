@@ -1,6 +1,6 @@
 # `:features:home`
 
-Home is module-driven, the way Chipbox's home screen is: a pluggable row contract, a per-screen
+Home is module-driven: a pluggable row contract, a per-screen
 plan built from Metro-registered definitions, and one independently-loading slot per row.
 
 ```kotlin

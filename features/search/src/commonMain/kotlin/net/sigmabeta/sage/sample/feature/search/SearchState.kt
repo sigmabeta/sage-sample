@@ -40,7 +40,7 @@ import net.sigmabeta.sage.sample.repository.searchSeedFor
  *
  * [history] is the persisted recent-search list from the previous runs. It is rendered only while
  * [submittedQuery] is blank; with fewer than [HISTORY_PROMPT_THRESHOLD] entries the resting prompt
- * follows the rows, matching Chipbox's sparse-history rule.
+ * follows the rows; a short history shows the prompt below them.
  */
 data class SearchState(
     val query: String = "",

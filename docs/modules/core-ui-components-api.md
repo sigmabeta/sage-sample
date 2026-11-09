@@ -1,7 +1,6 @@
 # `:core:ui:components:api`
 
-The shared Compose renderer suite, ported from Chipbox's `:cbox:common:ui:components:api`. Every app
-supply one `ListModel.Content` implementation to SAGE's `ListScreen`/`GridScreen`, so every SAGE
+The shared Compose renderer suite. Every app supplies one `ListModel.Content` implementation to SAGE's `ListScreen`/`GridScreen`, so every SAGE
 `ListModel` subtype renders the same way on Android and desktop.
 
 ```kotlin
@@ -24,7 +23,7 @@ Android and JVM targets share; `PlatformImageModel.jvmShared.kt` lives there.
 fun ListModel.Content(sink: ActionSink, debug: Boolean, mod: Modifier, pad: PaddingValues)
 ```
 
-It dispatches each non-Chipbox-specific SAGE model to a renderer:
+It dispatches each SAGE model the sample uses to a renderer:
 
 - rows — `NameCaption`, `ImageNameCaption`, `IconNameCaption`, `WideItem`, `GridImage`, …
 - chrome — `SectionHeader`, `SubsectionHeader`, `Section`, `Subsection`, `SmallText`
@@ -44,7 +43,7 @@ SAGE's `ListModel` vocabulary and this module's renderers from one dependency.
 
 | Area | Contents |
 |---|---|
-| `SearchContent.kt` | Chipbox-style search: one adaptive `LazyVerticalGrid` with the field overlaid and a status-bar scrim. Full-width rows/headers span the grid; grid cells keep one lane. |
+| `SearchContent.kt` | App-owned search: one adaptive `LazyVerticalGrid` with the field overlaid and a status-bar scrim. Full-width rows/headers span the grid; grid cells keep one lane. |
 | `SearchField.kt` | The search box chrome: back action, clear action, focus request, constant 48 dp control height. Not a `ListModel`; the caller owns the text and passes semantics strings. |
 | `LocalSampleStringProvider.kt` | Composition-local shared `StringProvider` plus `SampleStringId.text(...)` helpers. Every app installs its graph's provider. |
 | `subs/` | Drawing/effect building blocks: `CrossfadeImage` (Coil + crossfade + generated-art fallback), `FakeImage`, `Flasher`, `TintedText`, `TintedIcon`, `Rating`, `Elevated*`, `GridCellOffscreenLayerEnabled`, `PlatformImageModel` (`jvmSharedMain`), `TraceSection`. |
@@ -79,20 +78,20 @@ LazyColumn {
 }
 ```
 
-## Differences from Chipbox
+## Design choices
 
-- Chipbox-only models (`NowPlayingHomeCard`, `ScanStatusCard`) and their domain types were not
-  ported.
+- Domain-specific models and their domain types are not part of the shared suite; an app adds its
+  own alongside this module.
 - `FakeImage` uses the shared `:core:bitmaps` generator on every target instead of Android's
   `android.graphics` goldens and a separate desktop gradient.
 - `TraceSection` is a structural no-op: this repo has no macrobenchmark target.
-- `StackFrameSummary` is a single common implementation; there is no JavaScript target here.
+- `StackFrameSummary` is a single common implementation shared by every target.
 - Accessibility text uses `SampleStringId` + `LocalSampleStringProvider` from the shared strings
-  modules instead of Chipbox's string module. The type scale lives in `:core:ui:theme:api`.
+  modules. The type scale lives in `:core:ui:theme:api`.
 
 ## Module facts
 
-- **Targets:** Android + JVM (no JS)
+- **Targets:** Android + JVM; JS (Node) when built with `-Psage.js`
 - **Source sets:** `commonMain` (renderers, models, mapping), `jsMain` (`GridCellOffscreenLayerEnabled` + `platformImageModel` actuals), `androidMain` (`@Preview` harnesses
   and the Android offscreen-layer actual), `jvmMain` (the JVM offscreen-layer actual),
   `src/main/java` (`jvmSharedMain`: the okio path rewrite shared by both targets)
@@ -120,5 +119,5 @@ LazyColumn {
 
 - Renderers never read `R.string`. Accessibility text goes through `SampleStringId` and
   `LocalSampleStringProvider`; the strings module owns the values.
-- Keep renderers model-generic. Chipbox-specific models do not belong here; the sample has none.
+- Keep renderers model-generic. App-specific models do not belong here; the sample has none.
 - This module has no tests: it is exercised through the app modules' render tests and previews.

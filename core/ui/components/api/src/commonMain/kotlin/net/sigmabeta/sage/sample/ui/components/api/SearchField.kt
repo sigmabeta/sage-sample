@@ -34,7 +34,7 @@ private const val HINT_ALPHA = 0.5f
  * The app-owned search box shared by both composition roots.
  *
  * It is deliberately not a SAGE `ListModel`: a text field is chrome, not list content, so the
- * screen overlays it on the grid, like the other SAGE apps. The caller owns the text and the
+ * screen overlays it on the grid. The caller owns the text and the
  * semantics strings, which keeps feature text flowing through the app's `StringProvider` mapping
  * rather than leaking `R.string` into this shared module.
  *

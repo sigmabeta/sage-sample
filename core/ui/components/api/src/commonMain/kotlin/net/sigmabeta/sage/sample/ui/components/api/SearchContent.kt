@@ -33,7 +33,7 @@ import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.ListModel
 
 /**
- * Search's app-owned rendering, mirroring Chipbox's search screen.
+ * Search's app-owned rendering: the screen draws its own field and adaptive grid.
  *
  * A single adaptive grid draws every [ListModel] through [Content]; the [SearchField] is overlaid
  * on top with a status-bar scrim, rather than sitting in the layout above the list. Row items and

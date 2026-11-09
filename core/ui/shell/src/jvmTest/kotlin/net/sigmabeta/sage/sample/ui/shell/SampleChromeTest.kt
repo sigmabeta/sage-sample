@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The app-local chrome controller follows Chipbox's contract: default chrome shows the top bar, a
+ * The app-local chrome controller contract is: default chrome shows the top bar, a
  * screen may hide it, and `SampleNavHost` restores [SampleScreenChrome.Default] for the next
  * destination. The pure route-key/active-screen policy is tested once in `:core:nav`.
  */

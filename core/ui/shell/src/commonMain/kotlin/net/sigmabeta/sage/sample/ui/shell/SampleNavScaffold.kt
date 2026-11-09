@@ -44,7 +44,7 @@ import net.sigmabeta.sage.ui.vector
  * tab highlighted in both the bottom bar and the rail. [chrome] comes from the active screen's
  * [SampleChromeController]. Search hides the top bar while it is visible (its overlay search field
  * replaces it); [SampleNavHost] resets the chrome on every route change. The Scaffold uses zero
- * content insets, matching Chipbox: the top and bottom bars supply their own system-bar insets, and
+ * content insets: the top and bottom bars supply their own system-bar insets, and
  * a screen that hides the top bar handles the status bar itself (as Search does). The width class is
  * computed once by [SampleNavHost] from the window size (see [widthClassFromDp]); using SAGE's
  * [WidthClass] keeps the nav suite and list/grid layout on the same breakpoints. The rail is a
