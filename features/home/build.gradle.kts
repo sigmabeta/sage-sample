@@ -1,33 +1,49 @@
 plugins {
-    // A feature module is pure JVM: its view model depends only on SAGE's common (multiplatform)
-    // modules and the sample's ViewModel base, so it stays free of Android types.
-    alias(libs.plugins.sage.jvm)
-    // Metro compiler plugin, so the view model's `@Inject` constructor, the module set, and its
-    // contribution into the ViewModel map are all processed at compile time.
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)
 }
 
-dependencies {
-    implementation(projects.core.strings.api)
-    api(projects.core.models.api)
-    api(projects.core.viewmodel)
-    // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
-    api(libs.metrox.viewmodel)
+kotlin {
+    android {
+        namespace = "net.sigmabeta.sage.sample.feature.home"
+    }
 
-    api(libs.sage.common.list)
-    api(libs.sage.common.appcomm)
-    api(libs.sage.common.analytics)
-    api(libs.sage.common.logging)
-    api(libs.sage.common.ui.components)
-    api(libs.sage.common.ui.strings)
+    sourceSets {
+        named("commonMain") {
+            dependencies {
+                implementation(libs.sage.common.di)
+                // The feature reads through the repository seam; each app decides whether
+                // the implementation is the in-process demo source or the HTTP client.
+                api(projects.core.repository.api)
+                implementation(projects.core.strings.api)
+                api(projects.core.models.api)
+                api(projects.core.viewmodel)
+                api(libs.metrox.viewmodel)
 
-    // ImmutableList backs each module's section items, which HomeState wraps for rendering.
-    implementation(libs.kotlinx.collections.immutable)
+                api(libs.sage.common.list)
+                api(libs.sage.common.appcomm)
+                api(libs.sage.common.analytics)
+                api(libs.sage.common.logging)
+                api(libs.sage.common.ui.components)
+                api(libs.sage.common.ui.strings)
 
-    // `GeneratedImageFetcher.urlFor` is the single source of truth for `generated://` request
-    // URLs. The feature only builds the URL; the apps' Coil loaders do the rendering.
-    implementation(projects.core.bitmaps)
+                // ImmutableList backs each module's section items, which HomeState wraps.
+                implementation(libs.kotlinx.collections.immutable)
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.kotlinx.coroutines.test)
+                // `GeneratedImageFetcher.urlFor` is the single source of truth for `generated://`
+                // request URLs. The feature only builds the URL; the apps' loaders do the rendering.
+                implementation(projects.core.bitmaps)
+            }
+        }
+
+        named("jvmTest") {
+            dependencies {
+                implementation(libs.junit4)
+                implementation(libs.kotlinx.coroutines.test)
+                // The demo repository/generator tests live beside the feature they exercise.
+                implementation(projects.core.repository.demo)
+            }
+        }
+    }
 }

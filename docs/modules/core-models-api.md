@@ -5,7 +5,8 @@ speak.
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
 }
 ```
 
@@ -31,7 +32,7 @@ real domain objects, rather than a parallel fake vocabulary.
 
 ## Module facts
 
-- **Plugin:** `sage.jvm` (pure JVM; no Compose, no Android)
-- **Source set:** `src/main/kotlin`, tests in `src/test/kotlin`
+- **Plugin:** `sage.kmp` + `sage.kmp.js` (multiplatform; no Compose, no Android). `ContentId` is a data class rather than a value class because `@JvmInline` does not compile for the JS target.
+- **Source sets:** `src/commonMain/kotlin`, tests in `src/jvmTest/kotlin`
 - **Dependencies:** `sage.common.ui.iconsApi` (`api`, for `ContentAction.icon`)
 - **Consumers:** all features, `:core:nav`, `:core:ui:previews`.

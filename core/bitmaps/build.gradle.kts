@@ -3,6 +3,7 @@ plugins {
     // commonMain compiles once against Compose Multiplatform, and each consumer resolves the
     // variant for its own target.
     alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
     alias(libs.plugins.sage.compose.kmp)
 }
 

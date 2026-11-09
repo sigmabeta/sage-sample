@@ -62,8 +62,10 @@ Navigation facts worth knowing:
 
 `:core:ui:shell` (which re-exports the six feature modules, `:core:nav`, `:core:models:api`,
 `:core:strings:api`, `:core:viewmodel`, `:core:settings`, `:core:ui:components:api`,
-`:core:ui:theme:api` and `:core:bitmaps`), plus the Android seams this module implements directly:
-`:core:strings:real`, `:core:settings`, `:core:ui:components:api`, `:core:bitmaps`,
+`:core:ui:theme:api` and `:core:bitmaps`), plus the in-process data source
+`:core:repository:demo` (its Metro bindings supply every `*Repository`) and the Android seams this
+module implements directly: `:core:strings:real`, `:core:settings`, `:core:ui:components:api`,
+`:core:bitmaps`,
 `metrox-viewmodel(-compose)`, SAGE di/appinfo/analytics/logging/coroutines/ui-strings/perf and the
 Android logging/coroutines/strings modules, AndroidX DataStore Preferences, activity-compose and
 Coil core.

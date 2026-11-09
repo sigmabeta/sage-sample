@@ -1,10 +1,11 @@
 # `:core:nav`
 
-The navigation shell's pure policy, shared by both apps.
+The navigation shell's pure policy and URL codec, shared by every app.
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
 }
 ```
 
@@ -22,12 +23,13 @@ decisions live here now; the Compose/Voyager host stays app-side.
 | `SampleScreenLayout.kt` | `SampleScreenLayout` and `screenLayoutFor(columnType, widthClass)`. |
 | `SampleChrome.kt` | `SampleScreenChrome`, `SampleTopBarLeading`, `SampleTopBarState`, `topBarState`, `routeKeyFor`, generic `activeScreenFor`, `widthClassFromDp`. |
 | `SampleScreenKeys.kt` | `contentDetailScreenKey(contentId)`. |
+| `SampleRoute.kt` | `SampleRoute` (tab + screen + optional content id) and `SampleRouteUrl` encode/decode. |
 | `SampleLifecycle.kt` | `foregroundActionFor(Lifecycle.Event)`. |
 
 ## What stays out of `:core:nav`
 
 Compose and Voyager specifics that are genuinely host code now live in `:core:ui:shell`, shared by
-both apps:
+every app:
 
 - `SampleChromeController`, the composition locals and `SampleTitleBarSink` (Compose state).
 - `SampleTab`/`sampleTabs` (Voyager `Tab`, per-screen ViewModel stores).
@@ -40,16 +42,18 @@ app resolves it through the shared `StringProvider`.
 
 ## Tests
 
-The nine duplicated test classes moved here once: `SampleDestinationTest`, `SampleNavActionTest`,
-`SampleBackActionTest`, `SampleScreenLayoutTest`, `SampleTopBarStateTest`,
-`SampleChromePolicyTest`, `SampleContentDetailScreenKeyTest`, `ScreenLifecycleTest`. The shared
+The nine duplicated policy test classes moved here once: `SampleDestinationTest`,
+`SampleNavActionTest`, `SampleBackActionTest`, `SampleScreenLayoutTest`, `SampleTopBarStateTest`,
+`SampleChromePolicyTest`, `SampleContentDetailScreenKeyTest`, `ScreenLifecycleTest` — plus
+`SampleRouteUrlTest`, which pins `/home`, `/browse/list-items`, `/home/content-detail/{id}`,
+tab-less short links, canonical round trips, and malformed paths. The shared
 `SampleChromeTest`/`SampleTabsTest` live in `:core:ui:shell`; the apps keep only their platform
 tests.
 
 ## Module facts
 
-- **Plugin:** `sage.jvm` (pure JVM)
-- **Source set:** `src/main/kotlin`, tests in `src/test/kotlin`
+- **Plugin:** `sage.kmp` + `sage.kmp.js` (pure Kotlin, no Compose)
+- **Source sets:** `src/commonMain/kotlin`, tests in `src/jvmTest/kotlin`
 - **Dependencies:** `:core:models:api`, `:core:strings:api`, SAGE `nav`, `appcomm`, `list`,
   `ui.components`, `ui.iconsApi`, and `androidx.lifecycle:lifecycle-common` (all `api`).
-- **Consumers:** `:apps:android`, `:apps:jvm`.
+- **Consumers:** `:apps:android`, `:apps:jvm`, `:apps:js` (the server does not navigate).

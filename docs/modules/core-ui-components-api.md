@@ -1,6 +1,6 @@
 # `:core:ui:components:api`
 
-The shared Compose renderer suite, ported from Chipbox's `:cbox:common:ui:components:api`. Both apps
+The shared Compose renderer suite, ported from Chipbox's `:cbox:common:ui:components:api`. Every app
 supply one `ListModel.Content` implementation to SAGE's `ListScreen`/`GridScreen`, so every SAGE
 `ListModel` subtype renders the same way on Android and desktop.
 
@@ -11,7 +11,7 @@ plugins {
 }
 ```
 
-It is multiplatform (`commonMain`, `androidMain`, `jvmMain`) because its Compose code is shared.
+It is multiplatform (`commonMain`, `androidMain`, `jvmMain`, `jsMain`) because its Compose code is shared by Android, desktop and the browser.
 `sage.kmp` also creates a `jvmSharedMain` intermediate source set from `src/main/java` for code the
 Android and JVM targets share; `PlatformImageModel.jvmShared.kt` lives there.
 
@@ -46,7 +46,7 @@ SAGE's `ListModel` vocabulary and this module's renderers from one dependency.
 |---|---|
 | `SearchContent.kt` | Chipbox-style search: one adaptive `LazyVerticalGrid` with the field overlaid and a status-bar scrim. Full-width rows/headers span the grid; grid cells keep one lane. |
 | `SearchField.kt` | The search box chrome: back action, clear action, focus request, constant 48 dp control height. Not a `ListModel`; the caller owns the text and passes semantics strings. |
-| `LocalSampleStringProvider.kt` | Composition-local shared `StringProvider` plus `SampleStringId.text(...)` helpers. Both apps install their graph's provider. |
+| `LocalSampleStringProvider.kt` | Composition-local shared `StringProvider` plus `SampleStringId.text(...)` helpers. Every app installs its graph's provider. |
 | `subs/` | Drawing/effect building blocks: `CrossfadeImage` (Coil + crossfade + generated-art fallback), `FakeImage`, `Flasher`, `TintedText`, `TintedIcon`, `Rating`, `Elevated*`, `GridCellOffscreenLayerEnabled`, `PlatformImageModel` (`jvmSharedMain`), `TraceSection`. |
 | `utils/` | Focus-area padding, `ImageSize`, small math/lerp helpers. |
 | `previews/` (common) | Shared sizing constants: `BigImage`, `CoverArt`, `Notif`, `Square`, `WideItem`. |
@@ -93,7 +93,7 @@ LazyColumn {
 ## Module facts
 
 - **Targets:** Android + JVM (no JS)
-- **Source sets:** `commonMain` (renderers, models, mapping), `androidMain` (`@Preview` harnesses
+- **Source sets:** `commonMain` (renderers, models, mapping), `jsMain` (`GridCellOffscreenLayerEnabled` + `platformImageModel` actuals), `androidMain` (`@Preview` harnesses
   and the Android offscreen-layer actual), `jvmMain` (the JVM offscreen-layer actual),
   `src/main/java` (`jvmSharedMain`: the okio path rewrite shared by both targets)
 - `androidMain` previews also provide `FullscreenBlack`, `FullScreenOf` and `PreviewActionSink`

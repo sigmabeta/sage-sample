@@ -42,9 +42,13 @@ rootProject.name = "sage-sample"
 include(
     ":apps:android",
     ":apps:jvm",
+    ":apps:server",
     ":core:bitmaps",
     ":core:models:api",
     ":core:nav",
+    ":core:repository:api",
+    ":core:repository:demo",
+    ":core:repository:remote",
     ":core:settings",
     ":core:strings:api",
     ":core:strings:real",
@@ -66,3 +70,10 @@ include(
     ":features:settings",
     ":features:settings:screenshot",
 )
+
+// The browser app (and the Kotlin/JS variants its shared deps expose via sage.kmp.js) is gated
+// behind -Psage.js so ordinary Android/JVM builds and IDE syncs never configure Kotlin/JS. The
+// server's web-bundle wiring is gated to match.
+if (providers.gradleProperty("sage.js").orNull.toBoolean()) {
+    include(":apps:js")
+}

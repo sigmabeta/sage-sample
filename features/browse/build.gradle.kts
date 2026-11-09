@@ -1,26 +1,44 @@
 plugins {
-    // A feature module is pure JVM: its view model depends only on SAGE's common (multiplatform)
-    // modules and the sample's ViewModel base, so it stays free of Android types.
-    alias(libs.plugins.sage.jvm)
+    // Multiplatform: the same feature view model runs on Android, desktop and the browser.
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
     // Metro compiler plugin, so the view model's `@Inject` constructor and its contribution into
     // the ViewModel map are processed at compile time.
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.metro)
 }
 
-dependencies {
-    implementation(projects.core.strings.api)
-    api(projects.core.models.api)
-    api(projects.core.viewmodel)
-    // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
-    api(libs.metrox.viewmodel)
+kotlin {
+    android {
+        namespace = "net.sigmabeta.sage.sample.feature.browse"
+    }
 
-    api(libs.sage.common.list)
-    api(libs.sage.common.appcomm)
-    api(libs.sage.common.analytics)
-    api(libs.sage.common.logging)
-    api(libs.sage.common.ui.components)
-    api(libs.sage.common.ui.strings)
+    sourceSets {
+        named("commonMain") {
+            dependencies {
+                implementation(libs.sage.common.di)
+                // The feature reads through the repository seam; each app decides whether
+                // the implementation is the in-process demo source or the HTTP client.
+                api(projects.core.repository.api)
+                implementation(projects.core.strings.api)
+                api(projects.core.models.api)
+                api(projects.core.viewmodel)
+                // `@ViewModelKey`, the map key Metro uses to bind ViewModels.
+                api(libs.metrox.viewmodel)
 
-    testImplementation(libs.junit4)
-    testImplementation(libs.kotlinx.coroutines.test)
+                api(libs.sage.common.list)
+                api(libs.sage.common.appcomm)
+                api(libs.sage.common.analytics)
+                api(libs.sage.common.logging)
+                api(libs.sage.common.ui.components)
+                api(libs.sage.common.ui.strings)
+            }
+        }
+
+        named("jvmTest") {
+            dependencies {
+                implementation(libs.junit4)
+                implementation(libs.kotlinx.coroutines.test)
+            }
+        }
+    }
 }

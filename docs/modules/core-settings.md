@@ -1,12 +1,13 @@
 # `:core:settings`
 
-The app's persisted preference vocabulary and its `Storage`-backed managers. Shared by both apps so
+The app's persisted preference vocabulary and its `Storage`-backed managers. Shared by every app so
 a setting means the same thing on Android and desktop.
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)   // pure JVM
-    alias(libs.plugins.sage.di)    // Metro: @Inject constructors and contributed bindings
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)      // @Inject constructors and contributed bindings
 }
 ```
 

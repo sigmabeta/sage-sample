@@ -32,6 +32,9 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
 dependencies {
     // The Compose/Voyager shell, and through it the shared core modules and every feature.
     implementation(projects.core.ui.shell)
+    // Binds the in-process demo repositories for this app's graph; the browser binds the
+    // HTTP-backed implementations instead.
+    implementation(projects.core.repository.demo)
 
     // JVM platform seams used directly by this module.
     implementation(projects.core.bitmaps)

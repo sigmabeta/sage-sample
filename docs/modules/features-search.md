@@ -6,8 +6,9 @@ machine and the results.
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)
 }
 ```
 
@@ -73,15 +74,16 @@ template, and the two section headers. `SEARCH_NO_RESULTS` takes one argument (t
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
+| `:core:repository:api` (`api`) | Repository seams, constants and wire contract |
 | `:core:settings` (`api`) | `SearchHistoryManager` |
 | `:core:models:api` | `SearchResult` + the route codec |
 | `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `generated://` URLs |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
-| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringGenerator` |
+| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringProvider` |
 
 ## Tests
 
 `SearchResultGeneratorTest` (seeding, count bounds, kind independence),
-`DemoSearchRepositoryTest` (determinism, outcomes), `SearchStateTest` (resting/history/sections/
+`DemoSearchRepositoryTest` (determinism, outcomes), `SearchResultGeneratorTest` (shared seed and bounds), `SearchStateTest` (resting/history/sections/
 no-results), `SearchViewModelTest` (debounce, min length, cancellation, two calls, history gates).

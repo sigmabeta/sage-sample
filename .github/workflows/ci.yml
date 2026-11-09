@@ -64,7 +64,12 @@ jobs:
           -x :features:listitems:screenshot:test
           -x :features:search:screenshot:test
           -x :features:settings:screenshot:test
-          :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue
+          :core:models:api:jvmTest :core:nav:jvmTest :core:settings:jvmTest
+          :core:viewmodel:jvmTest :core:repository:api:jvmTest :core:repository:remote:jvmTest
+          :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest
+          :features:browse:jvmTest :features:contentdetail:jvmTest :features:home:jvmTest
+          :features:listitems:jvmTest :features:search:jvmTest :features:settings:jvmTest
+          :apps:server:test --continue
           --build-cache --no-daemon --max-workers=2
       - uses: actions/upload-artifact@v4
         if: always()
@@ -123,6 +128,41 @@ jobs:
         with:
           name: jvm-app
           path: 'apps/jvm/build/libs/**'
+          if-no-files-found: ignore
+
+  web:
+    # Browser client + the Ktor server distribution that ships it. Gated behind -Psage.js=true,
+    # which is why it is a separate job: ordinary Android/JVM jobs never configure Kotlin/JS.
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Kotlin/JS uses the system Node + Yarn (root build.gradle.kts disables the plugin's own
+      # download, which would add a project repository under FAIL_ON_PROJECT_REPOS).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Yarn 1.x
+        run: npm install -g yarn@1.22.22
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Lint, bundle, and package the server
+        run: >-
+          ./gradlew -Psage.js=true
+          :apps:js:ktlintCheck :apps:js:detekt
+          :apps:js:jsBrowserDistribution :apps:server:installDist
+          --build-cache --no-daemon --max-workers=2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: server-distribution
+          path: 'apps/server/build/install/**'
           if-no-files-found: ignore
 
   android:

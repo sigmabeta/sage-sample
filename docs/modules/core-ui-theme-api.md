@@ -16,7 +16,7 @@ plugins {
 | `SampleTheme(darkTheme, fontFamily, content)` | Wraps `MaterialTheme` with the light/dark schemes and `sampleTypography(fontFamily)`. |
 | `sampleTypography(fontFamily)` | The Material 3 type scale rendered in the chosen family; `FontFamily.Default` reproduces the Material defaults. |
 
-Both apps use it, and so does `:core:ui:previews`, so the theme cannot drift between an app and a
+Every app uses it, and so does `:core:ui:previews`, so the theme cannot drift between an app and a
 golden.
 
 ## Fonts stay app-side

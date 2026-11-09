@@ -41,10 +41,11 @@ without a per-app copy.
 ## Desktop rendering differences
 
 - **Per-screen view models.** Voyager's per-screen `ViewModelStoreOwner` plumbing is Android-only. On
-  desktop every screen would share the window's store, so `ui/PerScreenViewModelStore.kt` hangs a
-  `ViewModelStore` off a Voyager `ScreenModel` (disposed when the screen leaves the stack) and
-  provides it as `LocalViewModelStoreOwner`. `DesktopSampleScreenContainer` supplies that wrapper
-  to the shared shell through `SampleScreenContainer`.
+  desktop every screen would share the window's store. The wrapper now lives in `:core:ui:shell`
+  (`PerScreenViewModelStore.kt`): it hangs a `ViewModelStore` off a Voyager `ScreenModel` (disposed
+  when the screen leaves the stack) and provides it as `LocalViewModelStoreOwner`.
+  `PerScreenSampleScreenContainer` supplies it to the shared shell, and `:apps:js` reuses the same
+  object.
 - **Window focus lifecycle.** `ui/WindowFocusLifecycle.kt` builds a `LifecycleOwner` from window
   focus and passes it as `screenLifecycleOwner`, so the foreground `Resume`/`Pause` pair follows
   focus exactly as Android follows the activity.
@@ -60,8 +61,9 @@ without a per-app copy.
 
 ## Dependencies
 
-`:core:ui:shell` (which re-exports the features and shared core modules) plus the desktop seams:
-`:core:strings:real`, `:core:settings`, `:core:ui:components:api`, `:core:bitmaps`,
+`:core:ui:shell` (which re-exports the features and shared core modules), the in-process data
+source `:core:repository:demo` (its Metro bindings supply every `*Repository`), and the desktop
+seams: `:core:strings:real`, `:core:settings`, `:core:ui:components:api`, `:core:bitmaps`,
 JetBrains Compose runtime/ui + `compose.desktop.currentOs`, `androidx.lifecycle`
 viewmodel/viewModelCompose/runtimeCompose, `kotlinx-coroutines-swing` (provides `Dispatchers.Main`
 on the AWT event queue), Voyager navigator/screenmodel (for the per-screen store), Coil core, and
@@ -69,7 +71,7 @@ JUnit 4.
 
 ## Tests
 
-Pure JVM tests beside the module:
+JVM tests beside the module:
 
 - `JvmSampleAppGraphTest` — the graph resolves its entry points and ViewModel factory.
 - `InterFontResourcesTest` — bundled font resources are present.

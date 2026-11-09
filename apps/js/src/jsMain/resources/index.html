@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- The server's SPA fallback serves this file for deep links (/browse/list-items). `base`
+         keeps the bundle and other assets at the site root when the current path is nested. -->
+    <base href="/">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SAGE Sample</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #FFF8F1; }
+        #splash {
+            position: fixed; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font: 600 20px/1.2 system-ui, sans-serif;
+            color: #5D4037; background: #FFF8F1;
+        }
+        @media (prefers-color-scheme: dark) {
+            html, body, #splash { background: #16130B; color: #F4E6D8; }
+        }
+    </style>
+</head>
+<body>
+<div id="splash">SAGE Sample</div>
+<script src="sage-sample.js"></script>
+</body>
+</html>

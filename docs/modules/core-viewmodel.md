@@ -5,15 +5,16 @@ SAGE's Dagger-era `ListViewModelBrain` / `BrainProvider` shell.
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)   // pure JVM, Kotlin 17, detekt, ktlint
-    alias(libs.plugins.sage.di)    // contributes the shared MetroViewModelFactory binding
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)      // contributes the shared MetroViewModelFactory binding
 }
 ```
 
-## Why pure JVM
+## Why multiplatform
 
 The base class depends only on `androidx.lifecycle`'s multiplatform `ViewModel` and SAGE's common
-modules, so features stay free of Android types and both apps can share them. The module also owns
+modules, so features stay free of Android types and every app can share them. The module also owns
 `SampleMetroViewModelFactory`, the one `MetroViewModelFactory` binding both app graphs resolve, so
 neither app keeps its own copy.
 
@@ -60,7 +61,7 @@ an old navigation event; a collector only sees events emitted while it is subscr
 ### Lifecycle
 
 The instance lives in the Voyager screen's `ViewModelStore` (Voyager supplies one per screen on
-Android; `:apps:jvm` installs `WithPerScreenViewModelStore` for the desktop). It is retained while
+Android; `:apps:jvm` and `:apps:js` use `PerScreenSampleScreenContainer` from `:core:ui:shell`). It is retained while
 the screen stays in the back stack and cleared when popped, which cancels `viewModelScope` — and
 therefore every `runInBackground` collector and the `scheduler`.
 

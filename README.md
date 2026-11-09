@@ -1,14 +1,17 @@
 # SAGE Sample
 
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
-Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), six pure-JVM feature
-modules over shared `:core` modules (a module-driven Home that shows a stable plan by default and
-can randomize 2–10 hero and generated-image rows, Browse, a Content detail screen over seeded
-generated content,
-List Items — as text-only, generated-image, and 50-item generated-image grid variants —
-Search, and a Settings screen with persisted preferences), a per-screen Paparazzi screenshot suite
-over a phone/tablet device matrix, and SAGE itself as a Git submodule consumed through a Gradle
-composite build.
+Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), one
+Kotlin/JS browser app (`:apps:js`), and one Ktor server (`:apps:server`) that serves the browser
+bundle and the sample's JSON API. Six multiplatform feature modules sit over shared `:core`
+modules (a module-driven Home that shows a stable plan by default and can randomize 2–10 hero and
+generated-image rows, Browse, a Content detail screen over seeded generated content, List Items —
+as text-only, generated-image, and 50-item generated-image grid variants — Search, and a Settings
+screen with persisted preferences). The data seams are split the way a real app would split them:
+interfaces in `:core:repository:api`, deterministic in-process sources in `:core:repository:demo`
+(Android + desktop), and an HTTP client in `:core:repository:remote` (browser, backed by
+`apps:server`). A per-screen Paparazzi screenshot suite covers a phone/tablet device matrix, and
+SAGE itself is a Git submodule consumed through a Gradle composite build.
 
 ## Requirements
 
@@ -18,6 +21,8 @@ composite build.
 | Android SDK | platform 36 |
 | Gradle | 9.5 (wrapper) |
 | Git LFS | 3.x (the screenshot goldens are LFS objects) |
+| Node | 22 (only for the `-Psage.js` browser build) |
+| Yarn | 1.22.x (only for the `-Psage.js` browser build) |
 
 `local.properties` must point at an Android SDK (`sdk.dir=...`). `settings.gradle.kts` copies it
 into the `sage/` submodule so both builds resolve the SDK.
@@ -35,7 +40,13 @@ cd sage-sample
 ./gradlew :apps:android:assembleDebug
 ./gradlew :apps:android:installDebug
 ./gradlew :apps:jvm:run     # run the Compose Desktop app
+./gradlew :apps:server:run -Psage.js=true   # build the browser bundle and serve it on :8080
 ```
+
+The server jobs require Node 22 and Yarn 1.x on `PATH` (the Kotlin/JS plugin is configured to use
+the system tools). Open <http://localhost:8080>; `SAGE_SAMPLE_PORT` and `SAGE_SAMPLE_BIND_HOST`
+override the listen address. A production distribution is
+`./gradlew :apps:server:installDist -Psage.js=true`.
 
 A plain clone needs the submodule initialised first:
 
@@ -45,15 +56,16 @@ git submodule update --init --recursive
 
 ## Verification
 
-CI is `.github/workflows/ci.yml`. Five jobs run on every push, pull request, and manual dispatch:
+CI is `.github/workflows/ci.yml`. Six jobs run on every push, pull request, and manual dispatch:
 
 | Job | Command |
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
-| `unit-test` | `./gradlew test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue` (screenshot modules excluded) |
+| `unit-test` | `./gradlew test …jvmTest :apps:server:test --continue` (screenshot modules excluded; the JVM source sets of the KMP modules are listed explicitly) |
 | `screenshot` | `./gradlew verifyPaparazziDebug --continue` |
 | `android` | `./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
+| `web` | `./gradlew -Psage.js=true :apps:js:ktlintCheck :apps:js:detekt :apps:js:jsBrowserDistribution :apps:server:installDist` |
 
 The compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
 Reports, JUnit XML, the desktop JVM jar, Paparazzi diff images, and the APKs are uploaded as
@@ -63,11 +75,15 @@ Locally, `scripts/ci/verify.sh` runs the same tasks sequentially, keeps going af
 one run shows everything, and writes a summary with all reports to `build/verification/`:
 
 ```bash
-scripts/ci/verify.sh                 # everything
+scripts/ci/verify.sh                 # everything except the opt-in web suite
+scripts/ci/verify.sh --web           # also build the browser bundle + server distribution
 scripts/ci/verify.sh --skip-apps     # ktlint/detekt + unit tests only (fast inner loop)
 scripts/ci/verify.sh static-analysis # just the named task(s)
 scripts/ci/verify.sh --list          # task names
 ```
+
+The `web` task needs Node 22 + Yarn 1.x and is much slower than the JVM tasks, so it is opt-in
+locally (CI runs it in the separate `web` job).
 
 Screenshots have their own loop:
 
@@ -134,17 +150,32 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   resources/fonts/inter_*.otf  bundled Inter weights for the Settings font picker
   ui/DesktopPlatformBack.kt  Escape/Backspace + mouse Back -> the shared Back policy
   ui/WindowFocusLifecycle.kt  window focus as the screen foreground lifecycle
-  ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
   ui/navigation/            desktop Back-key detection (pure, unit-tested)
-core/bitmaps/               KMP Compose module shared by both apps
+apps/js/                    Kotlin/JS browser application
+  src/jsMain/kotlin/…/JsMain.kt  builds the web graph, mounts SampleApp in ComposeViewport
+  di/WebSampleAppGraph.kt   browser @DependencyGraph(AppScope::class) : ViewModelGraph
+  di/WebSampleBindings.kt   browser seams: strings, logging, localStorage, dispatchers, Ktor client
+  storage/LocalStorageStorage.kt  window.localStorage-backed SAGE Storage
+  navigation/BrowserHistoryNavigation.kt  pushState/popstate <-> SampleRoute
+  ui/WebPlatformBack.kt     Escape -> the shared Back policy
+  src/jsMain/resources/index.html  SPA shell (base href + splash)
+apps/server/                Ktor server; serves the JS bundle and the JSON API
+  Main.kt                   config -> embeddedServer(Netty)
+  SampleServer.kt           route stack shared with the tests (API, JSON 404, SPA fallback)
+  ServerConfig.kt           SAGE_SAMPLE_PORT / SAGE_SAMPLE_BIND_HOST
+  build.gradle.kts          copies the dev bundle for `run`, the production bundle for installDist
+core/repository/api/        KMP repository interfaces, wire DTOs + API route constants
+core/repository/demo/       JVM deterministic sources bound by Android/desktop (and used by the server)
+core/repository/remote/     Ktor-client repository implementations used by the browser app
+core/bitmaps/               KMP Compose module shared by every app
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
-core/models/api/            pure-JVM domain models + Content detail route codec
-core/nav/                   shared destinations, route/Back/layout/chrome policy, screen keys
+core/models/api/            KMP domain models + Content detail route codec
+core/nav/                   KMP destinations, route/Back/layout/chrome policy, URL codec, screen keys
 core/strings/api/           SampleStringId: the one id vocabulary for all user-visible text
 core/strings/real/          SampleStringProvider: the single id -> English table
-core/ui/components/api/     KMP Compose renderer suite shared by both apps
+core/ui/components/api/     KMP Compose renderer suite shared by every app
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
@@ -153,7 +184,7 @@ core/ui/components/api/     KMP Compose renderer suite shared by both apps
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
 core/ui/theme/api/          SampleTheme + the shared Material 3 type scale
-core/ui/shell/              KMP Compose app shell shared by both apps
+core/ui/shell/              KMP Compose app shell shared by every app
   SampleApp.kt              composition root: theme/font + platform seams + navigation host
   SampleNavHost.kt          TabNavigator shell: tab switch, pushed screens, Back application
   SampleScreens.kt          one Voyager Screen per destination
@@ -164,22 +195,24 @@ core/ui/shell/              KMP Compose app shell shared by both apps
   SampleChrome.kt           Compose chrome controller + locals (policy is in :core:nav)
   ScreenLifecycle.kt        one foreground Resume/Pause pair per visible screen
   SamplePlatformBack.kt     platform Back seam (Android BackHandler, desktop keys/mouse)
-  SampleScreenContainer.kt  per-screen ViewModelStore seam (desktop-only implementation)
-  GeneratedBitmapPreview.kt @Preview for the shared generated placeholder art
+  SampleScreenContainer.kt  per-screen ViewModelStore seam (desktop + web implementation in the shell)
+  SampleBrowserNavigation.kt  browser history seam (null on Android/desktop)
+  PerScreenViewModelStore.kt  Voyager per-screen store used by desktop and web
+  SampleNavHost.kt          also reports routes and applies browser-driven navigation
 core/ui/previews/           Paparazzi/@Preview harness shared by the screenshot modules
   ScreenPreview.kt          ListScreenPreview / ScreenPreview: VM-free ListState rendering
   DevicePreviews.kt         light/dark x phone/foldable/tablet @Preview matrix
   PreviewTestUtils.kt       Paparazzi device matrix + DeviceConfig -> WidthClass
   fake/FakeModelGenerator.kt  deterministic domain models for fixtures
-core/settings/              pure-JVM preference vocabulary shared by both apps
+core/settings/              KMP preference vocabulary shared by every app
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   FontChoice.kt             standard platform family or bundled Inter
   SimulateDelay.kt          none / 1s / 2s / 5s duration for every background load
   SampleSettingsManager.kt  StateFlow preferences over SAGE's Storage seam
   SampleDelayManager.kt     duration-aware extension of SAGE's DelayManager
-core/viewmodel/             pure-JVM ViewModel base shared by every feature
+core/viewmodel/             KMP ViewModel base shared by every feature
   SampleListViewModel.kt    ListState -> ListStateActual, ActionSink, delayed background seam
-features/home/             pure-JVM feature module (no Android dependencies)
+features/home/             multiplatform feature module (no Android dependencies)
   HomeState.kt             ListState: one section slot per home module
   HomeViewModel.kt         Metro-contributed ViewModel: fans module flows into their slots
   HomeModule.kt            pluggable row contract + resolved section payload
@@ -187,7 +220,6 @@ features/home/             pure-JVM feature module (no Android dependencies)
   HomeModuleFactory.kt     builds the stable or randomized 2–10 instance plan
   HomeModuleBindings.kt    Metro set of HomeModuleDefinitions (`@Binds @IntoSet`)
   modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
-  DemoHomeRepository.kt    seeded catalog + generated:// artwork
 features/home/screenshot/  Paparazzi goldens for Home (content/loading/empty/error)
 features/browse/            same shape; static destination rows (no loading/content)
 features/browse/screenshot/ Paparazzi goldens for Browse
@@ -289,8 +321,8 @@ app. The entry points:
 - `createGraphFactory<SampleAppGraph.Factory>().create(application)` builds it; Activity/Service
   code reads bindings from the graph rather than receiving member injection.
 
-The feature module applies `sage.di`, so its view model's constructor (and its ViewModel-map entry)
-is processed at compile time. `:core:viewmodel` contributes the one `SampleMetroViewModelFactory`
+Every feature module applies SAGE's KMP conventions plus the Metro compiler plugin, so its view
+model's constructor (and its ViewModel-map entry) is processed at compile time for every target. `:core:viewmodel` contributes the one `SampleMetroViewModelFactory`
 binding that reads that map; each app installs it with `LocalMetroViewModelFactory`, and screens
 call `metroViewModel<TheirViewModel>()`.
 
@@ -314,8 +346,8 @@ SAGE splits a screen in two:
    so SAGE's extra title-change `Resume` does not run feature side effects twice.
 
 Text goes through `StringProvider` and the shared `SampleStringId` enum (`:core:strings:api`), so
-feature modules stay platform-agnostic. `:core:strings:real` is the single id → text table; both
-apps bind it and install it at the composition root, and neither owns a copy.
+feature modules stay platform-agnostic. `:core:strings:real` is the single id → text table; every
+app binds it and installs it at the composition root, and none owns a copy.
 
 Home is module-driven, the way Chipbox's home screen is. `HomeModule` is the pluggable row
 contract: a stable id, a priority, an optional section header, and a
@@ -342,7 +374,9 @@ as a width-capped `GridImageListModel`,
 and `GridImagesModule` asks the repository for a bounded list and renders `GridImageListModel`
 cells.
 
-The List Items screens share one seeded generator. The text-only variant maps each `SampleItem`
+The List Items screens share one seeded generator (`DemoContent.sampleItems` in
+`:core:repository:demo`, exposed through `SampleItemRepository`/`GridOfImagesRepository`). The
+text-only variant maps each `SampleItem`
 to `NameCaptionListModel`; the image variant maps the same data to `ImageNameCaptionListModel`
 with a deterministic `generated://` URL in its `SourceInfo`; Grid of Images asks the generator
 for 50 items and maps them to `GridImageListModel` cells at a 160 dp column width. The shared
@@ -355,8 +389,8 @@ of generated label/value rows, a horizontally scrolling "Related" row of `WideIt
 an "Items" list of `ImageNameCaptionListModel` rows. One `LCE<ContentDetail>` drives every section
 through its own loading shape (`BIG_IMAGE`, no placeholder for the CTAs/details, `WIDE_ITEM` in a
 scroller, `TEXT_CAPTION_IMAGE` for the items), and an error replaces the screen with a single
-error row. `DemoContentDetailRepository` builds the item from a fixed seed
-(`CONTENT_DETAIL_SEED`), so the content is random-looking but identical on every visit — the
+error row. The demo `ContentDetailRepository` (`:core:repository:demo`) builds the item from a
+seed derived from the ID, so the content is random-looking but identical on every visit — the
 "randomized content, predetermined seed" contract. The only fixed text on the screen is section
 chrome and the click snackbar; titles, labels, CTA text, names and captions are generated.
 
@@ -368,12 +402,32 @@ animates the top bar away, and `SampleNavHost` resets the chrome to `Default` on
 change, so Search does not restore it on disposal. The field sends SAGE's `SearchQueryEntered` and
 `SearchClearClicked`; `SearchViewModel` waits 300 ms after typing and ignores queries shorter than
 three characters, matching the other SAGE apps.
-A settled query then runs two independent repository calls. `DemoSearchRepository` seeds each
-call from the trimmed, lowercased query plus a list/grid salt, so the same query always produces
+A settled query then runs two independent repository calls. The demo `SearchRepository` seeds
+each call from the trimmed, lowercased query plus a list/grid salt, so the same query always produces
 the same rows and `generated://` artwork, while each call independently picks a random count from
 one to twenty results. The list call maps to `ImageNameCaptionListModel` rows and the grid call
 to `GridImageListModel` cells; `SearchState` renders them as two headed sections, with per-section
 loading and error rows. If both calls come back empty, the screen shows its no-results state.
+
+### Web app and server
+
+`:apps:js` is a Kotlin/JS browser executable gated behind `-Psage.js`. It builds a
+`WebSampleAppGraph`, mounts the same `SampleApp` in a `ComposeViewport`, persists settings in
+`window.localStorage`, and binds `:core:repository:remote` instead of the demo sources. Artwork is
+drawn directly by `:core:bitmaps` (`LocalForceFakeImages`), so the browser needs no Coil fetcher.
+
+`:apps:server` is a stateless Ktor/Netty server. It serves the webpack bundle from
+`src/main/resources/static` with an SPA fallback (`/browse/list-items` and `/settings` both return
+`index.html`; a missing asset is a real 404) and a JSON API under `/api` backed by the same
+`DemoContent` generators the demo repositories use. Unknown `/api` paths return a JSON 404, never
+the shell. `SAGE_SAMPLE_PORT` / `SAGE_SAMPLE_BIND_HOST` control the listen address.
+
+`SampleRoute`/`SampleRouteUrl` (`:core:nav`) is the pure URL model:
+`/home`, `/browse/list-items`, `/home/content-detail/list-items:7`; short links such as `/settings`
+land on Home and are canonicalised. `BrowserHistoryNavigation` mirrors forward navigation with
+`pushState`, applies `popstate` through `SampleShellNavigation.navigateTo`, and lets Back use
+`history.back()` whenever an app entry exists behind the current URL. Android and desktop pass no
+browser bridge, so their navigation behaviour is unchanged.
 
 The renderer suite is ported from Chipbox's `:cbox:common:ui:components:api` and keeps its shape:
 one module that re-exports SAGE's `ListModel` types and owns every non-Chipbox-specific renderer,
@@ -443,7 +497,7 @@ the tabbed shell; each app supplies only its platform seams:
 the shared `:core` modules and the shared `:core:ui:shell` host; `apps/jvm` keeps only the window,
 the desktop graph/storage and the desktop platform seams. The seams differ:
 
-- **Text:** both apps bind the shared `SampleStringProvider` from `:core:strings:real`; there is no
+- **Text:** every app binds the shared `SampleStringProvider` from `:core:strings:real`; there is no
   desktop text table and no id → `R.string` map.
 - **Theme and font:** the shared `SampleApp` wraps `:core:ui:theme:api`'s
   `SampleTheme(darkTheme, fontFamily)`, with `darkTheme` selected by the persisted `ThemeMode`

@@ -6,10 +6,11 @@ app chrome and the renderer suite's accessibility labels.
 ```kotlin
 plugins {
     alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
 }
 ```
 
-It is multiplatform but deliberately Compose-free, so the pure-JVM feature modules can depend on it
+It is multiplatform but deliberately Compose-free, so the feature modules can depend on it
 without pulling Compose onto their classpath. `SageStringId` (and nothing else) comes from SAGE's
 string module.
 
@@ -47,4 +48,4 @@ Text(text = SampleStringId.NAV_HOME.text())
 - **Plugin:** `sage.kmp`
 - **Source set:** `src/commonMain`
 - **Dependencies:** `sage.common.ui.strings` (`api`)
-- **Consumers:** every feature, `:core:nav`, `:core:ui:components:api`, both apps.
+- **Consumers:** every feature, `:core:nav`, `:core:ui:components:api`, every app.

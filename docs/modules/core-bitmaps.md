@@ -1,6 +1,6 @@
 # `:core:bitmaps`
 
-Deterministic placeholder artwork shared by both apps. It serves two consumers:
+Deterministic placeholder artwork shared by every app. It serves two consumers:
 
 1. `@Preview` renders that need meaningful art instead of a loading placeholder.
 2. Coil requests for `generated://` URLs, so demo screens can show "real" images without shipping
@@ -24,8 +24,8 @@ Compose Desktop app resolve their own variant from one source set.
 | `GeneratedBitmap.kt` | `@Composable GeneratedBitmap(sourceInfo, width, height, …)` — remembers the bitmap and draws it with `ContentScale.Crop`. Intended for previews. |
 | `GeneratedImageFetcher.kt` | A Coil 3 `Fetcher` for the `generated://` scheme. The URL without query/fragment is the seed, so `?width=`/`?height=` change only resolution. Returns an `ImageFetchResult`, skipping the decode pipeline. |
 | `GeneratedImageFetcher.urlFor(seed, width, height)` | The single source of truth for building a `generated://` URL. Features call this; they never concatenate the scheme themselves. |
-| `generatedImageLoader(context)` | Builds an `ImageLoader` with the fetcher registered, alongside Coil's defaults. Both composition roots install it via `SingletonImageLoader.setSafe`. |
-| `CoilImage.android.kt` / `CoilImage.jvm.kt` | `expect`/`actual` conversion from Compose `ImageBitmap` to Coil's platform `Image`. |
+| `generatedImageLoader(context)` | Builds an `ImageLoader` with the fetcher registered, alongside Coil's defaults. Android and desktop install it via `SingletonImageLoader.setSafe`; the browser instead provides `LocalForceFakeImages = true`, so `CrossfadeImage` draws the bitmap directly. |
+| `CoilImage.android.kt` / `CoilImage.jvm.kt` | `expect`/`actual` conversion from Compose `ImageBitmap` to Coil's platform `Image`. The `jsMain` actual fails loudly: the browser renders `GeneratedBitmap` directly and never routes generated art through Coil. |
 
 `commonMain` re-exports `coil-kt-core` with `api`, so consumers can build a loader without
 declaring Coil core themselves.
@@ -55,7 +55,7 @@ private fun CoverPreview() {
 As a Coil request:
 
 ```kotlin
-// Both apps install the loader with SingletonImageLoader.setSafe in their entry points.
+// Android and desktop install the loader with SingletonImageLoader.setSafe in their entry points.
 AsyncImage(
     model = GeneratedImageFetcher.urlFor("cover-1", width = 300, height = 200),
     contentDescription = null,
@@ -71,9 +71,9 @@ AsyncImage(
 
 ## Module facts
 
-- **Plugins:** `sage.kmp` + `sage.compose.kmp`
+- **Plugins:** `sage.kmp` + `sage.kmp.js` + `sage.compose.kmp`
 - **Targets:** Android + JVM
-- **Source sets:** `commonMain`, `androidMain`, `jvmMain`, `jvmTest`
+- **Source sets:** `commonMain`, `androidMain`, `jvmMain`, `jsMain`, `jvmTest`
 - **Dependencies:** `coil-kt-core` (`api`); no SAGE modules
 
 ## Wire-up

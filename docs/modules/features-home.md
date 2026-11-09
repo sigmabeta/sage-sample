@@ -5,8 +5,9 @@ plan built from Metro-registered definitions, and one independently-loading slot
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)
 }
 ```
 
@@ -62,29 +63,31 @@ different titles and art, and revisiting one reproduces it.
 
 ## Data
 
-`HomeRepository` is shaped for the two modules: `itemCount(seed)`, `itemAt(seed, index)`, and
-`gridImages(seed, limit): Flow<LCE<List<HomeItem>>>`. Neither call loads the whole catalog to filter
-in memory.
+`HomeRepository` (`:core:repository:api`) is shaped for the two modules: `suspend itemCount(seed)`,
+`suspend itemAt(seed, index)`, and `gridImages(seed, limit): Flow<LCE<List<HomeItem>>>`. Neither
+call loads the whole catalog to filter in memory.
 
-`DemoHomeRepository` generates an 18-item catalog from the seed and reads `DemoOutcome` **per call**
-(`CONTENT` / `EMPTY` / `ERROR`), so the Home empty and all-error states are reachable from Settings
-without a restart.
+`DemoHomeRepository` (`:core:repository:demo`) generates an 18-item catalog from the seed and reads
+`DemoOutcome` **per call** (`CONTENT` / `EMPTY` / `ERROR`), so the Home empty and all-error states
+are reachable from Settings without a restart. The browser binds `RemoteHomeRepository` instead and
+the same interface is answered by `apps:server`.
 
 ## Dependencies
 
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
+| `:core:repository:api` (`api`) | Repository seams, constants and wire contract |
 | `:core:models:api` | `HomeItem` + the Content-detail route codec |
 | `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `generated://` URLs |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | `kotlinx-collections-immutable` | Section item lists |
-| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringGenerator` |
+| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringProvider` |
 
 ## Tests
 
 `HomeModuleFactoryTest` (stable/randomized plans, bounds, unique ids, priority order),
 `HomeStateTest` (per-row loading/error/content, all-error, empty + `hasEmitted`),
 `HomeViewModelTest` (parallel collection, plan replacement, generation guard, navigation),
-`HomeModulesTest` (daily pick and row hiding), `DemoHomeRepositoryTest` (determinism, outcomes).
+`HomeModulesTest` (daily pick and row hiding), `DemoHomeRepositoryTest` (determinism, outcomes; the module has a `jvmTest` dependency on `:core:repository:demo`).

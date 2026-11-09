@@ -5,8 +5,9 @@ with Images** (image rows, paginated), and **Grid of Images** (50 image cells, p
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)
 }
 ```
 
@@ -15,9 +16,9 @@ plugins {
 | Type | Role |
 |---|---|
 | `SampleItem` | `id`, `name`, `caption`. `id` is the row's stable list identity (backs `ListModel.dataId`). |
-| `SampleItemRepository` | `load(offset, limit)` window; `load()` returns the whole 25-item set. |
-| `GridOfImagesRepository` | Same shape over a 50-item set. |
-| `DemoSampleItemRepository` / `DemoGridOfImagesRepository` | Deterministic seeded data, generated from `DEMO_ITEM_SEED`. Read `DemoOutcome` per call (`CONTENT` / `EMPTY` / `ERROR`). |
+| `SampleItemRepository` (`:core:repository:api`) | `load(offset, limit)` window; `load()` returns the whole 25-item set. |
+| `GridOfImagesRepository` (`:core:repository:api`) | Same shape over a 50-item set. |
+| Demo implementations (`:core:repository:demo`) | Deterministic seeded data from `DemoContent.sampleItems`. Read `DemoOutcome` per call (`CONTENT` / `EMPTY` / `ERROR`). The browser binds the HTTP implementations instead. |
 | `DemoSampleItems.kt` | `demoSampleItems(count)` and `demoSampleItemsWindow(offset, limit, total)`; the latter builds the prefix up to the window end so pages match the non-paginated screen. |
 
 ## Screens
@@ -72,10 +73,10 @@ string exists in the enum but the screens currently navigate instead of showing 
 | `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `generated://` URLs |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
-| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringGenerator` |
+| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringProvider` |
 
 ## Tests
 
 State tests for each screen (loading/content/empty/error, loaders beside content), view-model tests
-for load and paging, repository determinism/windowing, and `ListItemsListIdentityTest` for the
+for load and paging, demo-repository determinism/windowing, and `ListItemsListIdentityTest` for the
 `dataId` contract.

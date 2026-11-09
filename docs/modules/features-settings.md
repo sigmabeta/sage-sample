@@ -6,8 +6,9 @@ selections back.
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)
 }
 ```
 
@@ -51,6 +52,7 @@ caption, reset label/caption/snackbars, and the two About labels.
 | `:core:settings` (`api`) | Preferences, `DemoDataResetter`, delay seam |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
 | `kotlinx-collections-immutable` | Dropdown label lists |
+| `kotlinx-datetime` | ISO build-date formatting shared with the browser |
 | SAGE `list`, `appcomm`, `appinfo`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, `AppInfo`, analytics |
 
 ## Tests

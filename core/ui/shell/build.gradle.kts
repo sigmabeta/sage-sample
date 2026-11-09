@@ -1,8 +1,9 @@
 plugins {
-    // Multiplatform because the shell is consumed by both the Android app and the desktop app.
-    // Sources live in `src/main/java` (the convention's `jvmSharedMain`), because the screen
-    // mapping and the app graph-adjacent types come from pure-JVM modules.
+    // Multiplatform because the shell is consumed by the Android app, the desktop app and the
+    // browser app. Sources live in `src/commonMain/kotlin`; only the desktop preview harness is
+    // JVM-specific.
     alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
     alias(libs.plugins.sage.compose.kmp)
 }
 
@@ -12,9 +13,9 @@ kotlin {
     }
 
     sourceSets {
-        named("jvmSharedMain") {
+        named("commonMain") {
             dependencies {
-                // Re-exported: both apps get the destinations, screens, view models and rendering
+                // Re-exported: every app gets the destinations, screens, view models and rendering
                 // entry points from this one dependency.
                 api(projects.core.nav)
                 api(projects.core.models.api)
@@ -40,14 +41,24 @@ kotlin {
                 implementation(libs.sage.common.ui.iconsReal)
                 implementation(libs.sage.common.ui.listScreens)
 
+                // `LocalViewModelStoreOwner` (used by PerScreenViewModelStore) comes with
+                // Metrox's Compose artifact, which resolves the JetBrains lifecycle variant on JS.
+                // Don't add Google's lifecycle-viewmodel-compose here: it publishes no JS variant.
                 implementation(libs.metrox.viewmodel.compose)
                 implementation(libs.androidx.lifecycle.runtimeCompose)
 
                 implementation(libs.voyager.navigator)
+                implementation(libs.voyager.screenmodel)
                 implementation(libs.voyager.tab.navigator)
                 implementation(libs.voyager.transitions)
 
                 implementation(libs.kotlinx.coroutines.core)
+            }
+        }
+
+        named("jvmMain") {
+            dependencies {
+                // The desktop-only preview harness loads generated art through Coil.
                 implementation(libs.coil.kt.compose)
             }
         }

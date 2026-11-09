@@ -7,7 +7,8 @@ agent-only guardrails and pointers; prefer a pointer over repeating the README.
 ## What this repo is
 
 The canonical reference for building an app on [SAGE](sage/): one Android app (`:apps:android`), one
-Compose Desktop app (`:apps:jvm`), six pure-JVM feature modules over `:core:viewmodel`, and SAGE
+Compose Desktop app (`:apps:jvm`), one Kotlin/JS browser app (`:apps:js`) with a Ktor server
+(`:apps:server`) that serves it, six multiplatform feature modules over `:core:viewmodel`, and SAGE
 itself as a Git submodule consumed through a Gradle composite build. Patterns added here are
 copied by real SAGE apps, so prefer the conventional SAGE way over a local shortcut.
 
@@ -33,12 +34,12 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 
 ## Guardrails
 
-- **Code is never duplicated between the two apps unless absolutely necessary.** Anything both
-  `:apps:android` and `:apps:jvm` need belongs in a shared module — Compose/Voyager host code in
+- **Code is never duplicated between apps unless absolutely necessary.** Anything more than one
+  app needs belongs in a shared module — Compose/Voyager host code in
   `:core:ui:shell`, policy in `:core:nav`, text in `:core:strings:real`, and so on. An app keeps
   only what is genuinely platform-specific (entry point, graph/bindings, storage backend, Back
-  input, window lifecycle, bundled font loading). If you find the same logic in both apps, move it
-  out rather than letting the copies drift.
+  input, window lifecycle, bundled font loading, the HTTP/local storage seams). If you find the
+  same logic in more than one app, move it out rather than letting the copies drift.
 - **DI is Metro** (`dev.zacsweers.metro`), not Hilt/Dagger. A screen contributes
   `@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())` + `@ViewModelKey` and
   resolves with `metroViewModel<...>()`. Do not add per-screen graph accessors and do not go
@@ -46,6 +47,14 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 - **A screen ViewModel lives in its Voyager screen's store**, not the app graph: no `@SingleIn`
   on a screen VM. Popping and re-pushing builds a fresh one; a tab root survives tab switches
   because each tab owns a retained inner `Navigator` (`TabNavigator`).
+- **Features depend on repository interfaces, never on a concrete data source.**
+  `:core:repository:api` holds the seams, wire DTOs and API route constants;
+  `:core:repository:demo` holds the deterministic in-process sources (Android/desktop and
+  `apps:server`); `:core:repository:remote` is the Ktor client the browser binds. A feature module
+  must not import the demo or remote implementations.
+- **Web is server-backed; local demo data is the non-web default.** The browser app must not depend
+  on `:core:repository:demo` (it would drag the JVM-only `StringGenerator` into JS). All apps share
+  `SampleRoute`/`SampleRouteUrl`, so URLs are derived from one pure codec.
 - **Features emit `SageEvent`s; the app owns navigation.** The pure policy lives in `:core:nav`:
   `navActionFor` decides `ShowTopLevel` (select that tab, clearing the outgoing tab's stack),
   `Push` (onto the active tab), or `Pop` (the shared Back policy). Don't navigate from a feature
@@ -75,20 +84,26 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `SamplePlatformBack`, a `SampleScreenContainer` when its navigator lacks per-screen stores, a
   screen lifecycle owner, and its Inter family. Don't re-add a navigation host or a
   destination-to-screen mapping to an app.
-- **Module plugins:** `:features:*`, `:core:models:api`, `:core:nav`, `:core:viewmodel` and
-  `:core:settings` apply `sage.jvm` (features, `:core:viewmodel` and `:core:settings` also
-  `sage.di`); `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`,
-  `:core:ui:components:api`, `:core:ui:shell` and `:core:ui:theme:api` apply `sage.kmp` (the
-  UI/renderer modules also `sage.compose.kmp`);
-  `:features:*:screenshot` applies the sample's `sagesample.screenshot` convention (from
-  `build-logic/`), which layers `sage.android` + `sage.compose.android` + Paparazzi; `:apps:jvm`
-  applies `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler and JetBrains Compose
-  plugins); `:apps:android` applies `android.application`, Compose, `metro`, `detekt`, and `ktlint`
-  directly. Add SAGE dependencies through `libs.sage.*`, never a local version.
+- **Module plugins:** `:features:*`, `:core:models:api`, `:core:nav`, `:core:viewmodel`,
+  `:core:settings`, `:core:repository:api` and `:core:repository:remote` apply `sage.kmp` +
+  `sage.kmp.js` (the ones with Metro bindings also apply `metro` directly — `sage.di`'s
+  top-level `implementation` does not fit KMP source sets). `:core:bitmaps`,
+  `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:shell` and
+  `:core:ui:theme:api` apply `sage.kmp` + `sage.kmp.js` (the UI/renderer modules also
+  `sage.compose.kmp`). `:core:repository:demo` is JVM-only (`sage.jvm` + `metro`) because SAGE's
+  `StringGenerator` lives in a JVM source set. `:features:*:screenshot` applies the sample's
+  `sagesample.screenshot` convention (from `build-logic/`), which layers `sage.android` +
+  `sage.compose.android` + Paparazzi; `:apps:jvm` applies `sage.jvm` + `sage.di` + Compose Desktop
+  (the Compose compiler and JetBrains Compose plugins); `:apps:android` applies
+  `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly; `:apps:js` applies the
+  raw KMP plugin + Compose + Metro + serialization + ktlint/detekt (single JS target);
+  `:apps:server` applies `sage.jvm` + serialization + `application`. Add SAGE dependencies
+  through `libs.sage.*`, never a local version.
 - **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
   convention plugins — don't delete either.
-- **Tests live beside their module:** feature/core and `:apps:jvm` are pure JVM (JUnit);
-  `:core:bitmaps` tests the seeded `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
+- **Tests live beside their module:** converted KMP modules use `src/jvmTest` (JUnit 4, no JS
+  test target); `:apps:server` and `:apps:jvm` use `src/test`; `:core:bitmaps` tests the seeded
+  `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
   `:core:nav` owns the pure shell policy tests and `:core:ui:shell` owns the tab/chrome tests in
   its `jvmTest` source set; the apps keep only host-local tests; `:features:*:screenshot` uses
   Paparazzi over committed LFS goldens. No emulator, device suite, or native code.
@@ -122,23 +137,31 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 ./gradlew :apps:android:assembleDebug     # Android build
 ./gradlew :apps:android:installDebug      # install on an attached device
 ./gradlew :apps:jvm:run                   # run the Compose Desktop app
+./gradlew :apps:server:run -Psage.js=true # build the browser bundle and serve it on :8080
+./gradlew -Psage.js=true :apps:js:jsBrowserDistribution :apps:server:installDist
 ./gradlew ktlintCheck detekt              # lint — run BOTH, they gate commit/push
 ./gradlew ktlintFormat                    # auto-fix ktlint findings
 ./gradlew verifyPaparazziDebug            # check the committed screenshot goldens
 ./gradlew recordPaparazziDebug            # re-record goldens (intentional UI change only)
 scripts/dev/paparazzi-diff.sh             # rank changed goldens + write review montages
-scripts/ci/verify.sh                      # full CI-mirroring suite
+scripts/ci/verify.sh                      # full CI-mirroring suite (web is opt-in)
+scripts/ci/verify.sh --web                # ...plus the browser bundle + server distribution
 ```
 
 - **Always run `scripts/ci/verify.sh` before any `git push`**, and only push when it reports
-  `OVERALL: PASS`. It mirrors `.github/workflows/ci.yml`, keeps going after a failure, and
-  collates logs/reports/JUnit/APKs into `build/verification/` with a `summary.txt`.
+  `OVERALL: PASS`. Add `--web` when the change touches the browser app, the server or the
+  repository split (the web suite is opt-in locally and runs as its own CI job). It mirrors
+  `.github/workflows/ci.yml`, keeps going after a failure, and collates logs/reports/JUnit/APKs
+  into `build/verification/` with a `summary.txt`.
   Scope it with `--list`, `--skip-apps`, `--rerun`, or task names.
 - Heed its `WARNING:` lines: uncommitted changes or a SAGE commit that is not on a remote
   branch mean CI may not see what you tested.
 - **CI mirrors the script; change them together.** CI has `static-analysis`, `unit-test`,
-  `screenshot` (Paparazzi, LFS checkout), `android` (lint + debug/release APK), and `jvm-app`
-  (desktop jar) jobs, on Temurin 21 and SDK platform 36.
+  `screenshot` (Paparazzi, LFS checkout), `android` (lint + debug/release APK), `jvm-app`
+  (desktop jar), and `web` (Node 22 + Yarn 1.x, JS lint/bundle, server distribution) jobs, on
+  Temurin 21 and SDK platform 36. Kotlin/JS uses the system Node/Yarn (`-Psage.js=true`); the root
+  build disables the plugin's own download because `FAIL_ON_PROJECT_REPOS` rejects its project
+  repositories.
 - Gradle prints thousands of task lines: redirect a long run to a file and grep it
   (`./gradlew … > /tmp/build.log 2>&1`) rather than pulling them into context.
 - The release APK is unsigned. Don't boot an AVD; stop after build + lint and hand device

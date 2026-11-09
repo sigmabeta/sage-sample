@@ -22,13 +22,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
 import net.sigmabeta.sage.sample.jvm.ui.DesktopPlatformBack
-import net.sigmabeta.sage.sample.jvm.ui.DesktopSampleScreenContainer
 import net.sigmabeta.sage.sample.jvm.ui.rememberWindowFocusLifecycleOwner
 import net.sigmabeta.sage.sample.jvm.ui.navigation.HeldBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.shell.PerScreenSampleScreenContainer
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
 
 /**
@@ -97,7 +97,7 @@ fun main() {
                     settingsManager = graph.settingsManager,
                     interFontFamily = InterFontFamily,
                     platformBack = platformBack,
-                    screenContainer = DesktopSampleScreenContainer,
+                    screenContainer = PerScreenSampleScreenContainer,
                     screenLifecycleOwner = screenLifecycleOwner,
                 )
             }

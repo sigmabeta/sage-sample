@@ -6,8 +6,9 @@ domain types and the **content route codec** it speaks live in `:core:models:api
 
 ```kotlin
 plugins {
-    alias(libs.plugins.sage.jvm)
-    alias(libs.plugins.sage.di)
+    alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
+    alias(libs.plugins.metro)
 }
 ```
 
@@ -73,15 +74,16 @@ Artwork URLs are built with `GeneratedImageFetcher.urlFor` and namespaced seeds
 | Dependency | Why |
 |---|---|
 | `:core:viewmodel` (`api`) | Base class |
+| `:core:repository:api` (`api`) | Repository seams, constants and wire contract |
 | `:core:models:api` (`api`) | `ContentDetail`, `ContentId` and the route codec |
 | `:core:strings:api` | `SampleStringId` vocabulary |
 | `:core:bitmaps` | `GeneratedImageFetcher.urlFor` |
 | `metrox-viewmodel` (`api`) | `@ViewModelKey` |
-| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` (`StringGenerator`) | State/models, actions, analytics, seeded fake data |
+| SAGE `list`, `appcomm`, `analytics`, `logging`, `ui.components`, `ui.strings` | State/models, actions, analytics, `StringProvider` |
 
 ## Tests
 
 `ContentDetailRouteTest` lives with the codec in `:core:models:api` (validation, encoding/decoding,
 known namespaces). `ContentDetailStateTest`
 (each section and loading/error/not-found shape), `ContentDetailViewModelTest` (init/cancel,
-navigation chain, snackbars), `DemoContentDetailRepositoryTest` (determinism, unknown IDs).
+navigation chain, snackbars), `DemoContentDetailRepositoryTest` (determinism, unknown IDs; `jvmTest` dependency on `:core:repository:demo`).

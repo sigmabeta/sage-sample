@@ -5,10 +5,11 @@ The sample's single id → text table: `SampleStringProvider`.
 ```kotlin
 plugins {
     alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
 }
 ```
 
-Both apps bind it into their Metro graph and install it at the composition root; the screenshot
+Every app binds it into its Metro graph and installs it at the composition root; the screenshot
 harness and `ComponentsPreview` use it directly. There is no Android `R.string` map and no desktop
 copy any more — the only app-owned string resource is `app_name` for the manifest label.
 

@@ -14,10 +14,15 @@
 # daemon is left on (faster local reruns; CI uses --no-daemon) and --max-workers is left at the
 # machine default.
 #
+# The `web` task is OPT-IN (`--web`, or naming `web` in the filter): it runs the Node/Yarn webpack
+# bundle and the shippable server distribution, which needs Node 22 + Yarn 1.x on PATH and is much
+# slower than the JVM tasks. A default run skips it. CI still runs it in its own `web` job.
+#
 # Usage:
-#   scripts/ci/verify.sh                     # run everything
+#   scripts/ci/verify.sh                     # run everything except the opt-in web suite
 #   scripts/ci/verify.sh static-analysis unit-test   # run only the named task(s)
 #   scripts/ci/verify.sh --skip-apps         # everything except lint + app builds (fast inner loop)
+#   scripts/ci/verify.sh --web               # also run the browser bundle + server distribution
 #   scripts/ci/verify.sh --rerun             # force every task to re-run (Gradle --rerun-tasks)
 #   scripts/ci/verify.sh --list              # list task names
 #   VERIFY_OUT=/tmp/v scripts/ci/verify.sh   # override the output folder
@@ -40,27 +45,32 @@ ALL_TASKS=(
   # The generic `test` lifecycle would also run each screenshot module's Paparazzi verify task;
   # those goldens are LFS objects and the dedicated `screenshot` task below owns them, so exclude
   # the modules here (the CI unit-test job does the same).
-  "unit-test|test -x :features:browse:screenshot:test -x :features:contentdetail:screenshot:test -x :features:home:screenshot:test -x :features:listitems:screenshot:test -x :features:search:screenshot:test -x :features:settings:screenshot:test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue"
+  "unit-test|test -x :features:browse:screenshot:test -x :features:contentdetail:screenshot:test -x :features:home:screenshot:test -x :features:listitems:screenshot:test -x :features:search:screenshot:test -x :features:settings:screenshot:test :core:models:api:jvmTest :core:nav:jvmTest :core:settings:jvmTest :core:viewmodel:jvmTest :core:repository:api:jvmTest :core:repository:remote:jvmTest :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest :features:browse:jvmTest :features:contentdetail:jvmTest :features:home:jvmTest :features:listitems:jvmTest :features:search:jvmTest :features:settings:jvmTest :apps:server:test --continue"
   "screenshot|verifyPaparazziDebug --continue"
   "android-lint|:apps:android:lintRelease"
   "apk|:apps:android:assembleDebug :apps:android:assembleRelease"
   "jvm-app|:apps:jvm:assemble"
+  # Browser client + the server distribution that ships it. Needs Node 22 + Yarn 1.x on PATH and
+  # -Psage.js=true (the JS modules are gated behind that flag).
+  "web|-Psage.js=true :apps:js:ktlintCheck :apps:js:detekt :apps:js:jsBrowserDistribution :apps:server:installDist"
 )
-# The screenshot/lint/APK/JVM-build tasks are the heavy ones: they need an Android SDK
-# (local.properties / ANDROID_HOME) or package the desktop app. --skip-apps leaves them out for a
-# quick inner loop.
-APP_BUILD_TASKS="screenshot android-lint apk jvm-app"
+# The screenshot/lint/APK/JVM-build/web tasks are the heavy ones: they need an Android SDK
+# (local.properties / ANDROID_HOME), package the desktop app, or run the Node/Yarn browser build.
+# --skip-apps leaves them out for a quick inner loop; `web` is also opt-in via --web.
+APP_BUILD_TASKS="screenshot android-lint apk jvm-app web"
 
 # ---- arg parsing -----------------------------------------------------------
 filter=()
 skip_apps=0
 rerun=0
+web=0
 while [ $# -gt 0 ]; do
   arg="$1"
   case "$arg" in
     -h|--help) awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "${BASH_SOURCE[0]}"; exit 0 ;;
     --list) printf '%s\n' "${ALL_TASKS[@]%%|*}"; exit 0 ;;
     --skip-apps) skip_apps=1 ;;
+    --web) web=1 ;;
     --rerun|--rerun-tasks) rerun=1 ;;
     -*) echo "unknown option: $arg" >&2; exit 2 ;;
     *) filter+=("$arg") ;;
@@ -88,6 +98,8 @@ fi
 selected=()
 for entry in "${ALL_TASKS[@]}"; do
   name="${entry%%|*}"
+  # The web suite is opt-in (--web), or explicitly named in the filter.
+  if [ "$name" = "web" ] && [ "$web" != 1 ] && [[ "$filter_text" != *" web "* ]]; then continue; fi
   if [ "$skip_apps" = 1 ] && [[ " $APP_BUILD_TASKS " == *" $name "* ]]; then continue; fi
   if [ "${#filter[@]}" -gt 0 ] && [[ "$filter_text" != *" $name "* ]]; then continue; fi
   selected+=("$entry")

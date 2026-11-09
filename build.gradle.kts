@@ -14,3 +14,21 @@ plugins {
 
 // One version for both apps: Android's versionName and the desktop build info both read it.
 version = "0.1.0"
+
+// Use the system Node + Yarn (Node 22 and Yarn 1.x are required) instead of letting Kotlin's JS
+// plugin download its own. The download paths add project-level nodejs.org / yarnpkg repositories,
+// which settings.gradle.kts's FAIL_ON_PROJECT_REPOS rejects before any JS task can run.
+// Kotlin 2.3 exposes the switch on the EnvSpec types; the root extension still drives each
+// project's convention (the deprecated field is the only global switch, hence the suppression).
+plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsPlugin> {
+    the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsEnvSpec>().download.set(false)
+}
+plugins.withType<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin> {
+    @Suppress("DEPRECATION_ERROR")
+    the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>().download = false
+}
+plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
+    the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootEnvSpec>().download.set(false)
+    @Suppress("DEPRECATION_ERROR")
+    the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().download = false
+}
