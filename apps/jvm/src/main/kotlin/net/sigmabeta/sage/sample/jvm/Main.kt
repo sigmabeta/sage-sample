@@ -7,6 +7,9 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -18,12 +21,15 @@ import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import kotlinx.coroutines.flow.MutableSharedFlow
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
-import net.sigmabeta.sage.sample.jvm.ui.SampleApp
-import net.sigmabeta.sage.sample.strings.api.SampleStringId
-import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
+import net.sigmabeta.sage.sample.jvm.ui.DesktopPlatformBack
+import net.sigmabeta.sage.sample.jvm.ui.DesktopSampleScreenContainer
+import net.sigmabeta.sage.sample.jvm.ui.rememberWindowFocusLifecycleOwner
 import net.sigmabeta.sage.sample.jvm.ui.navigation.HeldBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
+import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.shell.SampleApp
 
 /**
  * Desktop entry point: builds the app-scoped Metro graph once and opens the Compose window.
@@ -48,6 +54,8 @@ fun main() {
     application {
         val backKeyEvents = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
         val heldBackKeys = remember { HeldBackKeys() }
+        val platformBack = remember(backKeyEvents) { DesktopPlatformBack(backKeyEvents) }
+
         Window(
             onCloseRequest = ::exitApplication,
             title = SampleStringProvider.string(SampleStringId.APP_NAME),
@@ -79,15 +87,30 @@ fun main() {
                 heldBackKeys.onFocusChanged(isWindowFocused)
             }
 
+            val screenLifecycleOwner = rememberWindowFocusLifecycleOwner()
+
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
                 LocalSampleStringProvider provides graph.stringProvider,
             ) {
                 SampleApp(
                     settingsManager = graph.settingsManager,
-                    platformBackKeys = backKeyEvents,
+                    interFontFamily = InterFontFamily,
+                    platformBack = platformBack,
+                    screenContainer = DesktopSampleScreenContainer,
+                    screenLifecycleOwner = screenLifecycleOwner,
                 )
             }
         }
     }
 }
+
+/**
+ * Desktop loads the bundled OTF files from the classpath (`src/main/resources/fonts`) rather than
+ * an Android `R.font` resource; the three weights otherwise match the Android mapping.
+ */
+private val InterFontFamily = FontFamily(
+    Font("fonts/inter_regular.otf", FontWeight.Normal),
+    Font("fonts/inter_medium.otf", FontWeight.Medium),
+    Font("fonts/inter_bold.otf", FontWeight.Bold),
+)

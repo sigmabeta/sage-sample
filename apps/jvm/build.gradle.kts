@@ -30,47 +30,34 @@ val generateBuildInfo = tasks.register("generateBuildInfo") {
 }
 
 dependencies {
+    // The Compose/Voyager shell, and through it the shared core modules and every feature.
+    implementation(projects.core.ui.shell)
+
+    // JVM platform seams used directly by this module.
     implementation(projects.core.bitmaps)
-    implementation(projects.core.nav)
     implementation(projects.core.strings.real)
-    implementation(projects.core.ui.theme.api)
     implementation(projects.core.settings)
     implementation(projects.core.ui.components.api)
-    implementation(projects.core.viewmodel)
-    implementation(projects.features.browse)
-    implementation(projects.features.contentdetail)
-    implementation(projects.features.home)
-    implementation(projects.features.listitems)
-    implementation(projects.features.search)
-    implementation(projects.features.settings)
 
-    // Metro's ViewModel map (`ViewModelGraph`) and the Compose resolver (`metroViewModel()`).
+    // Metro's ViewModel map (`ViewModelGraph`) and the factory installed above the window.
     implementation(libs.metrox.viewmodel)
     implementation(libs.metrox.viewmodel.compose)
     // ViewModel + the per-screen `LocalViewModelStoreOwner` on desktop (Voyager only supplies
     // one on Android, so the app wraps each screen itself — see PerScreenViewModelStore.kt).
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.lifecycle.viewModelCompose)
-    // `LifecycleResumeEffect` and `LocalLifecycleOwner` for the window-focus screen lifecycle.
+    // Window-focus lifecycle owner for the screen foreground pair.
     implementation(libs.androidx.lifecycle.runtimeCompose)
 
-    implementation(libs.sage.common.list)
-    implementation(libs.sage.common.appcomm)
     implementation(libs.sage.common.appinfo)
     implementation(libs.sage.common.analytics)
     implementation(libs.sage.common.logging)
     implementation(libs.sage.common.coroutines)
-    implementation(libs.sage.common.ui.components)
-    implementation(libs.sage.common.ui.iconsReal)
-    implementation(libs.sage.common.ui.strings)
-    implementation(libs.sage.common.ui.listScreens)
     implementation(libs.sage.common.storage.common)
 
     // Platform-agnostic Compose from the catalog; the per-OS Skia native comes from
     // `compose.desktop.currentOs` above.
     implementation(libs.jetbrains.compose.runtime)
-    implementation(libs.jetbrains.compose.foundation)
-    implementation(libs.jetbrains.compose.material3)
     implementation(libs.jetbrains.compose.ui)
     implementation(compose.desktop.currentOs)
 
@@ -79,15 +66,12 @@ dependencies {
     // so without this artifact `viewModelScope` fails with "Main dispatcher is missing".
     implementation(libs.kotlinx.coroutines.swing)
 
-    // Coil serves `generated://` requests through :core:bitmaps' fetcher; compose provides
-    // AsyncImage for the preview.
+    // `SingletonImageLoader` registers :core:bitmaps' `generated://` fetcher at startup.
     implementation(libs.coil.kt.meta)
-    implementation(libs.coil.kt.compose)
 
+    // Voyager supplies the `Screen`/`ScreenModel` types the per-screen store hangs off.
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.screenmodel)
-    implementation(libs.voyager.tab.navigator)
-    implementation(libs.voyager.transitions)
 
     testImplementation(libs.junit4)
 }

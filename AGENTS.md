@@ -33,6 +33,12 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 
 ## Guardrails
 
+- **Code is never duplicated between the two apps unless absolutely necessary.** Anything both
+  `:apps:android` and `:apps:jvm` need belongs in a shared module — Compose/Voyager host code in
+  `:core:ui:shell`, policy in `:core:nav`, text in `:core:strings:real`, and so on. An app keeps
+  only what is genuinely platform-specific (entry point, graph/bindings, storage backend, Back
+  input, window lifecycle, bundled font loading). If you find the same logic in both apps, move it
+  out rather than letting the copies drift.
 - **DI is Metro** (`dev.zacsweers.metro`), not Hilt/Dagger. A screen contributes
   `@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())` + `@ViewModelKey` and
   resolves with `metroViewModel<...>()`. Do not add per-screen graph accessors and do not go
@@ -44,9 +50,9 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `navActionFor` decides `ShowTopLevel` (select that tab, clearing the outgoing tab's stack),
   `Push` (onto the active tab), or `Pop` (the shared Back policy). Don't navigate from a feature
   module.
-- **Back is one policy:** `backActionFor(tab, canPop)` is shared by the top-bar arrow, Android
-  system Back, and `SageEvent.NavigateBack`. A pushed screen pops inside the active tab; Search
-  root returns Home; Home/Browse roots fall through to the host.
+- **Back is one policy:** `backActionFor(tab, canPop)` is shared by the top-bar arrow, platform
+  Back, and `SageEvent.NavigateBack`. A pushed screen pops inside the active tab; Search root
+  returns Home; Home/Browse roots fall through to the host.
 - **Chrome comes from the active screen's `ListStateActual.title`** (`title` +
   `shouldShowBack`), with the destination as the pre-report fallback. Navigation-tab labels and
   icons stay app-owned.
@@ -63,19 +69,27 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   from Chipbox: `ListModel.Content` dispatches every non-Chipbox-specific SAGE model to its
   renderer, and it re-exports `libs.sage.common.ui.components`. Both apps supply
   `ListModel.Content` to `ListScreen`/`GridScreen`; don't reintroduce app-local `ListItemContent`.
+- **The composition root and Compose/Voyager shell live in `:core:ui:shell`.** That module owns
+  `SampleApp`, the tabs, screens, nav host/scaffold/top bar, chrome and screen lifecycle. An app
+  keeps only its entry point, Metro graph/bindings, storage, and platform seams: a
+  `SamplePlatformBack`, a `SampleScreenContainer` when its navigator lacks per-screen stores, a
+  screen lifecycle owner, and its Inter family. Don't re-add a navigation host or a
+  destination-to-screen mapping to an app.
 - **Module plugins:** `:features:*`, `:core:models:api`, `:core:nav`, `:core:viewmodel` and
-  `:core:settings` apply `sage.jvm` (features and `:core:settings` also `sage.di`);
-  `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api` and
-  `:core:ui:theme:api` apply `sage.kmp` (the UI/renderer modules also `sage.compose.kmp`);
-  `:apps:jvm` applies `sage.jvm` + `sage.di` + Compose Desktop (the Compose compiler and JetBrains
-  Compose plugins); `:apps:android` applies `android.application`, Compose, `metro`, `detekt`, and
-  `ktlint` directly. Add SAGE dependencies through `libs.sage.*`, never a local version.
+  `:core:settings` apply `sage.jvm` (features, `:core:viewmodel` and `:core:settings` also
+  `sage.di`); `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`,
+  `:core:ui:components:api`, `:core:ui:shell` and `:core:ui:theme:api` apply `sage.kmp` (the
+  UI/renderer modules also `sage.compose.kmp`); `:apps:jvm` applies `sage.jvm` + `sage.di` +
+  Compose Desktop (the Compose compiler and JetBrains Compose plugins); `:apps:android` applies
+  `android.application`, Compose, `metro`, `detekt`, and `ktlint` directly. Add SAGE dependencies
+  through `libs.sage.*`, never a local version.
 - **Lint config is required:** `detekt-config.yml` and `.editorconfig` are read by SAGE's
   convention plugins — don't delete either.
 - **Tests live beside their module:** feature/core and `:apps:jvm` are pure JVM (JUnit);
   `:core:bitmaps` tests the seeded `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
-  `:core:nav` owns the once-duplicated shell policy tests; the apps keep only host-local tests in
-  their local JVM source sets. No emulator, device suite, or native code.
+  `:core:nav` owns the pure shell policy tests and `:core:ui:shell` owns the tab/chrome tests in
+  its `jvmTest` source set; the apps keep only host-local tests. No emulator, device suite, or
+  native code.
 - **Generated bitmaps are placeholder art:** `:core:bitmaps` serves `@Preview`s and
   `generated://` Coil requests (seeded by the URL's scheme/authority/path; `?width=&height=`
   picks the size without changing the art). Don't treat them as real image content; add a
@@ -156,8 +170,9 @@ Don't `git commit` or `git push` unless explicitly asked.
 
 See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `apps/android/`
 (Android application), `apps/jvm/` (Compose Desktop application), `core/bitmaps/` (KMP Compose
-preview art), `core/ui/components/api/` (KMP Compose renderer suite), `core/settings/` and
-`core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`
+preview art), `core/ui/components/api/` (KMP Compose renderer suite), `core/ui/shell/` (KMP
+Compose composition root + navigation host), `core/settings/` and `core/viewmodel/`,
+`features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`
 (agent tooling), `docs/agents/` (tracker/domain docs), `sage/` (submodule).
 
 ## Agent skills

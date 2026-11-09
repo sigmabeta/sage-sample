@@ -65,42 +65,28 @@ ktlint {
 }
 
 dependencies {
+    // The Compose/Voyager shell, and through it the shared core modules and every feature.
+    implementation(projects.core.ui.shell)
+
+    // Android platform seams used directly by this module.
     implementation(projects.core.bitmaps)
-    implementation(projects.core.nav)
     implementation(projects.core.strings.real)
-    implementation(projects.core.ui.theme.api)
     implementation(projects.core.settings)
     implementation(projects.core.ui.components.api)
-    implementation(projects.core.viewmodel)
-    implementation(projects.features.browse)
-    implementation(projects.features.contentdetail)
-    implementation(projects.features.home)
-    implementation(projects.features.listitems)
-    implementation(projects.features.search)
-    implementation(projects.features.settings)
 
     // The AppScope marker (net.sigmabeta.sage.di.AppScope) used by the app graph.
     implementation(libs.sage.common.di)
 
-    // Metro's ViewModel map (`ViewModelGraph`) and the Compose resolver (`metroViewModel()`).
+    // Metro's ViewModel map (`ViewModelGraph`) and the factory installed above Compose.
     implementation(libs.metrox.viewmodel)
     implementation(libs.metrox.viewmodel.compose)
 
-    // SAGE's navigation vocabulary (`RouteDescriptor`, `ArgType`) for the app's destinations.
-    implementation(libs.sage.common.nav)
-    // SAGE's icon set; `Icon.vector()` turns it into a Compose ImageVector.
-    implementation(libs.sage.common.ui.iconsReal)
-
-    implementation(libs.sage.common.list)
-    implementation(libs.sage.common.appcomm)
     implementation(libs.sage.common.appinfo)
     implementation(libs.sage.common.analytics)
     implementation(libs.sage.common.logging)
     implementation(libs.sage.common.coroutines)
-    implementation(libs.sage.common.ui.components)
     implementation(libs.sage.common.ui.perfCompose)
     implementation(libs.sage.common.ui.strings)
-    implementation(libs.sage.common.ui.listScreens)
     implementation(libs.sage.common.storage.common)
 
     implementation(libs.sage.android.coroutines)
@@ -110,28 +96,8 @@ dependencies {
     // Preferences DataStore backs the app's SAGE Storage implementation (settings, theme).
     implementation(libs.androidx.dataStore.preferences)
 
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.foundation)
-    implementation(libs.androidx.compose.material3)
-    // `@Preview` for the generated-bitmap preview; the tooling runtime is debug-only.
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    debugImplementation(libs.androidx.compose.ui.tooling)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.lifecycle.runtimeCompose)
 
-    // Coil serves `generated://` requests through :core:bitmaps' fetcher; compose provides
-    // AsyncImage for the preview.
+    // `SingletonImageLoader` registers :core:bitmaps' `generated://` fetcher at startup.
     implementation(libs.coil.kt.meta)
-    implementation(libs.coil.kt.compose)
-
-    // Voyager owns the navigation back stack; SAGE's catalog pins the version. The tab navigator
-    // gives each top-level tab its own retained inner Navigator.
-    implementation(libs.voyager.navigator)
-    implementation(libs.voyager.tab.navigator)
-    implementation(libs.voyager.transitions)
-
-    implementation(libs.kotlinx.collections.immutable)
-
-    // Unit tests for app-owned logic that needs no Android runtime (e.g. route mapping).
-    testImplementation(libs.junit4)
 }

@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import net.sigmabeta.sage.sample.ui.shell.SampleScreenContainer
 
 /**
  * Gives every Voyager [Screen] its own [ViewModelStore] on the desktop target.
@@ -34,6 +35,17 @@ fun WithPerScreenViewModelStore(screen: Screen, content: @Composable () -> Unit)
 
     CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
         content()
+    }
+}
+
+/**
+ * The desktop [SampleScreenContainer]: wraps each pushed screen in [WithPerScreenViewModelStore]
+ * so `metroViewModel()` resolves per screen, exactly as Voyager does on Android.
+ */
+object DesktopSampleScreenContainer : SampleScreenContainer {
+    @Composable
+    override fun Content(screen: Screen, content: @Composable () -> Unit) {
+        WithPerScreenViewModelStore(screen, content)
     }
 }
 

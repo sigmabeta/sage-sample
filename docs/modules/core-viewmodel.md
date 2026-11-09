@@ -6,19 +6,23 @@ SAGE's Dagger-era `ListViewModelBrain` / `BrainProvider` shell.
 ```kotlin
 plugins {
     alias(libs.plugins.sage.jvm)   // pure JVM, Kotlin 17, detekt, ktlint
+    alias(libs.plugins.sage.di)    // contributes the shared MetroViewModelFactory binding
 }
 ```
 
 ## Why pure JVM
 
 The base class depends only on `androidx.lifecycle`'s multiplatform `ViewModel` and SAGE's common
-modules, so features stay free of Android types and both apps can share them. It deliberately does
-**not** apply `sage.di`: it contributes no bindings.
+modules, so features stay free of Android types and both apps can share them. The module also owns
+`SampleMetroViewModelFactory`, the one `MetroViewModelFactory` binding both app graphs resolve, so
+neither app keeps its own copy.
 
 ## Public API
 
 `SampleListViewModel<StateType : ListState>` (`SampleListViewModel.kt`) is abstract and implements
-SAGE's `ActionSink`.
+SAGE's `ActionSink`. `SampleMetroViewModelFactory` (`SampleMetroViewModelFactory.kt`) is the
+`@ContributesBinding(AppScope::class)` factory behind `metroViewModel<T>()`; Metro fills its
+`viewModelProviders` map from the graph's ViewModel multibindings.
 
 Implementors supply:
 
@@ -65,6 +69,7 @@ therefore every `runInBackground` collector and the `scheduler`.
 | Dependency | Why |
 |---|---|
 | `androidx.lifecycle:viewmodel` (`api`) | `ViewModel`, `viewModelScope` |
+| `metrox-viewmodel` (`api`) | `MetroViewModelFactory`, the shared factory's supertype |
 | `:core:settings` (`api`) | `SampleDelayManager`, exposed as the base's delay seam |
 | `sage.common.list` (`api`) | `ListState`, `ListStateActual`, `SageScheduler`, `DelayManager` |
 | `sage.common.appcomm` (`api`) | `SageAction`, `SageEvent`, `ActionSink` |

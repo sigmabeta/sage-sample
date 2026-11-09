@@ -24,6 +24,7 @@ automatically.
 | [`:core:strings:api`](core-strings-api.md) | KMP library | One `SampleStringId` vocabulary for every user-visible string |
 | [`:core:strings:real`](core-strings-real.md) | KMP library | The single id → English table (`SampleStringProvider`) |
 | [`:core:ui:components:api`](core-ui-components-api.md) | KMP Compose library | Shared renderer suite: SAGE `ListModel` → composables, search chrome |
+| [`:core:ui:shell`](core-ui-shell.md) | KMP Compose library | Shared composition root and Voyager navigation host |
 | [`:core:ui:theme:api`](core-ui-theme-api.md) | KMP Compose library | `SampleTheme` + the shared type scale |
 | [`:core:viewmodel`](core-viewmodel.md) | Pure-JVM library | `SampleListViewModel`: the base every feature screen builds on |
 | [`:features:browse`](features-browse.md) | Pure-JVM feature | Static destination list that opens the demo screens |
@@ -40,15 +41,19 @@ the single app `version` used by both apps.
 ## Dependency shape
 
 ```
-apps/android ─┬─ features/* ── core/viewmodel ── core/settings
-apps/jvm ─────┘        │
-                       ├─ core/models
-                       ├─ core/strings:api
-                       ├─ core/bitmaps          (generated:// URLs)
-                       └─ core/ui/components:api (renderers, SAGE ListModel re-export)
+apps/android ─┐
+apps/jvm ─────┴─ core/ui/shell ─┬─ features/* ── core/viewmodel ── core/settings
+                                │        │
+                                │        ├─ core/models
+                                │        ├─ core/strings:api
+                                │        └─ core/ui/components:api (renderers)
+                                ├─ core/nav         (shared shell policy)
+                                ├─ core/strings:real (text)
+                                ├─ core/ui/theme:api (SampleTheme)
+                                └─ core/bitmaps      (generated:// URLs)
 
-apps/* also depend on core/nav (shared shell policy), core/strings:real (text),
-core/ui/theme:api (SampleTheme), core/ui/components:api, core/bitmaps, core/settings
+apps/* also depend on core/strings:real, core/settings, core/ui/components:api,
+core/bitmaps and core:ui:shell; everything else reaches them through the shell.
 
 ```
 
@@ -59,9 +64,10 @@ Rules that hold across the graph:
   That is what lets both apps share them.
 - **`:core:models:api`, `:core:nav`, `:core:settings` and `:core:viewmodel` are pure JVM.**
   Only `:core:bitmaps`, `:core:strings:*` and the `:core:ui:*` libraries are multiplatform.
-- **The app owns navigation hosts and rendering.** Features emit `SageEvent`s and `ListState`s; the
-  app translates and renders them. The *policy* (routes, Back, layout, chrome, screen keys) is
-  shared in `:core:nav`.
+- **The shared shell owns navigation hosts and rendering.** Features emit `SageEvent`s and
+  `ListState`s; `:core:ui:shell` translates and renders them for both apps. The *policy* (routes,
+  Back, layout, chrome, screen keys) is shared in `:core:nav`; the platform-specific seams stay in
+  the apps.
 - **Text belongs to `:core:strings:real`.** Every UI-bearing module emits a `SampleStringId`; the
   apps install the shared `StringProvider` and keep no id → text table of their own.
 - **Text never touches `R.string` outside an app module.** Every UI-bearing module emits a
@@ -75,9 +81,9 @@ Rules that hold across the graph:
 | Convention | Applied by | Effect |
 |---|---|---|
 | `sage.jvm` | features, `:core:models:api`, `:core:nav`, `:core:settings`, `:core:viewmodel`, `:apps:jvm` | Kotlin/JVM 17, detekt, ktlint |
-| `sage.di` | features, `:core:settings`, `:apps:jvm` | Metro compiler plugin |
-| `sage.kmp` | `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:theme:api` | Kotlin Multiplatform (Android + JVM targets) |
-| `sage.compose.kmp` | `:core:bitmaps`, `:core:ui:components:api`, `:core:ui:theme:api` | Compose Multiplatform for the KMP targets |
+| `sage.di` | features, `:core:settings`, `:core:viewmodel`, `:apps:jvm` | Metro compiler plugin |
+| `sage.kmp` | `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Kotlin Multiplatform (Android + JVM targets) |
+| `sage.compose.kmp` | `:core:bitmaps`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Compose Multiplatform for the KMP targets |
 
 `:apps:android` applies `android.application`, Compose, Metro, detekt and ktlint directly, because
 SAGE's convention plugins target library modules. Its ktlint engine is pinned to the catalog's
@@ -94,6 +100,7 @@ SAGE's convention plugins target library modules. Its ktlint engine is pinned to
 scripts/ci/verify.sh                  # CI mirror; must report OVERALL: PASS before push
 ```
 
-Unit tests live beside each module (`src/test/kotlin`), except `:core:bitmaps`, which tests the KMP
-`jvmTest` source set. `:core:nav` owns the once-duplicated shell policy tests; the apps keep only
-host-local tests. There is no emulator, device suite or native target.
+Unit tests live beside each module (`src/test/kotlin`), except `:core:bitmaps` and
+`:core:ui:shell`, which use the KMP `jvmTest` source set. `:core:nav` owns the pure shell policy
+tests, `:core:ui:shell` owns the tab/chrome tests, and the apps keep only host-local tests. There
+is no emulator, device suite or native target.

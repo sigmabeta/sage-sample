@@ -46,7 +46,7 @@ CI is `.github/workflows/ci.yml`. Four jobs run on every push, pull request, and
 | Job | Command |
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
-| `unit-test` | `./gradlew test :core:bitmaps:jvmTest :core:strings:real:jvmTest --continue` |
+| `unit-test` | `./gradlew test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue` |
 | `android` | `./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
 
@@ -69,9 +69,8 @@ The release APK is unsigned: the sample has no release signing config, so `assem
 produces an unsigned artifact that must be signed before installing.
 
 Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
-`:core:viewmodel`, and the desktop app; `:core:bitmaps` uses the KMP `jvmTest` source set;
-Android unit tests in `:apps:android` for app-owned logic such as route mapping, chrome derivation, and
-layout selection. No emulator or device is needed; there is no native target.
+`:core:viewmodel`, and the desktop app; `:core:bitmaps` and `:core:ui:shell` use the KMP
+`jvmTest` source set. No emulator or device is needed; there is no native target.
 
 Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
 `scripts/dev/`:
@@ -104,34 +103,22 @@ If SAGE renames a module, update the `libs.sage.*` alias used by the module that
 apps/android/               Android application
   SampleApplication.kt      owns the Metro AppScope graph
   di/SampleAppGraph.kt      @DependencyGraph(AppScope::class) : ViewModelGraph
-  di/SampleMetroViewModelFactory.kt  the factory behind metroViewModel()
   di/SampleBindings.kt      app-side implementations of SAGE seams
   MainActivity.kt           installs LocalMetroViewModelFactory, hosts the Compose UI
   storage/PreferencesStorage.kt  DataStore-backed SAGE Storage (settings persistence)
   res/font/inter_*.otf      bundled Inter weights for the Settings font picker
-  ui/SampleApp.kt           settings-driven theme + font + navigation host
-  ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
-  ui/navigation/
-    SampleScreens.kt        one Voyager Screen per destination
-    SampleTabs.kt           per-tab retained Navigator, active-tab holder, shared Back local
-    SampleNavHost.kt        TabNavigator shell: tab switch, pushed screens, Back application
-    SampleNavEffects.kt     one-shot SageEvent -> app navigation seam (CompositionLocal)
-    SampleSystemBack.kt     platform Back seam (Android BackHandler; desktop no-op)
-    SampleNavScaffold.kt    top bar + bottom bar/rail driven by WidthClass
-    SampleTopBar.kt         title/back from the active screen's SAGE title state
-    SampleChrome.kt         app-local Compose chrome controller + locals (policy is in :core:nav)
+  ui/AndroidPlatformBack.kt  Android system Back -> the shared Back policy
 apps/jvm/                   Compose Desktop application (shares the feature modules)
   Main.kt                   builds the desktop Metro graph and opens the window
   JvmBuildInfo.kt           generated version/build time for the About rows
   di/JvmSampleAppGraph.kt   desktop @DependencyGraph(AppScope::class) : ViewModelGraph
   di/JvmSampleBindings.kt   JVM implementations of SAGE seams (shared strings, logging, dispatchers, storage)
-  di/JvmMetroViewModelFactory.kt  the factory behind metroViewModel() on desktop
   storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
   resources/fonts/inter_*.otf  bundled Inter weights for the Settings font picker
-  ui/SampleApp.kt           settings-driven theme + font + navigation host
-  ui/GeneratedBitmapPreview.kt  @Preview for the shared generated placeholder art
+  ui/DesktopPlatformBack.kt  Escape/Backspace + mouse Back -> the shared Back policy
+  ui/WindowFocusLifecycle.kt  window focus as the screen foreground lifecycle
   ui/PerScreenViewModelStore.kt  per-screen ViewModelStore (Voyager only does this on Android)
-  ui/navigation/            Compose/Voyager shell over the shared :core:nav policy
+  ui/navigation/            desktop Back-key detection (pure, unit-tested)
 core/bitmaps/               KMP Compose module shared by both apps
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
@@ -149,6 +136,19 @@ core/ui/components/api/     KMP Compose renderer suite shared by both apps
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
 core/ui/theme/api/          SampleTheme + the shared Material 3 type scale
+core/ui/shell/              KMP Compose app shell shared by both apps
+  SampleApp.kt              composition root: theme/font + platform seams + navigation host
+  SampleNavHost.kt          TabNavigator shell: tab switch, pushed screens, Back application
+  SampleScreens.kt          one Voyager Screen per destination
+  SampleTabs.kt             per-tab retained Navigator, active-tab holder, shared Back local
+  SampleNavEffects.kt       one-shot SageEvent -> app navigation seam (CompositionLocal)
+  SampleNavScaffold.kt      top bar + bottom bar/rail driven by WidthClass
+  SampleTopBar.kt           title/back from the active screen's SAGE title state
+  SampleChrome.kt           Compose chrome controller + locals (policy is in :core:nav)
+  ScreenLifecycle.kt        one foreground Resume/Pause pair per visible screen
+  SamplePlatformBack.kt     platform Back seam (Android BackHandler, desktop keys/mouse)
+  SampleScreenContainer.kt  per-screen ViewModelStore seam (desktop-only implementation)
+  GeneratedBitmapPreview.kt @Preview for the shared generated placeholder art
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   FontChoice.kt             standard platform family or bundled Inter
@@ -227,7 +227,8 @@ consumer's `rootDir/detekt-config.yml`.
 `:core:strings:api`/`:real` own the `SampleStringId` vocabulary and the single English table;
 `:core:ui:theme:api` owns `SampleTheme`; `:core:models:api` owns the domain types and the Content
 detail route codec; `:core:nav` owns destinations plus the route/Back/layout/chrome policy and
-screen keys. Both apps consume them, so they cannot drift from each other.
+screen keys; `:core:ui:shell` owns the composition root and the whole Compose/Voyager host. Both
+apps consume them, so an app cannot drift from the other.
 
 ### Dependency injection — Metro, not Hilt
 
@@ -245,9 +246,9 @@ app. The entry points:
   code reads bindings from the graph rather than receiving member injection.
 
 The feature module applies `sage.di`, so its view model's constructor (and its ViewModel-map entry)
-is processed at compile time. `SampleMetroViewModelFactory` is the contributed
-`MetroViewModelFactory` that reads that map; `MainActivity` installs it with
-`LocalMetroViewModelFactory`, and screens call `metroViewModel<TheirViewModel>()`.
+is processed at compile time. `:core:viewmodel` contributes the one `SampleMetroViewModelFactory`
+binding that reads that map; each app installs it with `LocalMetroViewModelFactory`, and screens
+call `metroViewModel<TheirViewModel>()`.
 
 ### Screens
 
@@ -258,12 +259,12 @@ SAGE splits a screen in two:
    `SampleListViewModel` (`:core:viewmodel`) is an `androidx.lifecycle.ViewModel` base with
    `uiStateActual` mapped from `ListState` — SAGE's plain `ListViewModelBrain` (and the graph
    accessor per screen) is a Dagger-era shell that Metro does not need.
-2. The app owns rendering. `SampleScreens` resolves the view model with
-   `metroViewModel<HomeViewModel>()`, observes `uiStateActual`, reports its title
-   through `LocalSampleTitleBarSink`, and passes the state to SAGE's `ListScreen` — or to
-   `GridScreen` when `screenLayoutFor` sees more than one column. It supplies the shared
-   `ListModel.Content` renderer (`:core:ui:components:api`) to draw each model. Unknown model
-   types fall through to a spacer, so features can add their own models without breaking the app.
+2. The shared shell owns rendering. `:core:ui:shell`'s `SampleScreens` resolves the view model
+   with `metroViewModel<HomeViewModel>()`, observes `uiStateActual`, reports its title through
+   `LocalSampleTitleBarSink`, and passes the state to SAGE's `ListScreen` — or to `GridScreen`
+   when `screenLayoutFor` sees more than one column. It supplies the shared `ListModel.Content`
+   renderer (`:core:ui:components:api`) to draw each model. Unknown model types fall through to a
+   spacer, so features can add their own models without breaking either app.
 3. The shared screen owns the foreground pair: `Resume` when it enters composition,
    `Pause` when it leaves. `SampleListViewModel.sendAction` coalesces those transitions,
    so SAGE's extra title-change `Resume` does not run feature side effects twice.
@@ -338,8 +339,8 @@ from the shared strings module; both composition roots install the graph's `Stri
 
 ### Navigation
 
-Navigation uses Voyager's `TabNavigator` (from SAGE's catalog). `SampleNavHost` owns the tabbed
-shell:
+Navigation uses Voyager's `TabNavigator` (from SAGE's catalog). The shared `:core:ui:shell` owns
+the tabbed shell; each app supplies only its platform seams:
 
 - **Destinations** are in `SampleDestination`, which implements SAGE's `RouteDescriptor`.
 - **Home, Browse and Search are tabs** (`SampleTabs.kt`), each owning a retained inner
@@ -350,9 +351,9 @@ shell:
   and UI state (including the Search query and scroll position).
 - **Back is one policy** (`backActionFor`): a pushed screen pops inside the active tab, Search
   at its root returns Home, and Home/Browse roots fall through to the host (Android finishes
-  the activity; desktop has nothing above the shell). The top-bar arrow, Android system Back,
-  and `SageEvent.NavigateBack` all run it. Desktop key and mouse Back inputs use the same
-  seam (`SampleSystemBack`).
+  the activity; desktop has nothing above the shell). The top-bar arrow, platform Back, and
+  `SageEvent.NavigateBack` all run it. Each app supplies a `SamplePlatformBack`: Android maps it
+  to `BackHandler`, desktop to window Escape/Backspace plus the mouse back button.
 - **Settings** is pushed from the hamburger onto the active tab.
 - **List Items, List Items with Images, Grid of Images, and Content Detail** are pushed from
   Browse onto the active tab. All four are non-top-level routes, so the back arrow returns to the
@@ -395,21 +396,25 @@ shell:
 ## Desktop app
 
 `apps/jvm` renders the same UI with Compose Multiplatform desktop. It reuses the feature modules,
-the shared `:core` modules and Voyager directly; the host lives in `apps/jvm` because
-`:apps:android` is Android-only. The platform seams differ:
+the shared `:core` modules and the shared `:core:ui:shell` host; `apps/jvm` keeps only the window,
+the desktop graph/storage and the desktop platform seams. The seams differ:
 
 - **Text:** both apps bind the shared `SampleStringProvider` from `:core:strings:real`; there is no
   desktop text table and no id → `R.string` map.
-- **Theme and font:** both composition roots wrap `:core:ui:theme:api`'s
+- **Theme and font:** the shared `SampleApp` wraps `:core:ui:theme:api`'s
   `SampleTheme(darkTheme, fontFamily)`, with `darkTheme` selected by the persisted `ThemeMode`
   (light, dark, or follow the system). `FontChoice` selects `FontFamily.Default` or Inter; each app
-  loads its own copies of the Inter OTFs (Android `res/font`, desktop classpath `fonts/`). Both
-  choices live in `SampleSettingsManager`, outside any screen's view model.
+  loads its own copies of the Inter OTFs (Android `res/font`, desktop classpath `fonts/`) and
+  passes the family in. Both choices live in `SampleSettingsManager`, outside any screen's view
+  model.
 - **View model stores:** Voyager supplies per-screen `ViewModelStoreOwner`s only on Android.
-  `WithPerScreenViewModelStore` hangs a store off a Voyager `ScreenModel`, so a screen keeps its
-  view model while it stays in the back stack and clears it when popped. Each tab's inner navigator
-  is retained by `TabNavigator`, so a tab root's store survives switching tabs here exactly as it
-  does on Android.
+  Desktop passes `DesktopSampleScreenContainer`, which hangs a store off a Voyager `ScreenModel`,
+  so a screen keeps its view model while it stays in the back stack and clears it when popped.
+  Each tab's inner navigator is retained by `TabNavigator`, so a tab root's store survives
+  switching tabs here exactly as it does on Android.
+- **Back and lifecycle:** `DesktopPlatformBack` feeds window Escape/Backspace and the mouse back
+  button into the shared policy, and `rememberWindowFocusLifecycleOwner` turns window focus into
+  the `Resume`/`Pause` pair screens expect.
 - **Dispatchers and storage:** `JvmSampleBindings` provides `SageDispatchers` with
   `Dispatchers.Main` backed by `kotlinx-coroutines-swing` (the AWT event queue), plus the JVM
   `Hatchet`, analytics, `AppInfo`, and a properties-file `Storage` implementation.
@@ -421,13 +426,14 @@ The Metro graph is `JvmSampleAppGraph`; `Main.kt` builds it once and installs it
 
 1. Create `features/<name>` with the `sage.jvm` + `sage.di` convention, and depend on
    `projects.core.viewmodel` plus the SAGE modules it needs.
-2. Add `:features:<name>` to `settings.gradle.kts` and `implementation(projects.features.<name>)`
-   in `apps/android/build.gradle.kts`.
+2. Add `:features:<name>` to `settings.gradle.kts` and to the `api(...)` list in
+   `core/ui/shell/build.gradle.kts` (that is what puts the feature's view model on both app
+   graphs).
 3. Write a `<Name>State : ListState` and a `<Name>ViewModel : SampleListViewModel<<Name>State>`,
    using a `<Name>StringId : SageStringId` enum for text. Annotate the view model with
    `@ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())` + `@ViewModelKey`, and
    send `SageAction.InitNoArgs` from `init`.
 4. Map the string ids in `SampleBindings`; no graph accessor is needed for the view model.
 5. To make it reachable, add a `SampleDestination`, a `SampleScreen` (resolving it with
-   `metroViewModel`), and a `screenFor` branch in `SampleTabs.kt` — plus a nav label in
-   `strings.xml` and a `SampleTab` if it becomes a top-level tab.
+   `metroViewModel`), and a `screenFor` branch in `:core:ui:shell`'s `SampleTabs.kt` — plus a nav
+   label in `:core:strings:real` and a `SampleTab` if it becomes a top-level tab.

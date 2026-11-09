@@ -46,6 +46,7 @@ include(
     ":core:strings:api",
     ":core:strings:real",
     ":core:ui:components:api",
+    ":core:ui:shell",
     ":core:ui:theme:api",
     ":core:viewmodel",
     ":features:browse",

@@ -24,14 +24,16 @@ decisions live here now; the Compose/Voyager host stays app-side.
 | `SampleScreenKeys.kt` | `contentDetailScreenKey(contentId)`. |
 | `SampleLifecycle.kt` | `foregroundActionFor(Lifecycle.Event)`. |
 
-## What stays app-side
+## What stays out of `:core:nav`
 
-Compose and Voyager specifics that are genuinely host code:
+Compose and Voyager specifics that are genuinely host code now live in `:core:ui:shell`, shared by
+both apps:
 
 - `SampleChromeController`, the composition locals and `SampleTitleBarSink` (Compose state).
 - `SampleTab`/`sampleTabs` (Voyager `Tab`, per-screen ViewModel stores).
 - `SampleNavHost`, `SampleNavScaffold`, `SampleTopBar`, `SampleScreens`, `SampleNavEffects`.
-- Platform Back (Android `BackHandler`, desktop key handling).
+- Platform Back (Android `BackHandler`, desktop key handling) enters through
+  `SamplePlatformBack`; the app supplies the implementation.
 
 Navigation labels are **not** host code: `SampleDestination.label` is a `SampleStringId`, and each
 app resolves it through the shared `StringProvider`.
@@ -40,8 +42,9 @@ app resolves it through the shared `StringProvider`.
 
 The nine duplicated test classes moved here once: `SampleDestinationTest`, `SampleNavActionTest`,
 `SampleBackActionTest`, `SampleScreenLayoutTest`, `SampleTopBarStateTest`,
-`SampleChromePolicyTest`, `SampleContentDetailScreenKeyTest`, `ScreenLifecycleTest`. The apps keep
-only host-local tests (`SampleChromeTest` for the controller, `SampleTabsTest` for Voyager tabs).
+`SampleChromePolicyTest`, `SampleContentDetailScreenKeyTest`, `ScreenLifecycleTest`. The shared
+`SampleChromeTest`/`SampleTabsTest` live in `:core:ui:shell`; the apps keep only their platform
+tests.
 
 ## Module facts
 

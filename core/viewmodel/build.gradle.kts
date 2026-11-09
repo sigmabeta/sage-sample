@@ -2,10 +2,15 @@ plugins {
     // Pure JVM: the base class depends only on androidx.lifecycle's multiplatform ViewModel plus
     // SAGE's common modules, so every feature module can extend it without Android types.
     alias(libs.plugins.sage.jvm)
+    // Metro compiler plugin: the ViewModel factory is contributed to AppScope here so both app
+    // graphs resolve one shared binding instead of each keeping its own copy.
+    alias(libs.plugins.sage.di)
 }
 
 dependencies {
     api(libs.androidx.lifecycle.viewmodel)
+    // `MetroViewModelFactory` is the binding's supertype, so consumers of this module must see it.
+    api(libs.metrox.viewmodel)
     // The base exposes the settings-backed SampleDelayManager every feature view model supplies.
     api(projects.core.settings)
 
