@@ -121,15 +121,13 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 - **Search:** use `git grep`/`rg`; when using `find`/`grep`, prune `build/` and `.gradle/`.
   Generated Android lint/dependency XML is enormous.
 
-## Worktrees and specs
+## Worktrees
 
 - Create a build-ready worktree with `scripts/dev/worktree-add.sh <name> [base-ref]` (copies
   `local.properties`, reference-clones SAGE); remove it with
   `scripts/dev/worktree-rm.sh <dir>`.
 - Never `git stash` in a multi-worktree run: the stash is shared across linked worktrees.
-- Specs and tickets live under `.scratch/<feature>/` (gitignored). Gate closure with
-  `scripts/dev/check-ticket-gates.sh --feature <slug>`; check a worktree before hand-off with
-  `scripts/dev/check-worktree-hygiene.sh [dir]`.
+- Check a worktree before hand-off with `scripts/dev/check-worktree-hygiene.sh [dir]`.
 
 ## Build / verify
 
@@ -208,19 +206,9 @@ See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top leve
 preview art), `core/ui/components/api/` (KMP Compose renderer suite), `core/ui/shell/` (KMP
 Compose composition root + navigation host), `core/settings/` and
 `core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`
-(agent tooling), `docs/agents/` (tracker/domain docs), `sage/` (submodule).
+(agent tooling), `docs/agents/` (domain docs), `sage/` (submodule).
 
 ## Agent skills
-
-### Issue tracker
-
-Issues and specs live as markdown files under `.scratch/<feature-slug>/`; triage state is a
-`Status:` line. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-The five canonical roles, default strings: `needs-triage`, `needs-info`, `ready-for-agent`,
-`ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
