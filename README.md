@@ -6,8 +6,9 @@ modules over shared `:core` modules (a module-driven Home that shows a stable pl
 can randomize 2–10 hero and generated-image rows, Browse, a Content detail screen over seeded
 generated content,
 List Items — as text-only, generated-image, and 50-item generated-image grid variants —
-Search, and a Settings screen with persisted preferences), and SAGE itself as a Git submodule
-consumed through a Gradle composite build.
+Search, and a Settings screen with persisted preferences), a per-screen Paparazzi screenshot suite
+over a phone/tablet device matrix, and SAGE itself as a Git submodule consumed through a Gradle
+composite build.
 
 ## Requirements
 
@@ -16,10 +17,13 @@ consumed through a Gradle composite build.
 | JDK | 17+ (CI uses Temurin 21) |
 | Android SDK | platform 36 |
 | Gradle | 9.5 (wrapper) |
+| Git LFS | 3.x (the screenshot goldens are LFS objects) |
 
 `local.properties` must point at an Android SDK (`sdk.dir=...`). `settings.gradle.kts` copies it
 into the `sage/` submodule so both builds resolve the SDK.
 
+Screenshot goldens are stored in Git LFS. Run `git lfs install` once per machine (and
+`git lfs pull` after cloning) so `verifyPaparazziDebug` sees PNGs rather than pointer files.
 
 ## Getting started
 
@@ -41,17 +45,18 @@ git submodule update --init --recursive
 
 ## Verification
 
-CI is `.github/workflows/ci.yml`. Four jobs run on every push, pull request, and manual dispatch:
+CI is `.github/workflows/ci.yml`. Five jobs run on every push, pull request, and manual dispatch:
 
 | Job | Command |
 |-----|---------|
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
-| `unit-test` | `./gradlew test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue` |
+| `unit-test` | `./gradlew test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue` (screenshot modules excluded) |
+| `screenshot` | `./gradlew verifyPaparazziDebug --continue` |
 | `android` | `./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
 
 The compile-heavy jobs wait for `static-analysis`, so a style/rule break fails fast.
-Reports, JUnit XML, the desktop JVM jar, and the APKs are uploaded as
+Reports, JUnit XML, the desktop JVM jar, Paparazzi diff images, and the APKs are uploaded as
 workflow artifacts.
 
 Locally, `scripts/ci/verify.sh` runs the same tasks sequentially, keeps going after a failure so
@@ -64,13 +69,23 @@ scripts/ci/verify.sh static-analysis # just the named task(s)
 scripts/ci/verify.sh --list          # task names
 ```
 
+Screenshots have their own loop:
+
+```bash
+./gradlew verifyPaparazziDebug                  # check the committed goldens
+./gradlew recordPaparazziDebug                  # re-record after an intentional UI change
+scripts/dev/paparazzi-diff.sh                   # rank changed goldens + write golden|new|diff montages
+scripts/dev/paparazzi-diff.sh --top 10 --keep   # keep the re-render for review
+```
 
 The release APK is unsigned: the sample has no release signing config, so `assembleRelease`
 produces an unsigned artifact that must be signed before installing.
 
 Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
-`:core:viewmodel`, and the desktop app; `:core:bitmaps` and `:core:ui:shell` use the KMP
-`jvmTest` source set. No emulator or device is needed; there is no native target.
+`:core:viewmodel`, and the desktop app; `:core:bitmaps`, `:core:strings:real` and
+`:core:ui:shell` use the KMP `jvmTest` source set. The per-feature screenshot modules
+(`:features:<x>:screenshot`) use Paparazzi to compare hand-built `ListState` fixtures against
+committed LFS goldens. No emulator or device is needed; there is no native target.
 
 Review-time judgement calls are in `CODING_STANDARDS.md`. Agent worktrees and closure gates use
 `scripts/dev/`:
@@ -100,6 +115,8 @@ If SAGE renames a module, update the `libs.sage.*` alias used by the module that
 ## Layout
 
 ```
+build-logic/                 the sample's convention plugins (included build)
+  convention/                SageSampleScreenshotPlugin: the `sagesample.screenshot` id
 apps/android/               Android application
   SampleApplication.kt      owns the Metro AppScope graph
   di/SampleAppGraph.kt      @DependencyGraph(AppScope::class) : ViewModelGraph
@@ -149,6 +166,11 @@ core/ui/shell/              KMP Compose app shell shared by both apps
   SamplePlatformBack.kt     platform Back seam (Android BackHandler, desktop keys/mouse)
   SampleScreenContainer.kt  per-screen ViewModelStore seam (desktop-only implementation)
   GeneratedBitmapPreview.kt @Preview for the shared generated placeholder art
+core/ui/previews/           Paparazzi/@Preview harness shared by the screenshot modules
+  ScreenPreview.kt          ListScreenPreview / ScreenPreview: VM-free ListState rendering
+  DevicePreviews.kt         light/dark x phone/foldable/tablet @Preview matrix
+  PreviewTestUtils.kt       Paparazzi device matrix + DeviceConfig -> WidthClass
+  fake/FakeModelGenerator.kt  deterministic domain models for fixtures
 core/settings/              pure-JVM preference vocabulary shared by both apps
   ThemeMode.kt              light/dark/system, plus the system-dark resolution
   FontChoice.kt             standard platform family or bundled Inter
@@ -166,15 +188,21 @@ features/home/             pure-JVM feature module (no Android dependencies)
   HomeModuleBindings.kt    Metro set of HomeModuleDefinitions (`@Binds @IntoSet`)
   modules/                 BigImageModule (daily hero) and GridImagesModule (bounded row)
   DemoHomeRepository.kt    seeded catalog + generated:// artwork
+features/home/screenshot/  Paparazzi goldens for Home (content/loading/empty/error)
 features/browse/            same shape; static destination rows (no loading/content)
+features/browse/screenshot/ Paparazzi goldens for Browse
 features/contentdetail/     detail layout: hero art, generated CTAs and label/value rows, related
                             scroller and image/name/caption items over one predetermined-seed item
+features/contentdetail/screenshot/  Paparazzi goldens for Content detail
 features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
+features/listitems/screenshot/  Paparazzi goldens for all three List Items screens
 features/search/            query + two deterministic generated result sets (list rows, grid)
+features/search/screenshot/ Paparazzi goldens for Search
 features/settings/          theme, font, simulate-delay and same-content rows, app version and build date
-scripts/dev/                agent worktrees, ticket gates, worktree hygiene
+features/settings/screenshot/  Paparazzi goldens for Settings
+scripts/dev/                agent worktrees, ticket gates, worktree hygiene, Paparazzi diff review
 CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
 detekt-config.yml           ruleset read by the SAGE base plugins
 sage/                       SAGE submodule (composite build)
@@ -195,6 +223,7 @@ SAGE's version catalog:
 
 ```kotlin
 includeBuild("sage/sage-build-logic")
+includeBuild("build-logic")
 includeBuild("sage")
 
 versionCatalogs {
@@ -228,7 +257,22 @@ consumer's `rootDir/detekt-config.yml`.
 `:core:ui:theme:api` owns `SampleTheme`; `:core:models:api` owns the domain types and the Content
 detail route codec; `:core:nav` owns destinations plus the route/Back/layout/chrome policy and
 screen keys; `:core:ui:shell` owns the composition root and the whole Compose/Voyager host. Both
-apps consume them, so an app cannot drift from the other.
+apps and the screenshot harness consume them, so an app cannot drift from a golden or from the
+other app.
+
+### Screenshot tests
+
+Each `:features:<x>:screenshot` module applies `sagesample.screenshot` from `build-logic/`, which
+layers Paparazzi on the SAGE Android/Compose conventions. Its previews render hand-built
+`ListState` fixtures through `:core:ui:previews` — never a ViewModel or repository — so goldens do
+not depend on time, DI, or the demo delay. Fixtures get their domain rows from
+`FakeModelGenerator`, and render with the shared `SampleStringProvider` and `SampleTheme`.
+
+Goldens live beside the test in `src/test/snapshots/images/` and are Git LFS objects. CI checks them
+out with LFS and runs `verifyPaparazziDebug`; the generic `test` task excludes the screenshot
+modules so only that task owns the goldens. `scripts/dev/paparazzi-diff.sh` re-renders, ranks the
+changed goldens by pixel difference, and writes `golden | new | diff` montages under
+`build/paparazzi-review/`.
 
 ### Dependency injection — Metro, not Hilt
 

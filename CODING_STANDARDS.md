@@ -29,9 +29,19 @@ of the same `NavigateTo`; one test per branch.
 
 User-visible text — including demo or repository content — goes through `SampleStringId`
 (`:core:strings:api`) and the shared `StringProvider` from `:core:strings:real`. No feature,
-renderer or app keeps its own id → text table; the Android app's only string
+renderer, screenshot module or app keeps its own id → text table; the Android app's only string
 resource is `app_name` for the manifest. Repository diagnostics (exception messages) are not UI text
 and may stay literals.
+
+## Screenshots are fixtures, not live screens
+
+A `:features:<x>:screenshot` preview renders a hand-built `ListState` through
+`:core:ui:previews`; it never constructs a ViewModel, collects a repository, or reads the clock. Use
+`FakeModelGenerator` for domain rows instead of hardcoding names and captions, and the shared
+`SampleStringProvider`/`SampleTheme` instead of a per-module text or theme copy. That is what keeps
+a golden stable and makes a diff mean "the UI changed", not "the seed changed". Add both halves of a
+state: a `@DevicePreviews` composable and a matching `@Test` in the module's `screenshot` test
+class.
 
 ## Comments describe the code
 

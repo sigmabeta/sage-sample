@@ -9,6 +9,9 @@ if (!sageLocalProps.exists()) {
 }
 
 includeBuild("sage/sage-build-logic")
+// The sample's own convention plugins (the screenshot module convention). It layers on the SAGE
+// build logic above, so this must come after it.
+includeBuild("build-logic")
 includeBuild("sage")
 
 pluginManagement {
@@ -46,13 +49,20 @@ include(
     ":core:strings:api",
     ":core:strings:real",
     ":core:ui:components:api",
+    ":core:ui:previews",
     ":core:ui:shell",
     ":core:ui:theme:api",
     ":core:viewmodel",
     ":features:browse",
+    ":features:browse:screenshot",
     ":features:contentdetail",
+    ":features:contentdetail:screenshot",
     ":features:home",
+    ":features:home:screenshot",
     ":features:listitems",
+    ":features:listitems:screenshot",
     ":features:search",
+    ":features:search:screenshot",
     ":features:settings",
+    ":features:settings:screenshot",
 )

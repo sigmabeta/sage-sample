@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # verify.sh — run the same verification tasks CI runs, summarize pass/fail, and collate every
-# task's artifacts (lint/ktlint/detekt reports, JUnit XML, APKs) into one folder.
+# task's artifacts (lint/ktlint/detekt reports, JUnit XML, Paparazzi diffs, APKs) into one folder.
 #
 # It verifies the WORKING TREE, not the commit you're about to push: it warns (without failing)
 # when there are uncommitted/untracked changes, when the SAGE submodule has local modifications,
@@ -34,17 +34,22 @@ GRADLE="./gradlew"
 GRADLE_FLAGS=(--build-cache --configuration-cache --console=plain)
 
 # name | gradle args. Order = cheapest feedback first, then the jobs that need the Android SDK.
-# Mirrors the CI jobs: static-analysis, unit-test, android-lint + apk.
+# Mirrors the CI jobs: static-analysis, unit-test, screenshot, android-lint + apk.
 ALL_TASKS=(
   "static-analysis|ktlintCheck detekt --continue"
-  "unit-test|test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue"
+  # The generic `test` lifecycle would also run each screenshot module's Paparazzi verify task;
+  # those goldens are LFS objects and the dedicated `screenshot` task below owns them, so exclude
+  # the modules here (the CI unit-test job does the same).
+  "unit-test|test -x :features:browse:screenshot:test -x :features:contentdetail:screenshot:test -x :features:home:screenshot:test -x :features:listitems:screenshot:test -x :features:search:screenshot:test -x :features:settings:screenshot:test :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest --continue"
+  "screenshot|verifyPaparazziDebug --continue"
   "android-lint|:apps:android:lintRelease"
   "apk|:apps:android:assembleDebug :apps:android:assembleRelease"
   "jvm-app|:apps:jvm:assemble"
 )
-# The lint/APK/JVM-build tasks are the heavy ones: they need an Android SDK (local.properties /
-# ANDROID_HOME) or package the desktop app. --skip-apps leaves them out for a quick inner loop.
-APP_BUILD_TASKS="android-lint apk jvm-app"
+# The screenshot/lint/APK/JVM-build tasks are the heavy ones: they need an Android SDK
+# (local.properties / ANDROID_HOME) or package the desktop app. --skip-apps leaves them out for a
+# quick inner loop.
+APP_BUILD_TASKS="screenshot android-lint apk jvm-app"
 
 # ---- arg parsing -----------------------------------------------------------
 filter=()
@@ -162,6 +167,13 @@ done
 if [[ "$ran" == *" apk "* ]] && [ -d apps/android/build/outputs/apk ]; then
   mkdir -p "$OUT/apk"; cp -r apps/android/build/outputs/apk/. "$OUT/apk/"
 fi
+if [[ "$ran" == *" screenshot "* ]]; then
+  # Paparazzi failure / diff images live under build/paparazzi, not build/reports.
+  find . "${prune[@]}" -o -path '*/build/paparazzi' -type d -print -prune | while read -r d; do
+    mod=$(echo "$d" | sed 's|^\./||;s|/build/paparazzi$||;s|/|-|g')
+    mkdir -p "$OUT/paparazzi/$mod" && cp -r "$d"/. "$OUT/paparazzi/$mod"/
+  done
+fi
 
 # ---- summary ---------------------------------------------------------------
 summary="$OUT/summary.txt"
@@ -183,6 +195,7 @@ summary="$OUT/summary.txt"
   desc() { [ -d "$OUT/$1" ] && printf '  %-14s %s\n' "$1/" "$2"; }
   desc reports      "ktlint, detekt, android-lint, HTML test reports (per module)"
   desc test-results "JUnit XML (unit tests)"
+  desc paparazzi    "screenshot diff/failure images (per module)"
   desc apk          "debug + release APKs (apps/android/build/outputs/apk; release is unsigned)"
 } >"$summary"
 
