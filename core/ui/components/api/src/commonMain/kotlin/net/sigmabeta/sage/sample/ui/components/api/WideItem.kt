@@ -86,4 +86,5 @@ fun WideItem(
     }
 }
 
-private val WideItemShape = RoundedCornerShape(8.dp)
+/** Shared with the loading placeholder, so the two shapes cannot drift. */
+internal val WideItemShape = RoundedCornerShape(8.dp)
