@@ -5,6 +5,7 @@ import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.storage.common.Storage
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
@@ -32,6 +33,12 @@ interface JvmSampleAppGraph : ViewModelGraph {
      * root so the shared component renderers can resolve their accessibility labels.
      */
     val stringProvider: StringProvider
+
+    /**
+     * Read by the composition root before the window opens: the size and position the window was
+     * closed with are startup state, not a screen's. The settings managers resolve it on their own.
+     */
+    val storage: Storage
 
     @DependencyGraph.Factory
     fun interface Factory {

@@ -10,11 +10,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.platform.Font
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
 import coil3.SingletonImageLoader
 import dev.zacsweers.metro.createGraphFactory
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
@@ -22,6 +19,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.jvm.di.JvmSampleAppGraph
 import net.sigmabeta.sage.sample.jvm.ui.DesktopPlatformBack
+import net.sigmabeta.sage.sample.jvm.ui.rememberPersistedWindowState
 import net.sigmabeta.sage.sample.jvm.ui.rememberWindowFocusLifecycleOwner
 import net.sigmabeta.sage.sample.jvm.ui.navigation.HeldBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
@@ -43,6 +41,9 @@ import net.sigmabeta.sage.sample.ui.shell.SampleApp
  * [backKeyEvents] and run the shell's shared Back policy; [HeldBackKeys] fires once per physical
  * press rather than repeating while the key auto-repeats. A window that loses focus forgets the
  * held keys, because the KeyUp may arrive while another window is focused.
+ *
+ * The window opens at the size the last run left it: [rememberPersistedWindowState] restores it
+ * from the graph's `Storage` before the platform window exists.
  */
 fun main() {
     val graph = createGraphFactory<JvmSampleAppGraph.Factory>().create()
@@ -59,7 +60,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = SampleStringProvider.string(SampleStringId.APP_NAME),
-            state = rememberWindowState(size = DpSize(1000.dp, 800.dp)),
+            state = rememberPersistedWindowState(graph.storage),
             onKeyEvent = { event ->
                 when {
                     !isBackKey(event.key) -> false

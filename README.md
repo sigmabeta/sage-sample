@@ -149,6 +149,7 @@ apps/jvm/                   Compose Desktop application (shares the feature modu
   storage/JvmStorage.kt     properties-file-backed SAGE Storage (settings persistence)
   resources/fonts/inter_*.otf  bundled Inter weights for the Settings font picker
   ui/DesktopPlatformBack.kt  Escape/Backspace + mouse Back -> the shared Back policy
+  ui/PersistedWindowState.kt  window size restored from Storage between runs
   ui/WindowFocusLifecycle.kt  window focus as the screen foreground lifecycle
   ui/navigation/            desktop Back-key detection (pure, unit-tested)
 apps/js/                    Kotlin/JS browser application
@@ -513,6 +514,9 @@ the desktop graph/storage and the desktop platform seams. The seams differ:
 - **Back and lifecycle:** `DesktopPlatformBack` feeds window Escape/Backspace and the mouse back
   button into the shared policy, and `rememberWindowFocusLifecycleOwner` turns window focus into
   the `Resume`/`Pause` pair screens expect.
+- **Window size:** `rememberPersistedWindowState` restores the size the app was closed with
+  through the same `Storage` seam, before the platform window exists, and saves it back while the
+  window is floating. The position stays the platform's business.
 - **Dispatchers and storage:** `JvmSampleBindings` provides `SageDispatchers` with
   `Dispatchers.Main` backed by `kotlinx-coroutines-swing` (the AWT event queue), plus the JVM
   `Hatchet`, analytics, `AppInfo`, and a properties-file `Storage` implementation.

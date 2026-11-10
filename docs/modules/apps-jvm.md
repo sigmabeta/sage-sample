@@ -29,10 +29,11 @@ build's, not a stale cached one.
 
 | File | Role |
 |---|---|
-| `Main.kt` | Creates `JvmSampleAppGraph`, registers `generatedImageLoader` as Coil's singleton, opens a 1000×800 window. Window-level Escape/Backspace handling emits into a `MutableSharedFlow` and runs the shared Back policy once per physical press (`HeldBackKeys`). |
-| `di/JvmSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager` and `stringProvider`. |
+| `Main.kt` | Creates `JvmSampleAppGraph`, registers `generatedImageLoader` as Coil's singleton, and opens the window at the size it was closed with. Window-level Escape/Backspace handling emits into a `MutableSharedFlow` and runs the shared Back policy once per physical press (`HeldBackKeys`). |
+| `di/JvmSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager`, `stringProvider` and `storage`. |
 | `di/JvmSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: the shared `SampleStringProvider`, `BluntHatchet`, `NoopAnalytics`, `AppInfo`, `JvmStorage`, `SageDispatchers` (main = `Dispatchers.Main`, backed by the Swing artifact), and an app-lifetime `CoroutineScope`. |
 | `storage/JvmStorage.kt` | `Storage` over a properties file (`~/.sage-sample/settings.properties`, overridable with `-Dsage.sample.settingsFile`). Type-namespaced keys, reactive `MutableStateFlow`s, atomic temp-file + move writes. |
+| `ui/PersistedWindowState.kt` | Window size restored from that `Storage` before the platform window is created, and saved back (debounced) while the window is floating. The position is left to the platform. |
 | `JvmBuildInfo.kt` | Reads the generated properties into version/build-time constants. |
 
 The shared `MetroViewModelFactory` binding lives in `:core:viewmodel`, so both graphs resolve it
@@ -76,6 +77,8 @@ JVM tests beside the module:
 - `JvmSampleAppGraphTest` — the graph resolves its entry points and ViewModel factory.
 - `InterFontResourcesTest` — bundled font resources are present.
 - `HeldBackKeysTest` / `SampleBackKeyTest` — one Back per press, auto-repeat and focus-loss handling.
+- `PersistedWindowStateTest` — restoring a stored size, falling back on an unusable one, and the
+  placement cases that are not saved.
 
 The shared chrome/tab tests live in `:core:ui:shell`'s `jvmTest`; the shared provider completeness
 test and the shell policy tests live in `:core:strings:real` and `:core:nav`.
