@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.LCE
@@ -80,7 +81,13 @@ data class ListItemsWithImagesState(
                                 caption = item.caption,
                                 sourceInfo = imageSourceFor(item),
                                 imagePlaceholder = Icon.Person,
-                                clickAction = ListItemsWithImagesAction.ItemClicked(item),
+                                clickAction = ListItemsWithImagesAction.ItemClicked(
+                                    item = item,
+                                    artwork = ContentArtworkSize(
+                                        width = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
+                                        height = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
+                                    ),
+                                ),
                             ),
                         )
                     }

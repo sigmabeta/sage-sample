@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.models.ContentDetailField
 import net.sigmabeta.sage.sample.models.ContentDetail
@@ -9,6 +10,7 @@ import net.sigmabeta.sage.sample.models.contentHeroImageSeed
 import net.sigmabeta.sage.sample.models.contentItemContentId
 import net.sigmabeta.sage.sample.models.relatedContentId
 
+import kotlinx.collections.immutable.immutableListOf
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
@@ -21,6 +23,7 @@ import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.components.SectionListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.components.WideItemListModel
 import net.sigmabeta.sage.images.SourceInfo
@@ -49,6 +52,14 @@ import net.sigmabeta.sage.sample.repository.CONTENT_DETAIL_OPERATION_NAME
  */
 data class ContentDetailState(
     val content: LCE<ContentDetail?> = LCE.Loading(CONTENT_DETAIL_OPERATION_NAME),
+    /**
+     * The address this screen was opened with, known before [content] arrives.
+     *
+     * The hero is seeded by the address, not by the payload (see [contentHeroImageSeed]), so
+     * knowing it during the load is enough to render the detail's real hero instead of a loading
+     * row. `null` until the screen's init action lands, and in the not-found state.
+     */
+    val contentId: ContentId? = null,
 ) : ListState() {
     override val columnType = ColumnType.Staggered(CONTENT_DETAIL_COLUMN_WIDTH_DP, false)
 
@@ -92,29 +103,65 @@ data class ContentDetailState(
         content: LCE<ContentDetail>,
         stringProvider: StringProvider,
     ): List<ListModel> = listOf(
-        heroSection(content),
+        heroSection(content, stringProvider),
         ctaSection(content),
         detailsSection(content, stringProvider),
         relatedSection(content, stringProvider),
         itemsSection(content, stringProvider),
     )
 
-    private fun heroSection(content: LCE<ContentDetail>): ListModel =
-        content.sectionWithStandardErrorAndLoading(
+    /**
+     * The hero, rendered as the destination's own artwork even while the payload is still in
+     * flight.
+     *
+     * A detail opened from a row shares that row's seed, so the request the loading state renders
+     * and the request the loaded state renders are the same [HeroImageListModel]: same [dataId],
+     * same source URL, same Coil request. Two consequences fall out of that. The content detail
+     * screen has its hero — and therefore its shared element — from its first composition, rather
+     * than gaining one when the load finishes; and the load-to-content swap reuses the in-flight
+     * (or already decoded) image instead of starting a second request.
+     *
+     * The only thing the loading hero cannot know is the title, so it describes itself with the
+     * destination's fallback name. A state with no [contentId] (the frame before the screen's init
+     * action, or a fixture that never addresses one) keeps the generic loading row.
+     */
+    private fun heroSection(
+        content: LCE<ContentDetail>,
+        stringProvider: StringProvider,
+    ): ListModel {
+        val addressed = contentId
+        if (content is LCE.Loading && addressed != null) {
+            return SectionListModel(
+                dataId = SECTION_NAME_HERO.hashCode().toLong(),
+                sectionItems = immutableListOf(
+                    heroFor(
+                        contentId = addressed,
+                        contentDescription = stringProvider.getString(
+                            SampleStringId.CONTENT_DETAIL_TITLE,
+                        ),
+                    ),
+                ),
+            )
+        }
+
+        return content.sectionWithStandardErrorAndLoading(
             sectionName = SECTION_NAME_HERO,
             loadingType = LoadingType.BIG_IMAGE,
             loadingItemCount = 1,
             loadingWithHeader = false,
         ) {
-            listOf(
-                HeroImageListModel(
-                    sourceInfo = heroSourceFor(data.id),
-                    imagePlaceholder = Icon.Album,
-                    contentDescription = data.title,
-                    clickAction = ContentDetailAction.HeroClicked,
-                ),
-            )
+            listOf(heroFor(contentId = data.id, contentDescription = data.title))
         }
+    }
+
+    /** The hero for [contentId]; identical while loading and once loaded, apart from its label. */
+    private fun heroFor(contentId: ContentId, contentDescription: String): HeroImageListModel =
+        HeroImageListModel(
+            sourceInfo = heroSourceFor(contentId),
+            imagePlaceholder = Icon.Album,
+            contentDescription = contentDescription,
+            clickAction = ContentDetailAction.HeroClicked,
+        )
 
     private fun ctaSection(content: LCE<ContentDetail>): ListModel =
         content.sectionWithStandardErrorAndLoading(
@@ -190,7 +237,14 @@ data class ContentDetailState(
                         sourceInfo = relatedSourceFor(parentId = data.id, relatedId = related.id),
                         imagePlaceholder = Icon.Album,
                         clickAction = ContentDetailAction.RelatedClicked(
-                            relatedContentId(parentId = data.id, relatedId = related.id),
+                            contentId = relatedContentId(
+                                parentId = data.id,
+                                relatedId = related.id,
+                            ),
+                            artwork = ContentArtworkSize(
+                                RELATED_IMAGE_SIZE,
+                                RELATED_IMAGE_SIZE,
+                            ),
                         ),
                     )
                 }.toImmutableList(),
@@ -219,7 +273,8 @@ data class ContentDetailState(
                 sourceInfo = itemSourceFor(parentId = data.id, itemId = item.id),
                 imagePlaceholder = Icon.Person,
                 clickAction = ContentDetailAction.ItemClicked(
-                    contentItemContentId(parentId = data.id, itemId = item.id),
+                    contentId = contentItemContentId(parentId = data.id, itemId = item.id),
+                    artwork = ContentArtworkSize(ITEM_IMAGE_SIZE, ITEM_IMAGE_SIZE),
                 ),
             )
         }

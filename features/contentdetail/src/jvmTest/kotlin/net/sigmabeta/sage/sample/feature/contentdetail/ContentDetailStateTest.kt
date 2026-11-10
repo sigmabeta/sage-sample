@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentDetailField
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.repository.CONTENT_DETAIL_OPERATION_NAME
@@ -199,10 +200,12 @@ class ContentDetailStateTest {
         assertEquals(
             listOf(
                 ContentDetailAction.RelatedClicked(
-                    ContentId("content-detail:related:list-items:1:1"),
+                    contentId = ContentId("content-detail:related:list-items:1:1"),
+                    artwork = ContentArtworkSize(128, 128),
                 ),
                 ContentDetailAction.RelatedClicked(
-                    ContentId("content-detail:related:list-items:1:2"),
+                    contentId = ContentId("content-detail:related:list-items:1:2"),
+                    artwork = ContentArtworkSize(128, 128),
                 ),
             ),
             items.map { it.clickAction },
@@ -235,10 +238,12 @@ class ContentDetailStateTest {
         assertEquals(
             listOf(
                 ContentDetailAction.ItemClicked(
-                    ContentId("content-detail:item:list-items:1:1"),
+                    contentId = ContentId("content-detail:item:list-items:1:1"),
+                    artwork = ContentArtworkSize(128, 128),
                 ),
                 ContentDetailAction.ItemClicked(
-                    ContentId("content-detail:item:list-items:1:2"),
+                    contentId = ContentId("content-detail:item:list-items:1:2"),
+                    artwork = ContentArtworkSize(128, 128),
                 ),
             ),
             rows.map { it.clickAction },

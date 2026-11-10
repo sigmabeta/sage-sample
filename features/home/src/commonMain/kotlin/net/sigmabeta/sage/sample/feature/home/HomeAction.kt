@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 
 import net.sigmabeta.sage.appcomm.SageAction
@@ -11,8 +12,14 @@ import net.sigmabeta.sage.appcomm.SageAction
  * user action rather than a screen view.
  */
 sealed class HomeAction : SageAction() {
-    /** A module's image was tapped; [contentId] names the detail screen it opens. */
-    data class ItemClicked(val contentId: ContentId) : HomeAction()
+    /**
+     * A module's image was tapped; [contentId] names the detail screen it opens, and [artwork] is
+     * the size of the image the module rendered, so the detail can start from that cached bitmap.
+     */
+    data class ItemClicked(
+        val contentId: ContentId,
+        val artwork: ContentArtworkSize? = null,
+    ) : HomeAction()
 }
 
 /**

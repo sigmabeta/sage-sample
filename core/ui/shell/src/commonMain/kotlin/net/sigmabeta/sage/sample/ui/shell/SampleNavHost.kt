@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.ui.shell
 
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.nav.SampleBackAction
 import net.sigmabeta.sage.sample.nav.SampleDestination
@@ -12,8 +13,11 @@ import net.sigmabeta.sage.sample.nav.navActionFor
 import net.sigmabeta.sage.sample.nav.routeKeyFor
 import net.sigmabeta.sage.sample.nav.topBarState
 import net.sigmabeta.sage.sample.nav.widthClassFromDp
+import net.sigmabeta.sage.sample.ui.components.api.LocalSharedTransitionScope
 import net.sigmabeta.sage.sample.ui.components.api.text
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -63,6 +67,7 @@ fun SampleNavHost(onOuterBack: () -> Unit = {}) {
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Unit) {
     val activeTabNavigator = remember { SampleActiveTabNavigator() }
@@ -176,7 +181,14 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
                 onBack = onBack,
             ) { innerPadding ->
                 Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    CurrentTab()
+                    // One shared-element host above every tab's navigator: a push inside a tab
+                    // animates the images that both screens show between the two layouts, and the
+                    // overlay has to outlive both screens to draw the element in flight.
+                    SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+                        CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                            CurrentTab()
+                        }
+                    }
                 }
             }
         }
@@ -304,12 +316,17 @@ private class DefaultSampleShellNavigation(
     /**
      * Pushes onto the active tab; a pushed screen belongs to the tab that was visible.
      *
-     * [contentId] is the decoded Content detail ID, `null` for its not-found state.
+     * [contentId] is the decoded Content detail ID, `null` for its not-found state. [artworkSize]
+     * is the size the tapped row rendered its own artwork at, when the route carried it.
      */
-    fun push(destination: SampleDestination, contentId: ContentId? = null) {
+    fun push(
+        destination: SampleDestination,
+        contentId: ContentId? = null,
+        artworkSize: ContentArtworkSize? = null,
+    ) {
         val currentTab = tabNavigator.current as SampleTab
         val navigator = activeTabNavigator.navigatorFor(currentTab.key) ?: return
-        val target = screenFor(destination, contentId)
+        val target = screenFor(destination, contentId, artworkSize)
         if (navigator.lastItem != target) {
             navigator.push(target)
         }
@@ -331,7 +348,11 @@ private fun handleEffect(
             is SampleNavAction.ShowTopLevel -> tabFor(action.destination)?.let(shellNavigation::selectTab)
 
             is SampleNavAction.Push ->
-                shellNavigation.push(action.destination, action.contentId)
+                shellNavigation.push(
+                    destination = action.destination,
+                    contentId = action.contentId,
+                    artworkSize = action.artworkSize,
+                )
 
             SampleNavAction.Pop -> shellNavigation.back()
 

@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home.modules
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlin.random.Random
@@ -66,7 +67,10 @@ class HomeModulesTest {
         assertEquals(20_000_000L + 7L, hero.dataId)
         assertEquals("generated://home/big_image_3/7?width=528&height=704", hero.sourceInfo.info)
         assertEquals(
-            HomeAction.ItemClicked(homeContentId("big_image_3", 7L)),
+            HomeAction.ItemClicked(
+                contentId = homeContentId("big_image_3", 7L),
+                artwork = ContentArtworkSize(528, 704),
+            ),
             hero.clickAction,
         )
         assertEquals(0.75f, hero.aspectRatio, 0f)
@@ -121,7 +125,10 @@ class HomeModulesTest {
             cells.first().sourceInfo.info,
         )
         assertEquals(
-            HomeAction.ItemClicked(homeContentId("grid_images_2", 1L)),
+            HomeAction.ItemClicked(
+                contentId = homeContentId("grid_images_2", 1L),
+                artwork = ContentArtworkSize(264, 352),
+            ),
             cells.first().clickAction,
         )
         assertTrue(cells.all { it.aspectRatio == 0.75f })

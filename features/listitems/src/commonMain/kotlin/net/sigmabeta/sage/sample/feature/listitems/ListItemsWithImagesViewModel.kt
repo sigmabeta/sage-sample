@@ -62,6 +62,7 @@ class ListItemsWithImagesViewModel(
                 SageEvent.NavigateTo(
                     destination = contentDetailRoute(
                         ContentId("list-items-with-images:${action.item.id}"),
+                        action.artwork,
                     ),
                     source = "ListItemsWithImagesViewModel",
                 ),

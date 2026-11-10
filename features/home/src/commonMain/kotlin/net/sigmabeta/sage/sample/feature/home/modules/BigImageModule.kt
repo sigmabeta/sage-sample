@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.home.modules
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlinx.collections.immutable.persistentListOf
@@ -80,7 +81,10 @@ class BigImageModule(
                         height = HERO_IMAGE_HEIGHT,
                     ),
                     imagePlaceholder = Icon.Album,
-                    clickAction = HomeAction.ItemClicked(homeContentId(id, pick.id)),
+                    clickAction = HomeAction.ItemClicked(
+                        contentId = homeContentId(id, pick.id),
+                        artwork = ContentArtworkSize(HERO_IMAGE_WIDTH, HERO_IMAGE_HEIGHT),
+                    ),
                     aspectRatio = HERO_ASPECT_RATIO,
                     maxWidthDp = MAX_WIDTH_DP,
                 ),

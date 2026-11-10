@@ -139,7 +139,7 @@ class SearchViewModel(
 
             is SearchAction.ResultClicked -> emitEvent(
                 SageEvent.NavigateTo(
-                    destination = contentDetailRoute(action.contentId),
+                    destination = contentDetailRoute(action.contentId, action.artwork),
                     source = "SearchViewModel",
                 ),
             )

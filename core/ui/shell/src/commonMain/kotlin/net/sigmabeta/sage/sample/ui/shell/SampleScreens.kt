@@ -1,6 +1,8 @@
 package net.sigmabeta.sage.sample.ui.shell
 
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.contentHeroImageSeed
 import net.sigmabeta.sage.sample.nav.SampleDestination
 import net.sigmabeta.sage.sample.nav.SampleScreenChrome
 import net.sigmabeta.sage.sample.nav.SampleScreenLayout
@@ -10,6 +12,7 @@ import net.sigmabeta.sage.sample.nav.screenLayoutFor
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,8 +37,10 @@ import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
+import net.sigmabeta.sage.sample.bitmaps.GeneratedImageFetcher
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.ui.components.api.Content
+import net.sigmabeta.sage.sample.ui.components.api.LocalArtworkHandoff
 import net.sigmabeta.sage.sample.ui.components.api.SearchContent
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
@@ -154,8 +159,15 @@ data object GridOfImagesScreen : SampleScreen {
  * `Screen.key`, so each ID gets its own ViewModel (and its own load) instead of sharing stale
  * state with the previously opened item. The ID reaches the ViewModel through an init action, not
  * a graph binding, because the ViewModel itself is graph-constructed.
+ *
+ * [artworkSize] is the size the tapped row rendered its artwork at. It does not go to the
+ * ViewModel — it is not content — it is published as [LocalArtworkHandoff] so the hero can put the
+ * row's already-cached bitmap on screen while its own, larger request loads.
  */
-data class ContentDetailScreen(val contentId: ContentId?) : SampleScreen {
+data class ContentDetailScreen(
+    val contentId: ContentId?,
+    val artworkSize: ContentArtworkSize? = null,
+) : SampleScreen {
     override val destination = SampleDestination.CONTENT_DETAIL
 
     override val key: ScreenKey = contentDetailScreenKey(contentId)
@@ -168,7 +180,25 @@ data class ContentDetailScreen(val contentId: ContentId?) : SampleScreen {
             viewModel.sendAction(SageAction.InitWithString(contentId?.value.orEmpty()))
         }
 
-        SampleListScreen(viewModel)
+        CompositionLocalProvider(LocalArtworkHandoff provides artworkHandoff()) {
+            SampleListScreen(viewModel)
+        }
+    }
+
+    /**
+     * The row's image request, rebuilt from the same seed the detail's hero uses. Same seed and
+     * same size means the same `generated://` URL, and therefore the same memory-cache entry the
+     * row populated.
+     */
+    private fun artworkHandoff(): String? {
+        val id = contentId ?: return null
+        val size = artworkSize ?: return null
+
+        return GeneratedImageFetcher.urlFor(
+            seed = contentHeroImageSeed(id),
+            width = size.width,
+            height = size.height,
+        )
     }
 }
 

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -31,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.ConstraintsSizeResolver
 import coil3.compose.LocalPlatformContext
+import coil3.compose.asPainter
+import coil3.memory.MemoryCache
+import coil3.SingletonImageLoader
 import coil3.compose.rememberAsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.size.Dimension
@@ -51,6 +55,14 @@ fun CrossfadeImage(
     imagePlaceholder: Icon,
     contentDescription: String?,
     modifier: Modifier,
+    // A second image to draw while this request is unresolved — typically the one the user
+    // navigated away from. It is resolved from the memory cache before this request's own entry is
+    // tried, so a destination that reuses another screen's artwork starts on that artwork.
+    placeholderSourceInfo: SourceInfo? = null,
+    // Whether an unresolved request may draw the model's placeholder icon. Off, it draws nothing
+    // instead — used by a surface that must never flash a grey icon (a hero), where an empty frame
+    // reads better than the loader's stand-in.
+    placeholderIcon: Boolean = true,
     // In a preview / Paparazzi render (LocalInspectionMode = true), or when the debug "image loader"
     // setting selects FAKE ([LocalForceFakeImages]; default on in UI tests), Coil can't / shouldn't
     // fetch — render a deterministic generated gradient via FakeImage instead.
@@ -71,6 +83,8 @@ fun CrossfadeImage(
             imagePlaceholder = imagePlaceholder,
             contentDescription = contentDescription,
             modifier = modifier,
+            placeholderSourceInfo = placeholderSourceInfo,
+            placeholderIcon = placeholderIcon,
             forceGenBitmap = forceGenBitmap,
             simulateError = simulateError,
             onImageLoadedChange = onImageLoadedChange,
@@ -86,6 +100,8 @@ private fun CrossfadeImageContent(
     imagePlaceholder: Icon,
     contentDescription: String?,
     modifier: Modifier,
+    placeholderSourceInfo: SourceInfo?,
+    placeholderIcon: Boolean,
     forceGenBitmap: Boolean,
     simulateError: Boolean,
     onImageLoadedChange: ((Boolean) -> Unit)?,
@@ -111,6 +127,8 @@ private fun CrossfadeImageContent(
                 current = current,
                 imagePlaceholder = imagePlaceholder,
                 contentDescription = contentDescription,
+                placeholderSourceInfo = placeholderSourceInfo,
+                placeholderIcon = placeholderIcon,
                 forceGenBitmap = forceGenBitmap,
                 simulateError = simulateError,
                 onImageLoadedChange = onImageLoadedChange,
@@ -123,6 +141,8 @@ private fun CrossfadeImageContent(
                 current = sourceInfo,
                 imagePlaceholder = imagePlaceholder,
                 contentDescription = contentDescription,
+                placeholderSourceInfo = placeholderSourceInfo,
+                placeholderIcon = placeholderIcon,
                 forceGenBitmap = forceGenBitmap,
                 simulateError = simulateError,
                 onImageLoadedChange = onImageLoadedChange,
@@ -132,12 +152,35 @@ private fun CrossfadeImageContent(
     }
 }
 
+/**
+ * The decoded bitmap the image loader still holds for [sourceInfo], if any.
+ *
+ * A cache lookup rather than a request: it runs during composition and returns the picture another
+ * screen already drew, so a destination that reuses that screen's artwork can paint it on its very
+ * first frame. `null` when the entry has been evicted, or the source is not a URL.
+ */
+@Composable
+private fun rememberCachedPainter(sourceInfo: SourceInfo?): Painter? {
+    val context = LocalPlatformContext.current
+    val url = sourceInfo?.info as? String ?: return null
+
+    return remember(context, url) {
+        SingletonImageLoader.get(context)
+            .memoryCache
+            ?.get(MemoryCache.Key(url))
+            ?.image
+            ?.asPainter(context)
+    }
+}
+
 /** Pulled out so both the animated + plain branches above share the dispatch logic. */
 @Composable
 private fun sourceBranch(
     current: SourceInfo,
     imagePlaceholder: Icon,
     contentDescription: String?,
+    placeholderSourceInfo: SourceInfo?,
+    placeholderIcon: Boolean,
     forceGenBitmap: Boolean,
     simulateError: Boolean,
     onImageLoadedChange: ((Boolean) -> Unit)?,
@@ -152,6 +195,8 @@ private fun sourceBranch(
             sourceInfo = current,
             imagePlaceholder = imagePlaceholder,
             contentDescription = contentDescription,
+            placeholderSourceInfo = placeholderSourceInfo,
+            placeholderIcon = placeholderIcon,
             simulateError = simulateError,
             onImageLoadedChange = onImageLoadedChange,
             modifier = Modifier.fillMaxSize(),
@@ -165,6 +210,8 @@ private fun RealImage(
     sourceInfo: SourceInfo,
     imagePlaceholder: Icon,
     contentDescription: String?,
+    placeholderSourceInfo: SourceInfo?,
+    placeholderIcon: Boolean,
     simulateError: Boolean,
     onImageLoadedChange: ((Boolean) -> Unit)?,
     modifier: Modifier,
@@ -243,17 +290,24 @@ private fun RealImage(
         sourceInfo,
         imagePlaceholder,
         contentDescription,
+        // The handoff first (another screen's artwork), then this request's own entry: a URL the
+        // loader has already decoded — this screen revisited, or the same artwork seen elsewhere —
+        // is painted from the cache in the very first frame instead of after an engine round trip.
+        rememberCachedPainter(placeholderSourceInfo ?: sourceInfo),
+        placeholderIcon,
         onImageLoadedChange,
         sizingModifier,
     )
 }
 
 @Composable
-fun RealStandardImage(
+private fun RealStandardImage(
     asyncPainter: AsyncImagePainter,
     sourceInfo: SourceInfo,
     imagePlaceholder: Icon,
     contentDescription: String?,
+    placeholderPainter: Painter?,
+    placeholderIcon: Boolean,
     onImageLoadedChange: ((Boolean) -> Unit)?,
     modifier: Modifier,
 ) {
@@ -289,11 +343,25 @@ fun RealStandardImage(
             label = "Image Crossfade",
             modifier = modifier,
         ) { loadingState ->
-            stateBranch(loadingState, asyncPainter, imagePlaceholder, contentDescription)
+            stateBranch(
+                loadingState,
+                asyncPainter,
+                imagePlaceholder,
+                contentDescription,
+                placeholderPainter,
+                placeholderIcon,
+            )
         }
     } else {
         Box(modifier = modifier) {
-            stateBranch(state, asyncPainter, imagePlaceholder, contentDescription)
+            stateBranch(
+                state,
+                asyncPainter,
+                imagePlaceholder,
+                contentDescription,
+                placeholderPainter,
+                placeholderIcon,
+            )
         }
     }
 }
@@ -305,6 +373,8 @@ private fun stateBranch(
     asyncPainter: AsyncImagePainter,
     imagePlaceholder: Icon,
     contentDescription: String?,
+    placeholderPainter: Painter?,
+    placeholderIcon: Boolean,
 ) {
     when (loadingState) {
         is AsyncImagePainter.State.Success -> Image(
@@ -320,7 +390,23 @@ private fun stateBranch(
             Modifier.fillMaxSize(),
         )
 
-        else -> PlaceHolderImage(imagePlaceholder, Modifier.fillMaxSize())
+        // A decoded bitmap is the picture the loader is about to deliver anyway; drawing it now
+        // (rather than waiting for the async hit) is what keeps a destination that reuses another
+        // screen's artwork from flashing a stand-in.
+        else -> when {
+            placeholderPainter != null -> Image(
+                painter = placeholderPainter,
+                contentDescription = contentDescription,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+
+            placeholderIcon -> PlaceHolderImage(imagePlaceholder, Modifier.fillMaxSize())
+
+            // Nothing to draw yet and this surface refuses the stand-in: leave the frame empty and
+            // let the container's own background show until the image arrives.
+            else -> Unit
+        }
     }
 }
 

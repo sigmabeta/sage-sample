@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
 
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 
 import net.sigmabeta.sage.appcomm.SageAction
@@ -19,6 +20,16 @@ import net.sigmabeta.sage.appcomm.SageAction
 sealed class ContentDetailAction : SageAction() {
     data object HeroClicked : ContentDetailAction()
     data class CtaClicked(val label: String) : ContentDetailAction()
-    data class ItemClicked(val contentId: ContentId) : ContentDetailAction()
-    data class RelatedClicked(val contentId: ContentId) : ContentDetailAction()
+
+    /** [artwork] is the row's thumbnail size, so the detail it opens starts from that bitmap. */
+    data class ItemClicked(
+        val contentId: ContentId,
+        val artwork: ContentArtworkSize? = null,
+    ) : ContentDetailAction()
+
+    /** [artwork] is the row's thumbnail size, so the detail it opens starts from that bitmap. */
+    data class RelatedClicked(
+        val contentId: ContentId,
+        val artwork: ContentArtworkSize? = null,
+    ) : ContentDetailAction()
 }

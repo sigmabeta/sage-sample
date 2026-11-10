@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.feature.contentdetail
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.models.contentIdOrNull
 import net.sigmabeta.sage.sample.models.contentDetailRoute
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 
 import androidx.lifecycle.ViewModel
@@ -83,9 +84,9 @@ class ContentDetailViewModel(
 
             is ContentDetailAction.CtaClicked -> showClickedName(action.label)
 
-            is ContentDetailAction.ItemClicked -> navigateTo(action.contentId)
+            is ContentDetailAction.ItemClicked -> navigateTo(action.contentId, action.artwork)
 
-            is ContentDetailAction.RelatedClicked -> navigateTo(action.contentId)
+            is ContentDetailAction.RelatedClicked -> navigateTo(action.contentId, action.artwork)
 
             else -> Unit
         }
@@ -93,8 +94,14 @@ class ContentDetailViewModel(
 
     private fun load(contentId: ContentId) {
         loadJob?.cancel()
+        // Publish the address alongside the loading state: the hero is seeded by it, so the screen
+        // can show the destination's own artwork from its first composition (and the shared
+        // element exists for the push transition) instead of a generic loading row.
         updateState {
-            it.copy(content = LCE.Loading(CONTENT_DETAIL_OPERATION_NAME))
+            it.copy(
+                contentId = contentId,
+                content = LCE.Loading(CONTENT_DETAIL_OPERATION_NAME),
+            )
         }
 
         loadJob = repository.load(contentId)
@@ -107,14 +114,14 @@ class ContentDetailViewModel(
     /** A missing or malformed ID is a defined destination state, not an error. */
     private fun showNotFound() {
         loadJob?.cancel()
-        updateState { it.copy(content = LCE.Content(null)) }
+        updateState { it.copy(contentId = null, content = LCE.Content(null)) }
     }
 
     /** Pushes another detail on the active tab; Back returns to this one. */
-    private fun navigateTo(contentId: ContentId) {
+    private fun navigateTo(contentId: ContentId, artwork: ContentArtworkSize?) {
         emitEvent(
             SageEvent.NavigateTo(
-                destination = contentDetailRoute(contentId),
+                destination = contentDetailRoute(contentId, artwork),
                 source = "ContentDetailViewModel",
             ),
         )

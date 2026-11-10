@@ -3,6 +3,8 @@ package net.sigmabeta.sage.sample.ui.components.api
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -55,14 +57,19 @@ fun WideItem(
             .clickable { actionSink.sendAction(model.clickAction) }
             .background(MaterialTheme.colorScheme.surfaceContainer)
     ) {
-        CrossfadeImage(
-            sourceInfo = sourceInfo,
-            imagePlaceholder = model.imagePlaceholder,
-            contentDescription = null,
+        Box(
             modifier = Modifier
                 .fillMaxHeight()
                 .aspectRatio(1.0f)
-        )
+                .sharedImageBounds(sourceInfo, WideItemShape),
+        ) {
+            CrossfadeImage(
+                sourceInfo = sourceInfo,
+                imagePlaceholder = model.imagePlaceholder,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize().sharedImageElement(sourceInfo),
+            )
+        }
 
         TintedText(
             text = model.name,

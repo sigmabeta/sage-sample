@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.LCE
@@ -84,7 +85,11 @@ data class GridOfImagesState(
                                 ),
                                 imagePlaceholder = Icon.Person,
                                 clickAction = GridOfImagesAction.ItemClicked(
-                                    gridOfImagesContentId(item.id),
+                                    contentId = gridOfImagesContentId(item.id),
+                                    artwork = ContentArtworkSize(
+                                        width = GRID_OF_IMAGES_IMAGE_SIZE,
+                                        height = GRID_OF_IMAGES_IMAGE_SIZE,
+                                    ),
                                 ),
                             ),
                         )

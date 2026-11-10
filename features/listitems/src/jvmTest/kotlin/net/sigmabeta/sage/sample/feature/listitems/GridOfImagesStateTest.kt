@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.repository.GRID_OF_IMAGES_ITEM_COUNT
 import net.sigmabeta.sage.sample.repository.GRID_OF_IMAGES_OPERATION_NAME
@@ -72,8 +73,14 @@ class GridOfImagesStateTest {
         rows.forEach { row -> assertEquals(Icon.Person, row.imagePlaceholder) }
         assertEquals(
             listOf(
-                GridOfImagesAction.ItemClicked(ContentId("grid-of-images:11")),
-                GridOfImagesAction.ItemClicked(ContentId("grid-of-images:22")),
+                GridOfImagesAction.ItemClicked(
+                    contentId = ContentId("grid-of-images:11"),
+                    artwork = ContentArtworkSize(256, 256),
+                ),
+                GridOfImagesAction.ItemClicked(
+                    contentId = ContentId("grid-of-images:22"),
+                    artwork = ContentArtworkSize(256, 256),
+                ),
             ),
             rows.map { it.clickAction },
         )

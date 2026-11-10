@@ -33,13 +33,73 @@ data class ContentId(val value: String) {
 }
 
 /**
+ * The pixel size a surface requested its artwork at.
+ *
+ * It travels with a Content detail route so the destination can ask for the same image the row
+ * displayed — same seed (the ID) and same size, hence the same memory-cache entry — while its own
+ * hero request loads.
+ */
+data class ContentArtworkSize(val width: Int, val height: Int) {
+    init {
+        require(width in 1..MAX_EDGE && height in 1..MAX_EDGE) {
+            "Artwork size must be within 1..$MAX_EDGE px: ${width}x$height"
+        }
+    }
+
+    /** The route wire form, e.g. `256x256`. */
+    val value: String = "${width}x$height"
+
+    companion object {
+        private const val MAX_EDGE = 4096
+
+        /** Parses [value]'s wire form, or `null` when it is malformed or out of range. */
+        fun parse(value: String): ContentArtworkSize? {
+            val parts = value.split('x')
+            if (parts.size != 2) return null
+
+            val width = parts[0].toIntOrNull() ?: return null
+            val height = parts[1].toIntOrNull() ?: return null
+            return runCatching { ContentArtworkSize(width, height) }.getOrNull()
+        }
+    }
+}
+
+/** The query parameter that carries [ContentArtworkSize] on a Content detail route. */
+private const val ARTWORK_PARAMETER = "artwork"
+
+/**
  * The app route that opens Content detail for [id].
  *
  * This lives here, next to the destination's data contract, so every feature that emits the route
  * (Browse, List Items, List Items with Images, and later the home and search surfaces) shares one
  * encoding instead of inventing its own.
+ *
+ * [artwork] is the pixel size the originating row requested its own artwork at. It is a cache
+ * hint, not content: the detail's hero is seeded by [id], so the same seed at the row's size is
+ * exactly the row's image request, and the engine can serve it from memory while the hero's own
+ * (larger) request is in flight. Routes without it decode to `null` and simply miss that shortcut.
  */
-fun contentDetailRoute(id: ContentId): String = "$CONTENT_DETAIL_ROUTE/${id.value}"
+fun contentDetailRoute(id: ContentId, artwork: ContentArtworkSize? = null): String {
+    val path = "$CONTENT_DETAIL_ROUTE/${id.value}"
+    return if (artwork == null) path else "$path?$ARTWORK_PARAMETER=${artwork.value}"
+}
+
+/**
+ * The artwork size carried by a Content detail [route], or `null` when it carried none.
+ *
+ * Parsed from the query string that [contentDetailRoute] appends, so a route with no query — every
+ * hand-written deep link, and every browser URL — still opens the destination.
+ */
+fun contentDetailArtworkFromRoute(route: String): ContentArtworkSize? {
+    val query = route.substringAfter('?', missingDelimiterValue = "")
+    if (query.isEmpty()) return null
+
+    val value = query.split('&')
+        .firstOrNull { it.startsWith("$ARTWORK_PARAMETER=") }
+        ?.substringAfter('=')
+
+    return value?.let(ContentArtworkSize::parse)
+}
 
 /**
  * Decodes a Content detail route into its ID, or `null` when the route has no `content-detail/`
@@ -53,7 +113,7 @@ fun contentDetailIdFromRoute(route: String): ContentId? {
     val prefix = "$CONTENT_DETAIL_ROUTE/"
     if (!route.startsWith(prefix)) return null
 
-    return contentIdOrNull(route.removePrefix(prefix))
+    return contentIdOrNull(route.substringBefore('?').removePrefix(prefix))
 }
 
 /** Parses [value] into a [ContentId], or `null` when it is blank or outside the contract. */

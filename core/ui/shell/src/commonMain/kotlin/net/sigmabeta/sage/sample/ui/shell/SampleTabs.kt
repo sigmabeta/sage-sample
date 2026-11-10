@@ -1,12 +1,15 @@
 package net.sigmabeta.sage.sample.ui.shell
 
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.nav.SampleDestination
 import net.sigmabeta.sage.sample.nav.activeScreenFor
 import net.sigmabeta.sage.sample.nav.backActionFor
+import net.sigmabeta.sage.sample.ui.components.api.LocalScreenTransitionScope
 import net.sigmabeta.sage.sample.ui.components.api.text
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -92,8 +95,13 @@ private fun SampleTabContent(tab: SampleTab) {
 
         val screens = LocalSampleScreenContainer.current
         SlideTransition(navigator) { screen ->
-            screens.Content(screen) {
-                screen.Content()
+            // `this` is the screen's slot in the navigator's AnimatedContent: the scope the shared
+            // elements below use to know which transition they belong to. Both the outgoing and
+            // the incoming screen get their own, which is what lets an image morph between them.
+            CompositionLocalProvider(LocalScreenTransitionScope provides this) {
+                screens.Content(screen) {
+                    screen.Content()
+                }
             }
         }
     }
@@ -154,19 +162,20 @@ val LocalSampleBackHandler = staticCompositionLocalOf<SampleBackHandler> {
 /**
  * The [SampleScreen] for a destination the app can reach (top-level roots and pushed screens).
  *
- * Only the parameterized Content detail destination consumes [contentId]; for every other
- * destination it is ignored.
+ * Only the parameterized Content detail destination consumes [contentId] and [artworkSize]; for
+ * every other destination they are ignored.
  */
 internal fun screenFor(
     destination: SampleDestination,
     contentId: ContentId? = null,
+    artworkSize: ContentArtworkSize? = null,
 ): SampleScreen = when (destination) {
     SampleDestination.HOME -> HomeScreen
     SampleDestination.BROWSE -> BrowseScreen
     SampleDestination.LIST_ITEMS -> ListItemsScreen
     SampleDestination.LIST_ITEMS_WITH_IMAGES -> ListItemsWithImagesScreen
     SampleDestination.GRID_OF_IMAGES -> GridOfImagesScreen
-    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen(contentId)
+    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen(contentId, artworkSize)
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
 }

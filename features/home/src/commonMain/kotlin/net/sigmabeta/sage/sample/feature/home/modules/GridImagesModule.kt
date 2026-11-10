@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.home.modules
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.HomeItem
 
 import kotlinx.collections.immutable.toImmutableList
@@ -77,7 +78,10 @@ class GridImagesModule(
                             height = GRID_IMAGE_HEIGHT,
                         ),
                         imagePlaceholder = Icon.Album,
-                        clickAction = HomeAction.ItemClicked(homeContentId(id, item.id)),
+                        clickAction = HomeAction.ItemClicked(
+                            contentId = homeContentId(id, item.id),
+                            artwork = ContentArtworkSize(GRID_IMAGE_WIDTH, GRID_IMAGE_HEIGHT),
+                        ),
                         aspectRatio = GRID_IMAGE_ASPECT_RATIO,
                     )
                 }.toImmutableList(),

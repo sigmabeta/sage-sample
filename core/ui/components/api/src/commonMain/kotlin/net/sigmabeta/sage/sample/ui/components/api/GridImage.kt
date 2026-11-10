@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,7 +83,7 @@ private fun GridImageContent(
                 sourceInfo = sourceInfo,
                 imagePlaceholder = model.imagePlaceholder,
                 contentDescription = model.name,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().sharedImageElement(sourceInfo),
             )
 
             TintedText(
@@ -112,6 +113,7 @@ private fun GridImageContent(
         // a matching win.
         .then(if (gridCellOffscreenLayerEnabled) OffscreenCellLayer else Modifier)
         .clickable { actionSink.sendAction(model.clickAction) }
+        .sharedImageBounds(sourceInfo, GridCellShape)
 
     val maxWidthDp = model.maxWidthDp
     if (maxWidthDp != null) {
@@ -150,3 +152,6 @@ private val NameExtraTopPadding = 8.dp
 private val OffscreenCellLayer = Modifier.graphicsLayer {
     compositingStrategy = CompositingStrategy.Offscreen
 }
+
+/** Matches the grid cell's [ElevatedRoundRect] radius, so the overlay clip agrees with it. */
+private val GridCellShape = RoundedCornerShape(16.dp)

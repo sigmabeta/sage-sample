@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.search
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SearchResult
 
 import net.sigmabeta.sage.appcomm.LCE
@@ -115,7 +116,8 @@ data class SearchState(
             sourceInfo = imageSourceFor(result, query, SearchResultKind.LIST, LIST_IMAGE_SIZE),
             imagePlaceholder = Icon.Search,
             clickAction = SearchAction.ResultClicked(
-                searchContentId(query, SearchResultKind.LIST, result.id),
+                contentId = searchContentId(query, SearchResultKind.LIST, result.id),
+                artwork = ContentArtworkSize(LIST_IMAGE_SIZE, LIST_IMAGE_SIZE),
             ),
         )
     }
@@ -135,7 +137,8 @@ data class SearchState(
             sourceInfo = imageSourceFor(result, query, SearchResultKind.GRID, GRID_IMAGE_SIZE),
             imagePlaceholder = Icon.Album,
             clickAction = SearchAction.ResultClicked(
-                searchContentId(query, SearchResultKind.GRID, result.id),
+                contentId = searchContentId(query, SearchResultKind.GRID, result.id),
+                artwork = ContentArtworkSize(GRID_IMAGE_SIZE, GRID_IMAGE_SIZE),
             ),
         )
     }

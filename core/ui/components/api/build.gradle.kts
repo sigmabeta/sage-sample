@@ -28,6 +28,9 @@ kotlin {
 
                 implementation(libs.coil.kt.core)
                 implementation(libs.coil.kt.compose)
+                // `SingletonImageLoader`, the loader the apps install: the renderers read its
+                // memory cache to draw a handoff bitmap on the frame a screen first appears.
+                implementation(libs.coil.kt.meta)
                 // `platformImageModel` hands Coil an okio Path for raw filesystem paths.
                 implementation(libs.okio)
             }

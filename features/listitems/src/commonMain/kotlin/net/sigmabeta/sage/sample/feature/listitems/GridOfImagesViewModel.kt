@@ -59,7 +59,7 @@ class GridOfImagesViewModel(
         when (action) {
             is GridOfImagesAction.ItemClicked -> emitEvent(
                 SageEvent.NavigateTo(
-                    destination = contentDetailRoute(action.contentId),
+                    destination = contentDetailRoute(action.contentId, action.artwork),
                     source = "GridOfImagesViewModel",
                 ),
             )

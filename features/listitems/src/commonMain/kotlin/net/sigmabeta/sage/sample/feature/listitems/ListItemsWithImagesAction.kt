@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SampleItem
 
 import net.sigmabeta.sage.appcomm.SageAction
@@ -10,5 +11,9 @@ import net.sigmabeta.sage.appcomm.SageAction
  * destinations: the app forwards the same tap, but each view model decides what it means.
  */
 sealed class ListItemsWithImagesAction : SageAction() {
-    data class ItemClicked(val item: SampleItem) : ListItemsWithImagesAction()
+    /** [artwork] is the row's own image size, carried so the detail can reuse its cached bitmap. */
+    data class ItemClicked(
+        val item: SampleItem,
+        val artwork: ContentArtworkSize? = null,
+    ) : ListItemsWithImagesAction()
 }

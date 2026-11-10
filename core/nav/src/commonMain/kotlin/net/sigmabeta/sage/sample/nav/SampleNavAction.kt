@@ -1,7 +1,9 @@
 package net.sigmabeta.sage.sample.nav
 
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.models.contentDetailArtworkFromRoute
 import net.sigmabeta.sage.sample.models.contentDetailIdFromRoute
 
 /**
@@ -19,10 +21,13 @@ sealed interface SampleNavAction {
      *
      * [contentId] is set only for the parameterized Content detail destination; a `null` value
      * there means the route had no usable ID and the screen renders its not-found state.
+     * [artworkSize] is the size the originating row requested its artwork at, when the route
+     * carried one: the detail uses it to reuse that cached image instead of waiting for its own.
      */
     data class Push(
         val destination: SampleDestination,
         val contentId: ContentId? = null,
+        val artworkSize: ContentArtworkSize? = null,
     ) : SampleNavAction
 
     /** Back: apply the shared [backActionFor] policy rather than popping a navigator directly. */
@@ -53,6 +58,11 @@ private fun navActionForRoute(route: String): SampleNavAction? {
             destination = destination,
             contentId = if (destination == SampleDestination.CONTENT_DETAIL) {
                 contentDetailIdFromRoute(route)
+            } else {
+                null
+            },
+            artworkSize = if (destination == SampleDestination.CONTENT_DETAIL) {
+                contentDetailArtworkFromRoute(route)
             } else {
                 null
             },
