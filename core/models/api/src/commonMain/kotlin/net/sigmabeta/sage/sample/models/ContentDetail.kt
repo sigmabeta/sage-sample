@@ -8,7 +8,8 @@ import net.sigmabeta.sage.ui.Icon
  * The shape follows a detail screen — the item itself (title and hero art), a set of descriptive
  * fields, related items, parts, and call-to-action rows — but every label and value is generated
  * from a predetermined seed rather than a fixed vocabulary. The sample has no library backend, so
- * [DemoContentDetailRepository] builds it.
+ * [DemoContentDetailRepository] builds it. [title] is the originating surface row's name when
+ * [id] came from one, so the detail matches the row the user tapped.
  */
 data class ContentDetail(
     val id: ContentId,

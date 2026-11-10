@@ -392,8 +392,12 @@ through its own loading shape (`BIG_IMAGE`, no placeholder for the CTAs/details,
 scroller, `TEXT_CAPTION_IMAGE` for the items), and an error replaces the screen with a single
 error row. The demo `ContentDetailRepository` (`:core:repository:demo`) builds the item from a
 seed derived from the ID, so the content is random-looking but identical on every visit — the
-"randomized content, predetermined seed" contract. The only fixed text on the screen is section
-chrome and the click snackbar; titles, labels, CTA text, names and captions are generated.
+"randomized content, predetermined seed" contract. When the ID came from a row, the detail's title
+and hero artwork reuse that row's own name and artwork seed, so tapping a list row, grid cell, Home
+tile or search result opens the item the user actually saw. Related rows and content parts embed
+their parent ID (for example `content-detail:related:list-items:7:1`), so drilling into one also
+keeps its name and thumbnail. The only fixed text on the screen is section chrome and the click
+snackbar; titles, labels, CTA text, names and captions are generated.
 
 Search keeps the same feature-state / app-rendering split, with a search shell: the
 shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim

@@ -18,7 +18,7 @@ plugins {
 | `SampleItem` | List Items repositories, states |
 | `SearchResult` | Search repository, state, generator |
 | `ContentDetail`, `ContentDetailField`, `ContentAction`, `RelatedContent`, `ContentItem` | Content detail repository/state, generator |
-| `ContentId` + route codec (`contentDetailRoute`, `contentDetailIdFromRoute`, `contentIdOrNull`, `isKnownContentId`, `DEFAULT_CONTENT_ID`, `CONTENT_DETAIL_ROUTE`) | every feature that links to detail, `:core:nav` |
+| `ContentId` + route codec (`contentDetailRoute`, `contentDetailIdFromRoute`, `contentIdOrNull`, `relatedContentId`, `contentItemContentId`, `contentHeroImageSeed`, `isKnownContentId`, `DEFAULT_CONTENT_ID`, `CONTENT_DETAIL_ROUTE`) | every feature that links to detail, `:core:nav` |
 
 The route codec moved with `ContentId`: it is the destination's data contract, not a
 content-detail-feature detail, and `:core:nav` must decode a route without depending on a feature.
@@ -27,8 +27,9 @@ real domain objects, rather than a parallel fake vocabulary.
 
 ## Tests
 
-`ContentDetailRouteTest` pins `ContentId` validation, route encode/decode, the not-found decode, and
-`isKnownContentId`'s accepted namespaces.
+`ContentDetailRouteTest` pins `ContentId` validation, route encode/decode, the not-found decode,
+the parent-qualified related/part IDs, the source-matched artwork seeds, and `isKnownContentId`'s
+accepted namespaces.
 
 ## Module facts
 

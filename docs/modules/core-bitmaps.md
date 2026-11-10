@@ -37,8 +37,9 @@ generated://<seed>?width=<px>&height=<px>
 ```
 
 `seed` is any stable string (an ID, a query+kind pair, a content ID). Features namespace their
-seeds (`home/…`, `search/…`, `content-detail/hero/…`) so different surfaces get different art.
-Non-positive or malformed size parameters are ignored.
+seeds (`home/…`, `search/…`, `list-items-with-images/…`, `grid-of-images/…`) so different surfaces
+get different art; Content detail reuses the source surface's seed so its hero is the tapped row's
+artwork. Non-positive or malformed size parameters are ignored.
 
 ## Using it
 

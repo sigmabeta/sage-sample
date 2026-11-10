@@ -162,11 +162,18 @@ class ContentDetailViewModelTest {
         val events = collectEvents(viewModel)
         advanceUntilIdle()
 
-        viewModel.sendAction(ContentDetailAction.ItemClicked(CONTENT_DETAIL_FIXTURE.items[0]))
+        viewModel.sendAction(
+            ContentDetailAction.ItemClicked(
+                ContentId("content-detail:item:list-items:1:1"),
+            ),
+        )
         advanceUntilIdle()
 
         val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
-        assertEquals("content-detail/content-detail:item:1", navigation.destination)
+        assertEquals(
+            "content-detail/content-detail:item:list-items:1:1",
+            navigation.destination,
+        )
         assertEquals("ContentDetailViewModel", navigation.source)
         assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }
@@ -177,11 +184,18 @@ class ContentDetailViewModelTest {
         val events = collectEvents(viewModel)
         advanceUntilIdle()
 
-        viewModel.sendAction(ContentDetailAction.RelatedClicked(CONTENT_DETAIL_FIXTURE.related[0]))
+        viewModel.sendAction(
+            ContentDetailAction.RelatedClicked(
+                ContentId("content-detail:related:list-items:1:1"),
+            ),
+        )
         advanceUntilIdle()
 
         val navigation = events.filterIsInstance<SageEvent.NavigateTo>().single()
-        assertEquals("content-detail/content-detail:related:1", navigation.destination)
+        assertEquals(
+            "content-detail/content-detail:related:list-items:1:1",
+            navigation.destination,
+        )
         assertEquals("ContentDetailViewModel", navigation.source)
         assertTrue(events.none { it is SageEvent.ShowSnackbar })
     }

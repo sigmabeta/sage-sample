@@ -38,9 +38,10 @@ import net.sigmabeta.sage.sample.repository.ContentDetailRepository
  * `InitWithString` cancels the previous load, so an old ID's late emission cannot overwrite the
  * new screen state.
  *
- * Related rows and content parts address their own detail IDs and push another detail, so Back
- * returns through the chain. The hero and generated call-to-action rows have no destination and
- * still report their text in a snackbar.
+ * Related rows and content parts address their own detail IDs (parent-qualified, so the opened
+ * detail keeps that row's name and artwork) and push another detail, so Back returns through the
+ * chain. The hero and generated call-to-action rows have no destination and still report their
+ * text in a snackbar.
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -82,13 +83,9 @@ class ContentDetailViewModel(
 
             is ContentDetailAction.CtaClicked -> showClickedName(action.label)
 
-            is ContentDetailAction.ItemClicked -> navigateTo(
-                contentItemContentId(action.item.id),
-            )
+            is ContentDetailAction.ItemClicked -> navigateTo(action.contentId)
 
-            is ContentDetailAction.RelatedClicked -> navigateTo(
-                relatedContentId(action.related.id),
-            )
+            is ContentDetailAction.RelatedClicked -> navigateTo(action.contentId)
 
             else -> Unit
         }

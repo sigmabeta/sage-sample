@@ -10,7 +10,10 @@ import net.sigmabeta.sage.sample.models.HomeItem
 import net.sigmabeta.sage.sample.models.RelatedContent
 import net.sigmabeta.sage.sample.models.SampleItem
 import net.sigmabeta.sage.sample.models.SearchResult
+import net.sigmabeta.sage.sample.models.contentItemContentId
 import net.sigmabeta.sage.sample.models.isKnownContentId
+import net.sigmabeta.sage.sample.models.relatedContentId
+import net.sigmabeta.sage.sample.repository.GRID_OF_IMAGES_ITEM_COUNT
 import net.sigmabeta.sage.sample.repository.MAX_SEARCH_RESULT_COUNT
 import net.sigmabeta.sage.sample.repository.MIN_SEARCH_QUERY_LENGTH
 import net.sigmabeta.sage.sample.repository.MIN_SEARCH_RESULT_COUNT
@@ -49,6 +52,9 @@ object DemoContent {
     fun searchResults(query: String, kind: SearchResultKind): List<SearchResult> =
         searchResultsFor(query, kind)
 
+    /** The results for a [searchSeedFor] seed; the route ID carries the seed rather than the query. */
+    fun searchResultsForSeed(seed: Int): List<SearchResult> = searchResultsForSeedImpl(seed)
+
     private fun homeCatalog(seed: String): List<HomeItem> {
         val generator = StringGenerator(Random(seed.hashCode().toLong()))
         return List(HOME_CATALOG_SIZE) { index ->
@@ -68,16 +74,22 @@ private const val HOME_CATALOG_SIZE = 18
  * The ID seeds the generator rather than a fixed constant: the content is still "randomized
  * content, predetermined seed" per address, so a demo screenshot and a re-push of the same link
  * always show the same item while a different link shows a different one.
+ *
+ * For an ID produced by a content surface, the detail's title is that surface's own item name
+ * (`SampleItem.name`, `HomeItem.title`, or `SearchResult.name`), so tapping a row opens a detail
+ * that matches it. The hero artwork is derived from the same ID in
+ * [net.sigmabeta.sage.sample.models.contentHeroImageSeed].
  */
 private fun demoContentDetail(contentId: ContentId): ContentDetail? {
     if (!isKnownContentId(contentId)) return null
 
     val random = Random(contentIdSeed(contentId))
     val generator = StringGenerator(random)
+    val title = contentTitleFor(contentId) ?: generator.generateTitle()
 
     return ContentDetail(
         id = contentId,
-        title = generator.generateTitle(),
+        title = title,
         details = List(DETAILS_COUNT) {
             ContentDetailField(
                 label = generator.generateTitle(),
@@ -91,20 +103,87 @@ private fun demoContentDetail(contentId: ContentId): ContentDetail? {
             )
         },
         related = List(RELATED_COUNT) { index ->
+            val relatedId = index + 1L
             RelatedContent(
-                id = index + 1L,
-                name = generator.generateTitle(),
+                id = relatedId,
+                // Seed the row from its own ID so opening it reproduces the same name.
+                name = generatedTitleFor(relatedContentId(contentId, relatedId)),
             )
         },
         items = List(ITEM_COUNT) { index ->
+            val itemId = index + 1L
+            val itemGenerator = StringGenerator(
+                Random(contentIdSeed(contentItemContentId(contentId, itemId))),
+            )
             ContentItem(
-                id = index + 1L,
-                name = generator.generateTitle(),
-                caption = generator.generateName(),
+                id = itemId,
+                name = itemGenerator.generateTitle(),
+                caption = itemGenerator.generateName(),
             )
         },
     )
 }
+
+/**
+ * The name shown by the surface that produced [contentId], or `null` when the ID is not backed by
+ * one of the sample's generated rows (Browse's default, a malformed ID, or a stale link).
+ */
+private fun contentTitleFor(contentId: ContentId): String? {
+    val value = contentId.value
+    return when {
+        value.startsWith("list-items-with-images:") -> sampleItemName(value)
+
+        value.startsWith("list-items:") -> sampleItemName(value)
+
+        value.startsWith("grid-of-images:") -> sampleItemName(value)
+
+        value.startsWith("home:") -> homeItemName(value)
+
+        value.startsWith("search:") -> searchResultName(value)
+
+        value.startsWith("content-detail:related:") ||
+            value.startsWith("content-detail:item:") -> generatedTitleFor(contentId)
+
+        else -> null
+    }
+}
+
+/** The `SampleItem.name` for `<namespace>:<id>`; both list screens and the grid share the catalog. */
+private fun sampleItemName(value: String): String? {
+    val itemId = value.substringAfter(':').toLongOrNull()
+        ?.takeIf { it in 1..GRID_OF_IMAGES_ITEM_COUNT.toLong() }
+        ?: return null
+
+    return demoSampleItems(itemId.toInt()).lastOrNull()?.name
+}
+
+/** The `HomeItem.title` for `home:<module-id>:<item-id>`. */
+private fun homeItemName(value: String): String? {
+    val parts = value.removePrefix("home:").split(':')
+    if (parts.size < 2) return null
+
+    val itemId = parts.last().toLongOrNull()?.takeIf { it > 0 } ?: return null
+    val moduleId = parts.dropLast(1).joinToString(":")
+    if (moduleId.isEmpty()) return null
+
+    return DemoContent.homeItem(seed = moduleId, index = itemId.toInt() - 1)?.title
+}
+
+/** The `SearchResult.name` for `search:<list|grid>:<seed>:<result-id>`. */
+private fun searchResultName(value: String): String? {
+    val parts = value.split(':')
+    if (parts.size != 4 || parts[1] !in SEARCH_ROUTE_SEGMENTS) return null
+
+    val seed = parts[2].toIntOrNull() ?: return null
+    val resultId = parts[3].toLongOrNull() ?: return null
+
+    return searchResultsForSeedImpl(seed).firstOrNull { it.id == resultId }?.name
+}
+
+private fun generatedTitleFor(contentId: ContentId): String =
+    StringGenerator(Random(contentIdSeed(contentId))).generateTitle()
+
+private val SEARCH_ROUTE_SEGMENTS = setOf("list", "grid")
 
 /**
  * A stable seed derived from the ID's text.
@@ -231,7 +310,17 @@ internal fun searchResultsFor(query: String, kind: SearchResultKind): List<Searc
         return emptyList()
     }
 
-    val random = Random(searchSeedFor(normalized, kind).toLong())
+    return searchResultsForSeedImpl(searchSeedFor(normalized, kind))
+}
+
+/**
+ * The rows for a [searchSeedFor] seed.
+ *
+ * Search routes carry the seed rather than the query text, so a detail can reproduce the exact
+ * result set a row came from without re-running the search box.
+ */
+private fun searchResultsForSeedImpl(seed: Int): List<SearchResult> {
+    val random = Random(seed.toLong())
     val generator = StringGenerator(random)
     val resultCount = MIN_SEARCH_RESULT_COUNT +
         random.nextInt(MAX_SEARCH_RESULT_COUNT - MIN_SEARCH_RESULT_COUNT + 1)

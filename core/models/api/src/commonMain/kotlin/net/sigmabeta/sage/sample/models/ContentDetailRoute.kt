@@ -61,6 +61,126 @@ fun contentIdOrNull(value: String): ContentId? =
     if (isValidContentId(value)) ContentId(value) else null
 
 /**
+ * The ID of related-content row [relatedId] shown by the detail [parentId].
+ *
+ * The parent is embedded, not implied: tapping a related row opens a detail whose name and artwork
+ * must match the row that produced it, and a route carries only this one ID.
+ */
+fun relatedContentId(parentId: ContentId, relatedId: Long): ContentId =
+    ContentId("content-detail:related:${parentId.value}:$relatedId")
+
+/** The ID of content-part row [itemId] shown by the detail [parentId]. */
+fun contentItemContentId(parentId: ContentId, itemId: Long): ContentId =
+    ContentId("content-detail:item:${parentId.value}:$itemId")
+
+/**
+ * The `generated://` artwork seed for [contentId]'s detail hero.
+ *
+ * A detail opened from a row uses the same seed as that row, so the hero shows the same artwork
+ * (at a different resolution) as the thumbnail the user tapped. Detail-owned rows are seeded by
+ * their parent as well, keeping equal numeric row ids in different details from sharing artwork.
+ */
+fun contentHeroImageSeed(contentId: ContentId): String {
+    contentDetailRow(contentId)?.let { row ->
+        return when (row.kind) {
+            ContentDetailRowKind.RELATED -> contentDetailRelatedImageSeed(row.parentId, row.rowId)
+            ContentDetailRowKind.ITEM -> contentDetailItemImageSeed(row.parentId, row.rowId)
+        }
+    }
+
+    val value = contentId.value
+    return when {
+        value.startsWith("list-items-with-images:") ->
+            "list-items-with-images/${value.substringAfter(':')}"
+
+        value.startsWith("list-items:") -> "list-items/${value.substringAfter(':')}"
+
+        value.startsWith("grid-of-images:") -> "grid-of-images/${value.substringAfter(':')}"
+
+        value.startsWith("home:") -> homeImageSeed(value) ?: fallbackHeroSeed(value)
+
+        value.startsWith("search:") -> searchImageSeed(value) ?: fallbackHeroSeed(value)
+
+        value.startsWith("browse:") -> "browse/${value.substringAfter(':')}"
+
+        else -> fallbackHeroSeed(value)
+    }
+}
+
+/** The artwork seed for related row [relatedId] of [parentId]; the row's own hero reuses it. */
+fun contentDetailRelatedImageSeed(parentId: ContentId, relatedId: Long): String =
+    "content-detail/related/${parentId.value}/$relatedId"
+
+/** The artwork seed for content-part row [itemId] of [parentId]; the row's own hero reuses it. */
+fun contentDetailItemImageSeed(parentId: ContentId, itemId: Long): String =
+    "content-detail/item/${parentId.value}/$itemId"
+
+private enum class ContentDetailRowKind(val segment: String) {
+    RELATED("related"),
+    ITEM("item"),
+}
+
+private data class ContentDetailRow(
+    val parentId: ContentId,
+    val kind: ContentDetailRowKind,
+    val rowId: Long,
+)
+
+/**
+ * Parses `content-detail:<kind>:<parent-id>:<row-id>` from the right: the parent is itself a
+ * content ID and may contain colons, so only the last separator before the row id is structural.
+ */
+private fun contentDetailRow(contentId: ContentId): ContentDetailRow? {
+    val value = contentId.value
+    val prefix = "content-detail:"
+    if (!value.startsWith(prefix)) return null
+
+    val remainder = value.removePrefix(prefix)
+    val kind = ContentDetailRowKind.entries.firstOrNull {
+        remainder.startsWith("${it.segment}:")
+    } ?: return null
+
+    val parentAndRow = remainder.removePrefix("${kind.segment}:")
+    val rowId = parentAndRow.substringAfterLast(':', missingDelimiterValue = "")
+        .toLongOrNull()
+        ?.takeIf { it > 0 }
+        ?: return null
+    val parentValue = parentAndRow.substringBeforeLast(':', missingDelimiterValue = "")
+    if (parentValue.isEmpty()) return null
+
+    return ContentDetailRow(
+        parentId = contentIdOrNull(parentValue) ?: return null,
+        kind = kind,
+        rowId = rowId,
+    )
+}
+
+private fun homeImageSeed(value: String): String? {
+    val parts = value.removePrefix("home:").split(':')
+    if (parts.size < 2) return null
+
+    val itemId = parts.last().toLongOrNull()?.takeIf { it > 0 } ?: return null
+    val moduleId = parts.dropLast(1).joinToString(":")
+    if (moduleId.isEmpty()) return null
+
+    return "home/$moduleId/$itemId"
+}
+
+private fun searchImageSeed(value: String): String? {
+    val parts = value.split(':')
+    if (parts.size != 4 || parts[1] !in SEARCH_ROUTE_SEGMENTS) return null
+
+    val seed = parts[2].toIntOrNull() ?: return null
+    val resultId = parts[3].toLongOrNull()?.takeIf { it > 0 } ?: return null
+
+    return "search/$seed/$resultId"
+}
+
+private fun fallbackHeroSeed(value: String): String = "content-detail/hero/$value"
+
+private val SEARCH_ROUTE_SEGMENTS = setOf("list", "grid")
+
+/**
  * Whether [id] names a content surface the sample knows how to generate.
  *
  * Recognized IDs are namespaced by the surface that produced them (`list-items:7`,

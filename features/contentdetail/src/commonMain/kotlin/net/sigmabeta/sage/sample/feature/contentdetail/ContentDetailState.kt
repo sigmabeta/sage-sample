@@ -3,6 +3,11 @@ import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.models.ContentDetailField
 import net.sigmabeta.sage.sample.models.ContentDetail
+import net.sigmabeta.sage.sample.models.contentDetailItemImageSeed
+import net.sigmabeta.sage.sample.models.contentDetailRelatedImageSeed
+import net.sigmabeta.sage.sample.models.contentHeroImageSeed
+import net.sigmabeta.sage.sample.models.contentItemContentId
+import net.sigmabeta.sage.sample.models.relatedContentId
 
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
@@ -182,9 +187,11 @@ data class ContentDetailState(
                     WideItemListModel(
                         dataId = ID_PREFIX_RELATED + related.id,
                         name = related.name,
-                        sourceInfo = relatedSourceFor(related.id),
+                        sourceInfo = relatedSourceFor(parentId = data.id, relatedId = related.id),
                         imagePlaceholder = Icon.Album,
-                        clickAction = ContentDetailAction.RelatedClicked(related),
+                        clickAction = ContentDetailAction.RelatedClicked(
+                            relatedContentId(parentId = data.id, relatedId = related.id),
+                        ),
                     )
                 }.toImmutableList(),
             ),
@@ -209,9 +216,11 @@ data class ContentDetailState(
                 dataId = ID_PREFIX_ITEMS + item.id,
                 name = item.name,
                 caption = item.caption,
-                sourceInfo = itemSourceFor(item.id),
+                sourceInfo = itemSourceFor(parentId = data.id, itemId = item.id),
                 imagePlaceholder = Icon.Person,
-                clickAction = ContentDetailAction.ItemClicked(item),
+                clickAction = ContentDetailAction.ItemClicked(
+                    contentItemContentId(parentId = data.id, itemId = item.id),
+                ),
             )
         }
     }
@@ -236,18 +245,17 @@ data class ContentDetailState(
 /**
  * The deterministic hero request for [contentId].
  *
- * The URL's path is the seed and its query only selects the rendered size, so the artwork is
- * stable across app runs and independent of the image's display size. The [HERO_SEED_PREFIX]
- * keeps this screen's seeds distinct from the list, grid, search and home artwork.
+ * The seed comes from [contentHeroImageSeed], so a detail opened from a row reuses that row's
+ * artwork. The query only selects the rendered size, so the same seed renders the same art for
+ * the list thumbnail and the detail hero.
  */
 internal fun heroSourceFor(
     contentId: ContentId,
-    seedPrefix: String = HERO_SEED_PREFIX,
     imageWidth: Int = HERO_IMAGE_WIDTH,
     imageHeight: Int = HERO_IMAGE_HEIGHT,
 ): SourceInfo = SourceInfo(
     GeneratedImageFetcher.urlFor(
-        seed = "$seedPrefix/${contentId.value}",
+        seed = contentHeroImageSeed(contentId),
         width = imageWidth,
         height = imageHeight,
     ),
@@ -255,12 +263,12 @@ internal fun heroSourceFor(
 
 /** The deterministic thumbnail request for a related item. */
 internal fun relatedSourceFor(
+    parentId: ContentId,
     relatedId: Long,
-    seedPrefix: String = RELATED_SEED_PREFIX,
     imageSize: Int = RELATED_IMAGE_SIZE,
 ): SourceInfo = SourceInfo(
     GeneratedImageFetcher.urlFor(
-        seed = "$seedPrefix/$relatedId",
+        seed = contentDetailRelatedImageSeed(parentId, relatedId),
         width = imageSize,
         height = imageSize,
     ),
@@ -268,20 +276,16 @@ internal fun relatedSourceFor(
 
 /** The deterministic thumbnail request for a content part. */
 internal fun itemSourceFor(
+    parentId: ContentId,
     itemId: Long,
-    seedPrefix: String = ITEM_SEED_PREFIX,
     imageSize: Int = ITEM_IMAGE_SIZE,
 ): SourceInfo = SourceInfo(
     GeneratedImageFetcher.urlFor(
-        seed = "$seedPrefix/$itemId",
+        seed = contentDetailItemImageSeed(parentId, itemId),
         width = imageSize,
         height = imageSize,
     ),
 )
-
-private const val HERO_SEED_PREFIX = "content-detail/hero"
-private const val RELATED_SEED_PREFIX = "content-detail/related"
-private const val ITEM_SEED_PREFIX = "content-detail/item"
 
 /**
  * The hero's request size. It is not part of the seed; the renderer draws the cover at its 3:4

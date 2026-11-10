@@ -24,9 +24,9 @@ browser; the browser uses `:core:repository:remote` instead.
 | Function | Result |
 |---|---|
 | `homeItemCount`, `homeItem`, `homeGrid` | 18 seeded Home items per module seed |
-| `contentDetail(ContentId)` | Full detail seeded from a 64-bit FNV hash of the ID; `null` for an unknown namespace |
+| `contentDetail(ContentId)` | Full detail seeded from a 64-bit FNV hash of the ID; its title is the source row's own name when the ID came from a surface; `null` for an unknown namespace |
 | `sampleItems(offset, limit, total)` | A window of the seeded List Items catalog |
-| `searchResults(query, kind)` | Deterministic results seeded by the normalized query + kind |
+| `searchResults(query, kind)` / `searchResultsForSeed(seed)` | Deterministic results seeded by the normalized query + kind, or by the seed a route carries |
 
 The same seed produces the same rows on Android, desktop and the server. The Settings demo outcome
 (content/empty/error) is applied by the repository wrappers, not by `DemoContent`, so the server

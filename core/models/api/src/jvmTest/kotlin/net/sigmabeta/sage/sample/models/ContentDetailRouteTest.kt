@@ -39,7 +39,8 @@ class ContentDetailRouteTest {
             "list-items:7",
             "list-items-with-images:25",
             "grid-of-images:1",
-            "content-detail:related:4",
+            "content-detail:related:list-items:7:4",
+            "content-detail:item:grid-of-images:1:2",
             "browse:featured",
         ).forEach { value ->
             val id = ContentId(value)
@@ -56,14 +57,95 @@ class ContentDetailRouteTest {
             "search:list:-123456:7",
             "search:grid:-123456:7",
             "grid-of-images:7",
-            "content-detail:related:7",
-            "content-detail:item:7",
+            "content-detail:related:list-items:7:1",
+            "content-detail:item:list-items:7:1",
             "list-items:7",
             "list-items-with-images:7",
         ).map(::ContentId)
 
         ids.forEach { assertTrue("$it must name a known surface", isKnownContentId(it)) }
         assertEquals(ids.size, ids.map { contentDetailRoute(it) }.toSet().size)
+    }
+
+    @Test
+    fun `a detail row id embeds the parent and its own row id`() {
+        val parent = ContentId("list-items:7")
+
+        assertEquals(
+            ContentId("content-detail:related:list-items:7:1"),
+            relatedContentId(parent, relatedId = 1),
+        )
+        assertEquals(
+            ContentId("content-detail:item:list-items:7:2"),
+            contentItemContentId(parent, itemId = 2),
+        )
+    }
+
+    @Test
+    fun `a detail row keeps its parent's route identity when nested`() {
+        val parent = ContentId("content-detail:related:list-items:7:1")
+
+        assertEquals(
+            ContentId("content-detail:item:content-detail:related:list-items:7:1:2"),
+            contentItemContentId(parent, itemId = 2),
+        )
+    }
+
+    @Test
+    fun `hero artwork reuses the source row's seed`() {
+        assertEquals("list-items/7", contentHeroImageSeed(ContentId("list-items:7")))
+        assertEquals(
+            "list-items-with-images/7",
+            contentHeroImageSeed(ContentId("list-items-with-images:7")),
+        )
+        assertEquals(
+            "grid-of-images/7",
+            contentHeroImageSeed(ContentId("grid-of-images:7")),
+        )
+        assertEquals(
+            "home/big_image_1/5",
+            contentHeroImageSeed(ContentId("home:big_image_1:5")),
+        )
+        assertEquals(
+            "search/-123456/3",
+            contentHeroImageSeed(ContentId("search:list:-123456:3")),
+        )
+    }
+
+    @Test
+    fun `a detail row hero reuses the row's thumbnail seed`() {
+        val parent = ContentId("list-items:7")
+
+        assertEquals(
+            "content-detail/related/list-items:7/1",
+            contentHeroImageSeed(relatedContentId(parent, relatedId = 1)),
+        )
+        assertEquals(
+            "content-detail/item/list-items:7/2",
+            contentHeroImageSeed(contentItemContentId(parent, itemId = 2)),
+        )
+    }
+
+    @Test
+    fun `a nested detail row keeps the whole parent id in its artwork seed`() {
+        val parent = ContentId("content-detail:related:list-items:7:1")
+
+        assertEquals(
+            "content-detail/item/content-detail:related:list-items:7:1/2",
+            contentHeroImageSeed(contentItemContentId(parent, itemId = 2)),
+        )
+    }
+
+    @Test
+    fun `browse and unrecognized ids keep a deterministic hero`() {
+        assertEquals(
+            "browse/featured",
+            contentHeroImageSeed(DEFAULT_CONTENT_ID),
+        )
+        assertEquals(
+            "content-detail/hero/stale-link:42",
+            contentHeroImageSeed(ContentId("stale-link:42")),
+        )
     }
 
     @Test

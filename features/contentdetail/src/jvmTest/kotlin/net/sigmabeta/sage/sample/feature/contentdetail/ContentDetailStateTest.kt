@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
 import net.sigmabeta.sage.sample.models.ContentDetailField
+import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.repository.CONTENT_DETAIL_OPERATION_NAME
 
 import net.sigmabeta.sage.appcomm.LCE
@@ -110,7 +111,7 @@ class ContentDetailStateTest {
             .single() as HeroImageListModel
 
         assertEquals(
-            "generated://content-detail/hero/list-items:1?width=528&height=704",
+            "generated://list-items/1?width=528&height=704",
             hero.sourceInfo.info,
         )
         assertEquals(CONTENT_DETAIL_FIXTURE.title, hero.contentDescription)
@@ -190,15 +191,19 @@ class ContentDetailStateTest {
         assertEquals(listOf("Alpha", "Beta"), items.map { it.name })
         assertEquals(
             listOf(
-                "generated://content-detail/related/1?width=128&height=128",
-                "generated://content-detail/related/2?width=128&height=128",
+                "generated://content-detail/related/list-items:1/1?width=128&height=128",
+                "generated://content-detail/related/list-items:1/2?width=128&height=128",
             ),
             items.map { it.sourceInfo.info },
         )
         assertEquals(
             listOf(
-                ContentDetailAction.RelatedClicked(CONTENT_DETAIL_FIXTURE.related[0]),
-                ContentDetailAction.RelatedClicked(CONTENT_DETAIL_FIXTURE.related[1]),
+                ContentDetailAction.RelatedClicked(
+                    ContentId("content-detail:related:list-items:1:1"),
+                ),
+                ContentDetailAction.RelatedClicked(
+                    ContentId("content-detail:related:list-items:1:2"),
+                ),
             ),
             items.map { it.clickAction },
         )
@@ -221,16 +226,20 @@ class ContentDetailStateTest {
         assertEquals(listOf("Ann", "Bob"), rows.map { it.caption })
         assertEquals(
             listOf(
-                "generated://content-detail/item/1?width=128&height=128",
-                "generated://content-detail/item/2?width=128&height=128",
+                "generated://content-detail/item/list-items:1/1?width=128&height=128",
+                "generated://content-detail/item/list-items:1/2?width=128&height=128",
             ),
             rows.map { it.sourceInfo.info },
         )
         rows.forEach { row -> assertEquals(Icon.Person, row.imagePlaceholder) }
         assertEquals(
             listOf(
-                ContentDetailAction.ItemClicked(CONTENT_DETAIL_FIXTURE.items[0]),
-                ContentDetailAction.ItemClicked(CONTENT_DETAIL_FIXTURE.items[1]),
+                ContentDetailAction.ItemClicked(
+                    ContentId("content-detail:item:list-items:1:1"),
+                ),
+                ContentDetailAction.ItemClicked(
+                    ContentId("content-detail:item:list-items:1:2"),
+                ),
             ),
             rows.map { it.clickAction },
         )

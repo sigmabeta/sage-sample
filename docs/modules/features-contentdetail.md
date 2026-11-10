@@ -23,6 +23,11 @@ Images and Search all navigate through it. It lives with `ContentId` in `:core:m
 - `contentDetailRoute(id)` → `content-detail/<id>`.
 - `contentDetailIdFromRoute(route)` → `ContentId?`. A route under the prefix with a bad payload still
   opens the screen (not-found state), rather than being ignored.
+- `relatedContentId(parentId, relatedId)` / `contentItemContentId(parentId, itemId)` embed the
+  parent detail in a row's ID, so nested detail navigation keeps the row's identity.
+- `contentHeroImageSeed(id)` maps a surface ID to the same `generated://` seed that surface used
+  for its thumbnail. `contentDetailRelatedImageSeed` / `contentDetailItemImageSeed` do the same
+  for the detail's own rows.
 - `isKnownContentId(id)` — whether the demo repository can generate content for the ID's namespace
   (`home`, `browse`, `search`, `list-items`, `list-items-with-images`, `grid-of-images`,
   `content-detail`).
@@ -52,10 +57,15 @@ An `LCE.Content(null)` payload is the explicit **not-found** state and renders o
 
 `ContentDetailRepository.load(contentId): Flow<LCE<ContentDetail?>>`.
 `DemoContentDetailRepository` generates from an FNV-1a 64-bit seed of the ID, so the same ID
-reproduces the same content on every visit; unknown IDs return `null`.
+reproduces the same content on every visit; unknown IDs return `null`. For IDs produced by a
+surface row, the generated title is that row's own name (`SampleItem.name`, `HomeItem.title` or
+`SearchResult.name`), so the detail matches what the user tapped.
 
-Artwork URLs are built with `GeneratedImageFetcher.urlFor` and namespaced seeds
-(`content-detail/hero/…`, `content-detail/related/…`, `content-detail/item/…`).
+Artwork URLs are built with `GeneratedImageFetcher.urlFor` and seeds derived from the source
+surface (`list-items/<id>`, `list-items-with-images/<id>`, `grid-of-images/<id>`,
+`home/<module>/<item>`, `search/<seed>/<id>`), so the hero is the same art as the tapped thumbnail
+at a larger size. Detail-owned rows use parent-qualified seeds
+(`content-detail/related/<parent>/<id>`, `content-detail/item/<parent>/<id>`).
 
 ## View model
 
