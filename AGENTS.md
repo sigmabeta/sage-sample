@@ -118,6 +118,11 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `generated://` Coil requests (seeded by the URL's scheme/authority/path; `?width=&height=`
   picks the size without changing the art). Don't treat them as real image content; add a
   network fetcher/decoder before pointing a request at an arbitrary URL.
+- **Benchmarks measure, the scripts gate.** `:benchmark` (Android test APK) writes one
+  `results-<axis>.json` per axis through `:testing:perfbench-core`; the shell scripts diff it
+  against a local, never-committed baseline. UI scenarios must start through the app's deep link
+  (`sagesample://<route>`) rather than clicking through navigation, and there is no audio axis or
+  media corpus. `TraceSection` is real on Android (Perfetto) and no-op on desktop/JS.
 - **Search:** use `git grep`/`rg`; when using `find`/`grep`, prune `build/` and `.gradle/`.
   Generated Android lint/dependency XML is enormous.
 
@@ -142,6 +147,10 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 ./gradlew verifyPaparazziDebug            # check the committed screenshot goldens
 ./gradlew recordPaparazziDebug            # re-record goldens (intentional UI change only)
 scripts/dev/paparazzi-diff.sh             # rank changed goldens + write review montages
+./gradlew :benchmark:compileBenchmarkKotlin          # compile the device benchmark APK
+./gradlew :benchmark:connectedBenchmarkAndroidTest   # run both axes (physical device)
+scripts/benchmark/device-ui.sh [--record]            # gate UI scroll against a local baseline
+scripts/benchmark/device-startup.sh [--record]       # gate startup against a local baseline
 scripts/ci/verify.sh                      # full CI-mirroring suite (web is opt-in)
 scripts/ci/verify.sh --web                # ...plus the browser bundle + server distribution
 ```
@@ -202,11 +211,12 @@ Don't `git commit` or `git push` unless explicitly asked.
 ## Layout
 
 See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `apps/android/`
-(Android application), `apps/jvm/` (Compose Desktop application), `core/bitmaps/` (KMP Compose
-preview art), `core/ui/components/api/` (KMP Compose renderer suite), `core/ui/shell/` (KMP
-Compose composition root + navigation host), `core/settings/` and
-`core/viewmodel/`, `features/*` (pure JVM), `scripts/ci/verify.sh` (CI mirror), `scripts/dev/`
-(agent tooling), `docs/agents/` (domain docs), `sage/` (submodule).
+(Android application), `apps/jvm/` (Compose Desktop application), `benchmark/` (Android device
+macrobenchmarks), `core/bitmaps/` (KMP Compose preview art), `core/ui/components/api/` (KMP Compose
+renderer suite), `core/ui/shell/` (KMP Compose composition root + navigation host), `core/settings/`
+and `core/viewmodel/`, `features/*` (pure JVM), `testing/perfbench-core/` (result contract) and
+`testing/perfbench/` (diff CLI), `scripts/benchmark/` (per-axis device gates), `scripts/ci/verify.sh`
+(CI mirror), `scripts/dev/` (agent tooling), `docs/agents/` (domain docs), `sage/` (submodule).
 
 ## Agent skills
 

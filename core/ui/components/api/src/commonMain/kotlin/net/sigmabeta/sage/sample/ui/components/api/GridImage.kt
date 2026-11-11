@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -27,7 +26,6 @@ import net.sigmabeta.sage.sample.ui.components.api.previews.SquareConstants
 import net.sigmabeta.sage.sample.ui.components.api.subs.CrossfadeImage
 import net.sigmabeta.sage.sample.ui.components.api.subs.ElevatedRoundRect
 import net.sigmabeta.sage.sample.ui.components.api.subs.TintedText
-import net.sigmabeta.sage.sample.ui.components.api.subs.LocalFirstContentReporter
 import net.sigmabeta.sage.sample.ui.components.api.subs.TraceSection
 import net.sigmabeta.sage.sample.ui.components.api.subs.gridCellOffscreenLayerEnabled
 import net.sigmabeta.sage.appcomm.ActionSink
@@ -41,14 +39,6 @@ fun GridImage(
     modifier: Modifier,
     padding: PaddingValues,
 ) {
-    // The first grid cell to compose is the library grid showing its first item; hosts that measure
-    // startup (the Android benchmark build) provide a reporter that reports the app fully drawn.
-    // The local is static, so the branch is stable within a host; production leave it null.
-    val reportFirstContent = LocalFirstContentReporter.current
-    if (reportFirstContent != null) {
-        LaunchedEffect(reportFirstContent) { reportFirstContent() }
-    }
-
     // Perfetto section the device scroll macrobenchmark sums as "GridImage" — the composition cost
     // of a grid cell, alongside the frame-time percentiles.
     TraceSection("GridImage") {

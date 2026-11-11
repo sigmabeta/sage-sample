@@ -75,7 +75,7 @@ CI is `.github/workflows/ci.yml`. Six jobs run on every push, pull request, and 
 | `static-analysis` | `./gradlew ktlintCheck detekt --continue` |
 | `unit-test` | `./gradlew test …jvmTest :apps:server:test --continue` (screenshot modules excluded; the JVM source sets of the KMP modules are listed explicitly) |
 | `screenshot` | `./gradlew verifyPaparazziDebug --continue` |
-| `android` | `./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease` |
+| `android` | `./gradlew :apps:android:lintRelease :benchmark:compileBenchmarkKotlin :apps:android:assembleDebug :apps:android:assembleRelease` |
 | `jvm-app` | `./gradlew :apps:jvm:assemble` |
 | `web` | `./gradlew -Psage.js=true :apps:js:ktlintCheck :apps:js:detekt :apps:js:jsBrowserDistribution :apps:server:installDist` |
 
@@ -108,6 +108,26 @@ scripts/dev/paparazzi-diff.sh --top 10 --keep   # keep the re-render for review
 
 The release APK is unsigned: the sample has no release signing config, so `assembleRelease`
 produces an unsigned artifact that must be signed before installing.
+
+### Performance benchmarks
+
+A device macrobenchmark suite (`:benchmark`) measures UI scroll and app startup on the installed
+`benchmark` build of `:apps:android`. UI scenarios use the app's own deep links, so each one starts
+directly on the screen it measures. Results are written as `results-ui.json` / `results-startup.json`
+in the run's additional test output directory; `:testing:perfbench-core` owns the schema and
+`:testing:perfbench` the result diff.
+
+```bash
+./gradlew :benchmark:connectedBenchmarkAndroidTest       # both axes on every attached device
+scripts/benchmark/device-ui.sh                           # gate UI scroll against a local baseline
+scripts/benchmark/device-ui.sh --record                  # (re)record that device's baseline
+scripts/benchmark/device-startup.sh --threshold 0.97     # gate startup with a custom threshold
+scripts/ci/verify.sh --device-ui                         # the same run inside verify.sh
+```
+
+A device script exits `3` (a flagged `SKIP`, not a failure) when no device is attached. Use a
+physical device for real numbers; see [`benchmark/README.md`](benchmark/README.md) for the scenario
+table, startup first-content wiring, and device-driver notes.
 
 Unit tests live beside each module (`src/test/kotlin`): plain JUnit in the feature modules,
 `:core:viewmodel`, and the desktop app; `:core:bitmaps`, `:core:strings:real` and
@@ -249,6 +269,13 @@ features/search/            query + two deterministic generated result sets (lis
 features/search/screenshot/ Paparazzi goldens for Search
 features/settings/          theme, font, simulate-delay and same-content rows, app version and build date
 features/settings/screenshot/  Paparazzi goldens for Settings
+benchmark/                  Android test APK: device UI-scroll and startup macrobenchmarks
+  DeviceBenchmark.kt        fingerprint, deep-link launcher, per-axis result sink, progress logging
+  UiScrollBenchmark.kt      one WARM scroll per core surface, started through its deep link
+  StartupBenchmark.kt       cold/warm launch to Home's first content
+testing/perfbench-core/     shared result contract: schema, scenarios, report math, diff guards
+testing/perfbench/          diff CLI over two result files (the baseline gate reads its JSON)
+scripts/benchmark/          per-axis device gates (device-ui.sh, device-startup.sh)
 scripts/dev/                agent worktrees, ticket gates, worktree hygiene, Paparazzi diff review
 CODING_STANDARDS.md         review-time rules (closed-set tests, intent mapping, text)
 detekt-config.yml           ruleset read by the SAGE base plugins

@@ -75,6 +75,14 @@ fun CrossfadeImage(
     // AsyncImagePainter fall back to SizeResolver.ORIGINAL.
     loadOriginalSize: Boolean = false,
 ) {
+    // The first image cell to compose is the first content the app shows; hosts that measure
+    // startup (the Android benchmark build) provide a reporter that reports the app fully drawn.
+    // The local is static, so the branch is stable within a host; production leaves it null.
+    val reportFirstContent = LocalFirstContentReporter.current
+    if (reportFirstContent != null) {
+        LaunchedEffect(reportFirstContent) { reportFirstContent() }
+    }
+
     // Perfetto section the device scroll macrobenchmark sums as "CrossfadeImage" — the image
     // composition/dispatch cost, nested inside the outer "GridImage" section.
     TraceSection("CrossfadeImage") {

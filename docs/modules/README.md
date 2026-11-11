@@ -19,6 +19,7 @@ coordinates resolve to the included projects automatically.
 | [`:apps:jvm`](apps-jvm.md) | Compose Desktop application | Window entry point, desktop graph, JVM platform seams, same navigation shell |
 | [`:apps:js`](apps-js.md) | Kotlin/JS application | Browser entry point, web graph, localStorage/HTTP seams, same navigation shell |
 | [`:apps:server`](apps-server.md) | JVM application | Ktor JSON API over `DemoContent`; serves the browser bundle with an SPA fallback |
+| [`:benchmark`](benchmark.md) | Android test module | Device macrobenchmarks for UI scroll and startup, each started through the app's deep links |
 | [`:core:bitmaps`](core-bitmaps.md) | KMP Compose library | Deterministic placeholder art: generator, `@Preview` composable, `generated://` Coil fetcher |
 | [`:core:models:api`](core-models-api.md) | KMP library | Shared domain models + the Content detail route codec |
 | [`:core:nav`](core-nav.md) | KMP library | Shared destinations, route/Back policy, layout and top-bar derivation, URL codec, screen keys |
@@ -45,6 +46,8 @@ coordinates resolve to the included projects automatically.
 | [`:features:search:screenshot`](features-search-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Search |
 | [`:features:settings`](features-settings.md) | KMP feature | Preferences, demo controls, reset action, About rows |
 | [`:features:settings:screenshot`](features-settings-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Settings |
+| [`:testing:perfbench-core`](testing-perfbench-core.md) | KMP library | Shared performance-result schema, scenario ids, report math and diff contract |
+| [`:testing:perfbench`](testing-perfbench.md) | JVM tool | The result-diff CLI the baseline gate scripts call |
 
 The root project (`build.gradle.kts`) has no sources. It declares the plugins SAGE's convention
 plugins apply by id with `apply false`, so their runtime is on the shared build classpath, and pins

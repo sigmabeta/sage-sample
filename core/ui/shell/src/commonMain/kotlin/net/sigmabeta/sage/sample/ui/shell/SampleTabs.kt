@@ -371,7 +371,7 @@ internal fun screenFor(
     SampleDestination.LIST_ITEMS -> ListItemsScreen
     SampleDestination.LIST_ITEMS_WITH_IMAGES -> ListItemsWithImagesScreen
     SampleDestination.GRID_OF_IMAGES -> GridOfImagesScreen
-    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen(contentId, artworkSize)
+    SampleDestination.CONTENT_DETAIL -> ContentDetailScreen(contentId?.value, artworkSize?.value)
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
 }

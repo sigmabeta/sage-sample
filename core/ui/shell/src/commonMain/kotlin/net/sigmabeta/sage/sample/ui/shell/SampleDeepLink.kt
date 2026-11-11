@@ -28,9 +28,9 @@ interface SampleDeepLinkSource {
 /**
  * [SampleDeepLinkSource] whose route is set by the host and cleared by the shell.
  *
- * Android keeps one in `SampleApplication` so a link survives activity recreation until the shell
- * consumes it; desktop creates one from the process arguments. [offer] ignores null because a plain
- * launcher intent (`intent.data == null`) must not clear an unconsumed link.
+ * Android keeps one per Activity, so an outgoing shell cannot consume the next launch's link;
+ * desktop creates one from the process arguments. [offer] ignores null because a plain launcher
+ * intent (`intent.data == null`) must not clear an unconsumed link.
  */
 class MutableSampleDeepLinkSource(initial: SampleRoute? = null) : SampleDeepLinkSource {
     private val mutablePending = MutableStateFlow(initial)

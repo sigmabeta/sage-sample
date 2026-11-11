@@ -43,6 +43,11 @@ include(
     ":apps:android",
     ":apps:jvm",
     ":apps:server",
+    // The macrobenchmark test APK and the shared result contract + diff CLI it shares with the
+    // scripts. Nothing shipped depends on these.
+    ":benchmark",
+    ":testing:perfbench",
+    ":testing:perfbench-core",
     ":core:bitmaps",
     ":core:models:api",
     ":core:nav",

@@ -9,12 +9,37 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import java.util.concurrent.atomic.AtomicBoolean
 import net.sigmabeta.sage.sample.nav.SampleDeepLink
 import net.sigmabeta.sage.sample.ui.AndroidPlatformBack
 import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.subs.LocalFirstContentReporter
+import net.sigmabeta.sage.sample.ui.shell.MutableSampleDeepLinkSource
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
 
 class MainActivity : ComponentActivity() {
+    /**
+     * This Activity's one-shot deep-link source.
+     *
+     * Per Activity rather than app-scoped: a `FLAG_ACTIVITY_CLEAR_TASK` relaunch creates the new
+     * Activity while the outgoing one's shell may still be collecting. A shared source lets the
+     * outgoing shell consume the new launch's route, leaving the new shell on Home.
+     */
+    private val deepLinks = MutableSampleDeepLinkSource()
+
+    // In benchmark builds, report the app fully drawn the first time a content-bearing image
+    // composes — the "first content" the device startup macrobenchmark measures
+    // (StartupTimingMetric's `timeToFullDisplayMs`). A fresh guard per Activity instance, so every
+    // warm relaunch reports again. Outside the benchmark build the reporter is null and costs
+    // nothing.
+    private val firstContentReporter: (() -> Unit)? = if (BuildConfig.BENCHMARK) {
+        val reported = AtomicBoolean(false)
+        val report: () -> Unit = { if (reported.compareAndSet(false, true)) reportFullyDrawn() }
+        report
+    } else {
+        null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -33,6 +58,7 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
                 LocalSampleStringProvider provides graph.stringProvider,
+                LocalFirstContentReporter provides firstContentReporter,
             ) {
                 // Back at a tab root leaves the tabbed shell: finish the activity, which is the
                 // platform's default Back behaviour.
@@ -40,7 +66,7 @@ class MainActivity : ComponentActivity() {
                     settingsManager = graph.settingsManager,
                     interFontFamily = InterFontFamily,
                     platformBack = AndroidPlatformBack,
-                    deepLinkSource = (application as SampleApplication).deepLinks,
+                    deepLinkSource = deepLinks,
                     onOuterBack = { finish() },
                 )
             }
@@ -59,9 +85,7 @@ class MainActivity : ComponentActivity() {
 
     /** Offers the intent's deep link to the shell; a plain launcher intent has none. */
     private fun offerDeepLink(intent: Intent?) {
-        (application as SampleApplication).deepLinks.offer(
-            intent?.dataString?.let(SampleDeepLink::routeFor),
-        )
+        deepLinks.offer(intent?.dataString?.let(SampleDeepLink::routeFor))
     }
 }
 

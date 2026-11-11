@@ -3,6 +3,7 @@ package net.sigmabeta.sage.sample.ui.shell
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.models.contentHeroImageSeed
+import net.sigmabeta.sage.sample.models.contentIdOrNull
 import net.sigmabeta.sage.sample.nav.SampleDestination
 import net.sigmabeta.sage.sample.nav.SampleScreenChrome
 import net.sigmabeta.sage.sample.nav.SampleScreenLayout
@@ -164,11 +165,20 @@ data object GridOfImagesScreen : SampleScreen {
  * [artworkSize] is the size the tapped row rendered its artwork at. It does not go to the
  * ViewModel — it is not content — it is published as [LocalArtworkHandoff] so the hero can put the
  * row's already-cached bitmap on screen while its own, larger request loads.
+ *
+ * The constructor stores the ID and artwork size as their wire strings, not as [ContentId] /
+ * [ContentArtworkSize]: Voyager writes the Screen into the Activity's saved state as a
+ * `java.io.Serializable`, and those model types are not serializable. The typed values are
+ * recomputed from the strings after a restore.
  */
 data class ContentDetailScreen(
-    val contentId: ContentId?,
-    val artworkSize: ContentArtworkSize? = null,
+    private val contentIdValue: String? = null,
+    private val artworkValue: String? = null,
 ) : SampleScreen {
+    val contentId: ContentId? get() = contentIdValue?.let(::contentIdOrNull)
+
+    val artworkSize: ContentArtworkSize? get() = artworkValue?.let(ContentArtworkSize::parse)
+
     override val destination = SampleDestination.CONTENT_DETAIL
 
     override val key: ScreenKey = contentDetailScreenKey(contentId)

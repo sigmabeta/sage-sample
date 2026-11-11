@@ -43,6 +43,10 @@ kotlin {
 }
 
 dependencies {
+    // The Android actual of `TraceSection`: Perfetto / systrace sections the device scroll
+    // macrobenchmark sums. Android-only; the JVM and JS actuals are no-ops.
+    add("androidMainImplementation", libs.androidx.tracing.ktx)
+
     // @Preview harnesses for the component renderers. Declared through the top-level handler so
     // the AndroidX BOM uses Gradle's `platform()`, not the KMP source-set DSL's deprecated one.
     add("androidMainImplementation", platform(libs.androidx.compose.bom))

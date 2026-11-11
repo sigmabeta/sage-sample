@@ -69,6 +69,7 @@ jobs:
           :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest
           :features:browse:jvmTest :features:contentdetail:jvmTest :features:home:jvmTest
           :features:listitems:jvmTest :features:search:jvmTest :features:settings:jvmTest
+          :testing:perfbench-core:jvmTest :testing:perfbench:test
           :apps:server:test --continue
           --build-cache --no-daemon --max-workers=2
       - uses: actions/upload-artifact@v4
@@ -186,9 +187,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       # lintRelease compiles the release graph, so running it before the APKs makes the
       # subsequent assemble steps incremental on this runner.
-      - name: Android lint + debug/release APKs
+      - name: Android lint, benchmark test APK, debug/release APKs
         run: >-
-          ./gradlew :apps:android:lintRelease :apps:android:assembleDebug :apps:android:assembleRelease
+          ./gradlew :apps:android:lintRelease :benchmark:compileBenchmarkKotlin
+          :apps:android:assembleDebug :apps:android:assembleRelease
           --build-cache --no-daemon --max-workers=4
       - uses: actions/upload-artifact@v4
         if: always()

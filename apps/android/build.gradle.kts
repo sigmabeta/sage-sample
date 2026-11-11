@@ -24,6 +24,9 @@ android {
         // Settings' About section displays these. The timestamp is captured when the build's
         // BuildConfig is generated, so it reflects the build rather than the install.
         buildConfigField("long", "BUILD_TIME_MS", "${System.currentTimeMillis()}L")
+        // True only for the `benchmark` build type: MainActivity then reports the app fully drawn
+        // when its first image cell composes, which the startup macrobenchmark records.
+        buildConfigField("boolean", "BENCHMARK", "false")
     }
 
     buildTypes {
@@ -32,6 +35,16 @@ android {
         }
         getByName("release") {
             isMinifyEnabled = false
+        }
+        // The variant the `:benchmark` test APK instruments. Release-shaped and profileable so
+        // numbers describe production code, but debug-signed so it installs anywhere.
+        create("benchmark") {
+            initWith(getByName("release"))
+            isDebuggable = false
+            isProfileable = true
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            buildConfigField("boolean", "BENCHMARK", "true")
         }
     }
 

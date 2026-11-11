@@ -16,14 +16,19 @@ plugins {
 `namespace`/`applicationId` are `net.sigmabeta.sage.sample`; `compileSdk`/`targetSdk` 36, `minSdk`
 26, JVM 17. Version comes from the root project (`0.1.0`). `buildConfig` is enabled because Settings'
 About rows read `VERSION_NAME`, `VERSION_CODE` and `BUILD_TIME_MS` (captured at BuildConfig
-generation). Both build types are unminified; release is unsigned.
+generation). All build types are unminified; release is unsigned.
+
+A third build type, `benchmark`, extends `release`, is non-debuggable + profileable, and sets
+`BuildConfig.BENCHMARK = true`. The `:benchmark` test APK instruments it; only that variant wires
+`LocalFirstContentReporter` to `Activity.reportFullyDrawn()`, so the startup macrobenchmark can
+measure first content without production paying for the callback.
 
 ## Entry points
 
 | File | Role |
 |---|---|
-| `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug; holds the app-scoped `deepLinks` source. |
-| `MainActivity.kt` | Installs `LocalMetroViewModelFactory` and `LocalSampleStringProvider` above `SampleApp`, supplies `finish()` as the outer Back action, and offers `sagesample://` intent links from `onCreate`/`onNewIntent` to the shell. |
+| `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug. |
+| `MainActivity.kt` | Installs `LocalMetroViewModelFactory`, `LocalSampleStringProvider` and (benchmark builds) `LocalFirstContentReporter` above `SampleApp`, supplies `finish()` as the outer Back action, and offers `sagesample://` intent links from `onCreate`/`onNewIntent` to the shell. |
 | `di/SampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`. Exposes `settingsManager` and `stringProvider`; provides the application `Context`. |
 | `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), `AppInfo`. The app owns no text table. |
 | `storage/PreferencesStorage.kt` | Android `Storage` over Preferences DataStore (`sage_sample_settings`); disk-dispatched writes, flow reads. |
@@ -42,7 +47,7 @@ shared `SampleApp` from `:core:ui:shell`, passing the Android platform seams:
 | `interFontFamily` | the three Inter OTF weights from `res/font`. |
 | `screenContainer` | the default passthrough (Voyager already supplies per-screen stores). |
 | `screenLifecycleOwner` | `null` → the activity's `LocalLifecycleOwner`. |
-| `deepLinkSource` | `SampleApplication.deepLinks`, offered from `MainActivity`'s VIEW intents. |
+| `deepLinkSource` | `MainActivity.deepLinks`, a source owned by that Activity and offered its VIEW intents — a per-Activity source stops an outgoing shell consuming the next launch's route. |
 | `onOuterBack` | `finish()`. |
 
 Deep links: the manifest claims the `sagesample` scheme (`singleTop`, so a link tapped while the

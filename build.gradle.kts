@@ -1,6 +1,9 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
+    // The `:benchmark` module is an Android Test module (`com.android.test`). Declared here so it
+    // resolves against the same AGP version as the app.
+    alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.compose.compiler) apply false
     // The desktop app (:apps:jvm) applies the JetBrains Compose plugin directly; declaring it here

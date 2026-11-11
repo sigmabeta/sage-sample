@@ -59,7 +59,8 @@ SAGE's `ListModel` vocabulary and this module's renderers from one dependency.
 - `platformImageModel` normalises image references; the shared Android/JVM actual hands Coil an okio
   `Path` so file paths containing `#`/`?` are not truncated by URI parsing.
 - `LocalForceFakeImages` / `LocalFirstContentReporter` are host-provided hooks; the sample's default
-  is off/null.
+  is off/null. The Android benchmark build supplies the reporter, so the startup macrobenchmark can
+  measure first content.
 
 ## Using it
 
@@ -84,7 +85,8 @@ LazyColumn {
   own alongside this module.
 - `FakeImage` uses the shared `:core:bitmaps` generator on every target instead of Android's
   `android.graphics` goldens and a separate desktop gradient.
-- `TraceSection` is a structural no-op: this repo has no macrobenchmark target.
+- `TraceSection` is real on Android (`androidx.tracing.Trace`, so a macrobenchmark can sum it) and a
+  structural no-op on desktop and JS.
 - `StackFrameSummary` is a single common implementation shared by every target.
 - Accessibility text uses `SampleStringId` + `LocalSampleStringProvider` from the shared strings
   modules. The type scale lives in `:core:ui:theme:api`.
