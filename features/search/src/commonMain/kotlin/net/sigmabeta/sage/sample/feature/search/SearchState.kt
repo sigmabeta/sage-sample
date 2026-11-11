@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.search
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SearchResult
 
@@ -117,7 +118,11 @@ data class SearchState(
             imagePlaceholder = Icon.Search,
             clickAction = SearchAction.ResultClicked(
                 contentId = searchContentId(query, SearchResultKind.LIST, result.id),
-                artwork = ContentArtworkSize(LIST_IMAGE_SIZE, LIST_IMAGE_SIZE),
+                artwork = ContentArtworkSize(
+                    width = LIST_IMAGE_SIZE,
+                    height = LIST_IMAGE_SIZE,
+                    corner = ArtworkCorner.Circle,
+                ),
             ),
         )
     }
@@ -138,7 +143,11 @@ data class SearchState(
             imagePlaceholder = Icon.Album,
             clickAction = SearchAction.ResultClicked(
                 contentId = searchContentId(query, SearchResultKind.GRID, result.id),
-                artwork = ContentArtworkSize(GRID_IMAGE_SIZE, GRID_IMAGE_SIZE),
+                artwork = ContentArtworkSize(
+                    width = GRID_IMAGE_SIZE,
+                    height = GRID_IMAGE_SIZE,
+                    corner = ArtworkCorner.Rounded(GRID_CORNER_RADIUS_DP),
+                ),
             ),
         )
     }
@@ -212,5 +221,8 @@ data class SearchState(
 
         /** Larger than a 160 dp grid cell, so generated artwork stays sharp on dense screens. */
         const val GRID_IMAGE_SIZE = 256
+
+        /** The grid cell's corner radius, so the detail's clip starts from the cell's shape. */
+        const val GRID_CORNER_RADIUS_DP = 16
     }
 }

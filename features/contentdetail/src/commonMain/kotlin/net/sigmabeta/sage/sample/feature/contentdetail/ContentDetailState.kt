@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.models.ContentDetailField
@@ -244,6 +245,7 @@ data class ContentDetailState(
                             artwork = ContentArtworkSize(
                                 RELATED_IMAGE_SIZE,
                                 RELATED_IMAGE_SIZE,
+                                corner = ArtworkCorner.Rounded(WIDE_ITEM_CORNER_RADIUS_DP),
                             ),
                         ),
                     )
@@ -274,7 +276,11 @@ data class ContentDetailState(
                 imagePlaceholder = Icon.Person,
                 clickAction = ContentDetailAction.ItemClicked(
                     contentId = contentItemContentId(parentId = data.id, itemId = item.id),
-                    artwork = ContentArtworkSize(ITEM_IMAGE_SIZE, ITEM_IMAGE_SIZE),
+                    artwork = ContentArtworkSize(
+                        ITEM_IMAGE_SIZE,
+                        ITEM_IMAGE_SIZE,
+                        corner = ArtworkCorner.Circle,
+                    ),
                 ),
             )
         }
@@ -289,6 +295,9 @@ data class ContentDetailState(
 
         const val CONTENT_DETAIL_COLUMN_WIDTH_DP = 320
         const val ITEMS_LOADING_COUNT = 8
+
+        /** `WideItem`'s corner radius, so the detail it opens starts from the row's shape. */
+        const val WIDE_ITEM_CORNER_RADIUS_DP = 8
 
         const val ID_PREFIX_SCROLLER = 1_000_000_000_000L
         const val ID_PREFIX_DETAILS = 2_000_000_000_000L

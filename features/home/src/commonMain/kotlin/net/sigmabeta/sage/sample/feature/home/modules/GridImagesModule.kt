@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.home.modules
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.HomeItem
 
@@ -80,7 +81,11 @@ class GridImagesModule(
                         imagePlaceholder = Icon.Album,
                         clickAction = HomeAction.ItemClicked(
                             contentId = homeContentId(id, item.id),
-                            artwork = ContentArtworkSize(GRID_IMAGE_WIDTH, GRID_IMAGE_HEIGHT),
+                            artwork = ContentArtworkSize(
+                                width = GRID_IMAGE_WIDTH,
+                                height = GRID_IMAGE_HEIGHT,
+                                corner = ArtworkCorner.Rounded(CELL_CORNER_RADIUS_DP),
+                            ),
                         ),
                         aspectRatio = GRID_IMAGE_ASPECT_RATIO,
                     )
@@ -98,5 +103,8 @@ class GridImagesModule(
         // A 3:4 grid cell at a little over twice the 160 dp column width.
         const val GRID_IMAGE_WIDTH = 264
         const val GRID_IMAGE_HEIGHT = 352
+
+        /** The cell's corner radius, so the detail's clip starts from the cell's shape. */
+        const val CELL_CORNER_RADIUS_DP = 16
     }
 }

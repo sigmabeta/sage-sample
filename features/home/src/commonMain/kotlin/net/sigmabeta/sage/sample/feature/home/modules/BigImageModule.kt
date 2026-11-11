@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.home.modules
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.HomeItem
 
@@ -83,7 +84,11 @@ class BigImageModule(
                     imagePlaceholder = Icon.Album,
                     clickAction = HomeAction.ItemClicked(
                         contentId = homeContentId(id, pick.id),
-                        artwork = ContentArtworkSize(HERO_IMAGE_WIDTH, HERO_IMAGE_HEIGHT),
+                        artwork = ContentArtworkSize(
+                            width = HERO_IMAGE_WIDTH,
+                            height = HERO_IMAGE_HEIGHT,
+                            corner = ArtworkCorner.Rounded(CELL_CORNER_RADIUS_DP),
+                        ),
                     ),
                     aspectRatio = HERO_ASPECT_RATIO,
                     maxWidthDp = MAX_WIDTH_DP,
@@ -102,6 +107,9 @@ class BigImageModule(
         // size (IGDB's 528 × 704) rather than relying on the display size.
         const val HERO_IMAGE_WIDTH = 528
         const val HERO_IMAGE_HEIGHT = 704
+
+        /** The card's corner radius, so the detail's clip starts from the card's shape. */
+        const val CELL_CORNER_RADIUS_DP = 16
 
         const val MILLIS_PER_DAY = 86_400_000L
     }

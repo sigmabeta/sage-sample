@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.listitems
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.repository.GRID_OF_IMAGES_ITEM_COUNT
@@ -75,11 +76,11 @@ class GridOfImagesStateTest {
             listOf(
                 GridOfImagesAction.ItemClicked(
                     contentId = ContentId("grid-of-images:11"),
-                    artwork = ContentArtworkSize(256, 256),
+                    artwork = ContentArtworkSize(256, 256, ArtworkCorner.Rounded(16)),
                 ),
                 GridOfImagesAction.ItemClicked(
                     contentId = ContentId("grid-of-images:22"),
-                    artwork = ContentArtworkSize(256, 256),
+                    artwork = ContentArtworkSize(256, 256, ArtworkCorner.Rounded(16)),
                 ),
             ),
             rows.map { it.clickAction },

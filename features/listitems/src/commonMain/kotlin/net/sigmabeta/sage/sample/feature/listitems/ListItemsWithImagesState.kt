@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SampleItem
 
@@ -86,6 +87,8 @@ data class ListItemsWithImagesState(
                                     artwork = ContentArtworkSize(
                                         width = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
                                         height = LIST_ITEMS_WITH_IMAGES_IMAGE_SIZE,
+                                        // The row's thumbnail is a circle.
+                                        corner = ArtworkCorner.Circle,
                                     ),
                                 ),
                             ),

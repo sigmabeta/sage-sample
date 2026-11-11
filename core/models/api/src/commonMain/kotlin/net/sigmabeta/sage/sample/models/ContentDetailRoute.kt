@@ -39,27 +39,68 @@ data class ContentId(val value: String) {
  * displayed — same seed (the ID) and same size, hence the same memory-cache entry — while its own
  * hero request loads.
  */
-data class ContentArtworkSize(val width: Int, val height: Int) {
+data class ContentArtworkSize(
+    val width: Int,
+    val height: Int,
+    /** How the container that rendered this artwork rounds its corners, when known. */
+    val corner: ArtworkCorner? = null,
+) {
     init {
         require(width in 1..MAX_EDGE && height in 1..MAX_EDGE) {
             "Artwork size must be within 1..$MAX_EDGE px: ${width}x$height"
         }
     }
 
-    /** The route wire form, e.g. `256x256`. */
-    val value: String = "${width}x$height"
+    /** The route wire form, e.g. `256x256:16` (`circle` in place of the radius). */
+    val value: String = "${width}x$height" + (corner?.let { ":${it.value}" } ?: "")
 
     companion object {
         private const val MAX_EDGE = 4096
 
         /** Parses [value]'s wire form, or `null` when it is malformed or out of range. */
         fun parse(value: String): ContentArtworkSize? {
-            val parts = value.split('x')
-            if (parts.size != 2) return null
+            val parts = value.split(':')
+            val edge = parts[0].split('x')
+            if (edge.size != 2) return null
 
-            val width = parts[0].toIntOrNull() ?: return null
-            val height = parts[1].toIntOrNull() ?: return null
-            return runCatching { ContentArtworkSize(width, height) }.getOrNull()
+            val width = edge[0].toIntOrNull() ?: return null
+            val height = edge[1].toIntOrNull() ?: return null
+            val corner = parts.getOrNull(1)?.let(ArtworkCorner::parse)
+            if (parts.size > 1 && corner == null) return null
+
+            return runCatching { ContentArtworkSize(width, height, corner) }.getOrNull()
+        }
+    }
+}
+
+/**
+ * How the container a destination's artwork travelled from rounds its corners.
+ *
+ * The hero animates its own clip from this to its resting shape while the artwork flies, so the
+ * corners change over the same window the bounds do instead of switching in the first frame.
+ */
+sealed interface ArtworkCorner {
+    /** The wire form used in a route's artwork parameter. */
+    val value: String
+
+    /** A plain dp radius, e.g. a grid cell's 16 dp. */
+    data class Rounded(val radiusDp: Int) : ArtworkCorner {
+        override val value: String get() = radiusDp.toString()
+    }
+
+    /** A circle: a list row's thumbnail. */
+    data object Circle : ArtworkCorner {
+        override val value: String get() = "circle"
+    }
+
+    companion object {
+        /** Parses [value]'s wire form, or `null` when it names neither a radius nor a circle. */
+        fun parse(value: String): ArtworkCorner? = when (value) {
+            Circle.value -> Circle
+
+            else -> value.toIntOrNull()
+                ?.takeIf { it >= 0 }
+                ?.let(::Rounded)
         }
     }
 }

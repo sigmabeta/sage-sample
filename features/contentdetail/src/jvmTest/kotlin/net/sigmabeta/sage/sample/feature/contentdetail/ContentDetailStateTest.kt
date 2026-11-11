@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentDetailField
 import net.sigmabeta.sage.sample.models.ContentId
@@ -201,11 +202,11 @@ class ContentDetailStateTest {
             listOf(
                 ContentDetailAction.RelatedClicked(
                     contentId = ContentId("content-detail:related:list-items:1:1"),
-                    artwork = ContentArtworkSize(128, 128),
+                    artwork = ContentArtworkSize(128, 128, ArtworkCorner.Rounded(8)),
                 ),
                 ContentDetailAction.RelatedClicked(
                     contentId = ContentId("content-detail:related:list-items:1:2"),
-                    artwork = ContentArtworkSize(128, 128),
+                    artwork = ContentArtworkSize(128, 128, ArtworkCorner.Rounded(8)),
                 ),
             ),
             items.map { it.clickAction },
@@ -239,11 +240,11 @@ class ContentDetailStateTest {
             listOf(
                 ContentDetailAction.ItemClicked(
                     contentId = ContentId("content-detail:item:list-items:1:1"),
-                    artwork = ContentArtworkSize(128, 128),
+                    artwork = ContentArtworkSize(128, 128, ArtworkCorner.Circle),
                 ),
                 ContentDetailAction.ItemClicked(
                     contentId = ContentId("content-detail:item:list-items:1:2"),
-                    artwork = ContentArtworkSize(128, 128),
+                    artwork = ContentArtworkSize(128, 128, ArtworkCorner.Circle),
                 ),
             ),
             rows.map { it.clickAction },

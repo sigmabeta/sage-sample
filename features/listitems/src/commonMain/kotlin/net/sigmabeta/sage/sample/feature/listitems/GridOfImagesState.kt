@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SampleItem
 
@@ -89,6 +90,9 @@ data class GridOfImagesState(
                                     artwork = ContentArtworkSize(
                                         width = GRID_OF_IMAGES_IMAGE_SIZE,
                                         height = GRID_OF_IMAGES_IMAGE_SIZE,
+                                        corner = ArtworkCorner.Rounded(
+                                            GRID_OF_IMAGES_CORNER_RADIUS_DP,
+                                        ),
                                     ),
                                 ),
                             ),
@@ -136,6 +140,9 @@ private const val GRID_OF_IMAGES_SEED_PREFIX = "grid-of-images"
  * sharp on high-density screens; the size is not part of the seed.
  */
 private const val GRID_OF_IMAGES_IMAGE_SIZE = 256
+
+/** The cell's [ElevatedRoundRect] radius, so the detail's clip starts from the cell's shape. */
+private const val GRID_OF_IMAGES_CORNER_RADIUS_DP = 16
 
 /** The preferred grid cell width; SAGE divides the window's width class by this. */
 private const val GRID_OF_IMAGES_CELL_WIDTH_DP = 160

@@ -1,4 +1,5 @@
 package net.sigmabeta.sage.sample.feature.home.modules
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.HomeItem
 
@@ -69,7 +70,7 @@ class HomeModulesTest {
         assertEquals(
             HomeAction.ItemClicked(
                 contentId = homeContentId("big_image_3", 7L),
-                artwork = ContentArtworkSize(528, 704),
+                artwork = ContentArtworkSize(528, 704, ArtworkCorner.Rounded(16)),
             ),
             hero.clickAction,
         )
@@ -127,7 +128,7 @@ class HomeModulesTest {
         assertEquals(
             HomeAction.ItemClicked(
                 contentId = homeContentId("grid_images_2", 1L),
-                artwork = ContentArtworkSize(264, 352),
+                artwork = ContentArtworkSize(264, 352, ArtworkCorner.Rounded(16)),
             ),
             cells.first().clickAction,
         )
