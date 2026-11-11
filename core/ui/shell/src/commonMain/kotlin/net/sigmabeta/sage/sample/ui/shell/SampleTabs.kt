@@ -26,6 +26,8 @@ import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
@@ -35,7 +37,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
 import cafe.adriel.voyager.core.stack.StackEvent
 import cafe.adriel.voyager.transitions.ScreenTransition
@@ -81,6 +86,57 @@ val sampleTabs: List<SampleTab> = listOf(HomeTab, BrowseTab, SearchTab)
 /** The tab for a top-level destination, or `null` when the destination is pushed onto a tab. */
 fun tabFor(destination: SampleDestination): SampleTab? =
     sampleTabs.firstOrNull { it.destination == destination }
+
+/**
+ * The selected top-level tab's content, animated on switch: the outgoing tab slides down and
+ * fades out while the incoming one slides in from the left (no fade).
+ *
+ * Voyager's `CurrentTab` swaps tabs with no transition. This keeps its saveable-state contract —
+ * each tab's `rememberSaveable` state and retained inner navigator are keyed by the tab — and uses
+ * the shape real SAGE apps use for a tab switch, deliberately distinct from the horizontal slide a
+ * push uses inside a tab. The duration follows the animation-scale setting.
+ */
+@Composable
+fun SampleCurrentTab() {
+    val tabNavigator = LocalTabNavigator.current
+    val animationScale = LocalAnimationScale.current
+    val durationMillis = remember(animationScale) {
+        scaledMillis(TAB_SWITCH_BASE_MILLIS, animationScale)
+    }
+    val maxSlidePx = with(LocalDensity.current) { TAB_SWITCH_MAX_SLIDE.roundToPx() }
+
+    AnimatedContent(
+        targetState = tabNavigator.current,
+        contentKey = { it.key },
+        transitionSpec = {
+            val enter = slideInHorizontally(
+                animationSpec = tween(durationMillis = durationMillis),
+                initialOffsetX = { fullWidth -> -fullWidth },
+            )
+            val exit = slideOutVertically(
+                animationSpec = tween(durationMillis = durationMillis),
+                targetOffsetY = { fullHeight -> minOf(fullHeight, maxSlidePx) },
+            ) + fadeOut(
+                animationSpec = tween(durationMillis = durationMillis),
+            )
+            enter togetherWith exit
+        },
+        label = "TabSwitch",
+    ) { tab ->
+        tabNavigator.saveableState("currentTab", tab) {
+            tab.Content()
+        }
+    }
+}
+
+// Top-level tab switches: the outgoing tab slides down and fades out while the incoming tab slides
+// in from the left. Deliberately distinct from the horizontal slide used for push/pop within a
+// tab's hierarchy.
+private const val TAB_SWITCH_BASE_MILLIS = 210
+
+// Cap how far the outgoing tab travels downward, so on tall screens it fades out rather than
+// sliding the full height.
+private val TAB_SWITCH_MAX_SLIDE = 400.dp
 
 /**
  * Hosts one tab's inner back stack. Registering [navigator] together with its tab lets the shell

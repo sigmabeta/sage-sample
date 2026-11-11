@@ -23,7 +23,7 @@ dependency. `jvmTest` holds the shared shell tests.
 | `SampleApp.kt` | Composition root: selects `SampleTheme(darkTheme, fontFamily)` from the persisted settings, installs the platform seams as composition locals, renders the nav host. |
 | `SampleNavHost.kt` | `TabNavigator` shell: tab switching (`popAll` on the outgoing tab), pushed screens, width class, chrome reset, Back application. |
 | `SampleScreens.kt` | One Voyager `Screen` per destination, resolving its own view model with `metroViewModel<...>()`; the shared `SampleListScreen` renders title, layout and lifecycle. |
-| `SampleTabs.kt` | Home/Browse/Search tabs with retained inner `Navigator`s, active-tab registration, the shared Back local, and `screenFor`. |
+| `SampleTabs.kt` | Home/Browse/Search tabs with retained inner `Navigator`s, the slide/fade between them (`SampleCurrentTab`), active-tab registration, the shared Back local, and `screenFor`. |
 | `SampleNavEffects.kt` | `LocalSampleNavEffects`: forwards a feature `SageEvent` into the app. |
 | `SampleNavScaffold.kt` / `SampleTopBar.kt` | Bottom bar vs. rail by width class; top bar title/leading affordance from the active screen's SAGE title state. |
 | `SampleChrome.kt` | Compose state: `SampleChromeController`, title-bar/width/chrome locals. Policy lives in `:core:nav`. |

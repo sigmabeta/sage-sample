@@ -36,7 +36,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import cafe.adriel.voyager.navigator.tab.CurrentTab
 import cafe.adriel.voyager.navigator.tab.TabNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -49,7 +48,9 @@ import kotlin.math.roundToInt
  * The app shell: a Voyager [TabNavigator] whose top-level tabs are Home, Browse and Search.
  *
  * Each tab owns its retained inner [cafe.adriel.voyager.navigator.Navigator] (see [SampleTab]), so
- * switching away leaves that tab's root view model and UI state in place. Selecting a tab pops the
+ * switching away leaves that tab's root view model and UI state in place. Visiting a top-level
+ * screen slides the old tab down and out while the new one slides in (see [SampleCurrentTab]).
+ * Selecting a tab pops the
  * outgoing tab to its root,
  * discarding any pushed screen; re-tapping the current tab does the same. Feature navigation lands
  * through [LocalSampleNavEffects]: a top-level route selects a tab, a pushed route stays on the
@@ -186,7 +187,7 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
                     // overlay has to outlive both screens to draw the element in flight.
                     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
                         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                            CurrentTab()
+                            SampleCurrentTab()
                         }
                     }
                 }
