@@ -16,14 +16,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import cafe.adriel.voyager.core.annotation.ExperimentalVoyagerApi
+import cafe.adriel.voyager.core.annotation.InternalVoyagerApi
 import cafe.adriel.voyager.core.screen.ScreenKey
+import cafe.adriel.voyager.navigator.LocalNavigatorSaver
 import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.navigator.NavigatorSaver
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
 import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
@@ -148,70 +155,119 @@ private val TAB_SWITCH_MAX_SLIDE = 400.dp
  * and returns `false` to decline Voyager's own pop. Each screen is wrapped by the active
  * [LocalSampleScreenContainer]; Android passes screens straight through, desktop adds the
  * per-screen view-model store that Voyager supplies only on Android.
+ *
+ * A tab left through a switch reopens at its root (see [tabNavigatorSaver]) without the stack
+ * being popped while the switch animates: the exit animation keeps showing the screen the user
+ * was on, and the reset is applied when the tab is composed again.
  */
+@OptIn(ExperimentalVoyagerApi::class)
 @Composable
 private fun SampleTabContent(tab: SampleTab) {
     val activeTabNavigator = LocalSampleActiveTabNavigator.current
     val backHandler = LocalSampleBackHandler.current
+    val tabSaver = remember(tab, activeTabNavigator) {
+        tabNavigatorSaver(activeTabNavigator, tab.key)
+    }
+    // Clear the reset only after this composition succeeded: if it is retried, the saver has
+    // already restored the tab at its root and the mark must still be there for the retry.
+    val resetOnEntry = remember(tab, activeTabNavigator) {
+        activeTabNavigator.rootResetPending(tab.key)
+    }
+    if (resetOnEntry) {
+        SideEffect { activeTabNavigator.clearRootReset(tab.key) }
+    }
 
-    Navigator(
-        screen = tab.root,
-        onBackPressed = {
-            backHandler.back()
-            false
-        },
-    ) { navigator ->
-        DisposableEffect(tab.key, navigator) {
-            activeTabNavigator.register(tab.key, navigator)
-            onDispose { activeTabNavigator.unregister(navigator) }
-        }
-
-        val screens = LocalSampleScreenContainer.current
-
-        // One scale for the whole move: the fade specs stretch linearly, and the spring's natural
-        // period is stretched with them (see screenSlideSpec), so slowing the transition down keeps
-        // its shape instead of ending in a fade tail behind a slide that already settled.
-        val animationScale = LocalAnimationScale.current
-        val fadeInSpec = remember(animationScale) {
-            tween<Float>(scaledMillis(BASE_FADE_IN_MILLIS, animationScale))
-        }
-        val fadeOutSpec = remember(animationScale) {
-            tween<Float>(scaledMillis(BASE_FADE_OUT_MILLIS, animationScale))
-        }
-        val slideSpec = remember(animationScale) { screenSlideSpec(animationScale) }
-
-        // Voyager's SlideTransition moves the screens but leaves them fully opaque, so a push reads
-        // as one page sliding over another. Adding a fade to the same offsets makes the content
-        // that has no shared element dissolve while the artwork that does travels: the overlap
-        // stops looking like two stacked pages.
-        ScreenTransition(
-            navigator = navigator,
-            transition = {
-                val (initialOffset, targetOffset) = when (navigator.lastEvent) {
-                    StackEvent.Pop -> ({ size: Int -> -size }) to ({ size: Int -> size })
-                    else -> ({ size: Int -> size }) to ({ size: Int -> -size })
-                }
-
-                (
-                    slideInHorizontally(slideSpec, initialOffset) +
-                        fadeIn(fadeInSpec)
-                    ) togetherWith (
-                    slideOutHorizontally(slideSpec, targetOffset) +
-                        fadeOut(fadeOutSpec)
-                    )
+    CompositionLocalProvider(LocalNavigatorSaver provides tabSaver) {
+        Navigator(
+            screen = tab.root,
+            onBackPressed = {
+                backHandler.back()
+                false
             },
-        ) { screen ->
-            // `this` is the screen's slot in the navigator's AnimatedContent: the scope the shared
-            // elements below use to know which transition they belong to. Both the outgoing and
-            // the incoming screen get their own, which is what lets an image morph between them.
-            CompositionLocalProvider(LocalScreenTransitionScope provides this) {
-                screens.Content(screen) {
-                    screen.Content()
+        ) { navigator ->
+            DisposableEffect(tab.key, navigator) {
+                activeTabNavigator.register(tab.key, navigator)
+                onDispose { activeTabNavigator.unregister(navigator) }
+            }
+
+            val screens = LocalSampleScreenContainer.current
+
+            // One scale for the whole move: the fade specs stretch linearly, and the spring's
+            // natural period is stretched with them (see screenSlideSpec), so slowing the
+            // transition down keeps its shape instead of ending in a fade tail behind a slide
+            // that already settled.
+            val animationScale = LocalAnimationScale.current
+            val fadeInSpec = remember(animationScale) {
+                tween<Float>(scaledMillis(BASE_FADE_IN_MILLIS, animationScale))
+            }
+            val fadeOutSpec = remember(animationScale) {
+                tween<Float>(scaledMillis(BASE_FADE_OUT_MILLIS, animationScale))
+            }
+            val slideSpec = remember(animationScale) { screenSlideSpec(animationScale) }
+
+            // Voyager's SlideTransition moves the screens but leaves them fully opaque, so a push
+            // reads as one page sliding over another. Adding a fade to the same offsets makes the
+            // content that has no shared element dissolve while the artwork that does travels: the
+            // overlap stops looking like two stacked pages.
+            ScreenTransition(
+                navigator = navigator,
+                transition = {
+                    val (initialOffset, targetOffset) = when (navigator.lastEvent) {
+                        StackEvent.Pop -> ({ size: Int -> -size }) to ({ size: Int -> size })
+                        else -> ({ size: Int -> size }) to ({ size: Int -> -size })
+                    }
+
+                    (
+                        slideInHorizontally(slideSpec, initialOffset) +
+                            fadeIn(fadeInSpec)
+                        ) togetherWith (
+                        slideOutHorizontally(slideSpec, targetOffset) +
+                            fadeOut(fadeOutSpec)
+                        )
+                },
+            ) { screen ->
+                // `this` is the screen's slot in the navigator's AnimatedContent: the scope the
+                // shared elements below use to know which transition they belong to. Both the
+                // outgoing and the incoming screen get their own, which is what lets an image
+                // morph between them.
+                CompositionLocalProvider(LocalScreenTransitionScope provides this) {
+                    screens.Content(screen) {
+                        screen.Content()
+                    }
                 }
             }
         }
     }
 }
+
+/**
+ * Restores a tab's stack, except when the tab was left through a switch: then it reopens at its
+ * root (see [SampleActiveTabNavigator.resetToRootOnNextEntry]).
+ *
+ * The switch itself never pops the outgoing tab, so its exit animation keeps showing the screen
+ * the user was on. Applying the reset here, as the tab is composed again, means the pop is never
+ * visible; the screens leaving the stack are released the way a pop would release them.
+ */
+@OptIn(ExperimentalVoyagerApi::class, InternalVoyagerApi::class)
+private fun tabNavigatorSaver(
+    activeTabNavigator: SampleActiveTabNavigator,
+    tabKey: String,
+): NavigatorSaver<Any> =
+    NavigatorSaver { initialScreens, key, stateHolder, disposeBehavior, parent ->
+        listSaver(
+            save = { navigator -> navigator.items },
+            restore = { items ->
+                if (activeTabNavigator.rootResetPending(tabKey)) {
+                    val navigator = Navigator(initialScreens, key, stateHolder, disposeBehavior, parent)
+                    val kept = initialScreens.mapTo(mutableSetOf()) { it.key }
+                    items.filterNot { it.key in kept }.forEach(navigator::dispose)
+                    navigator
+                } else {
+                    Navigator(items, key, stateHolder, disposeBehavior, parent)
+                }
+            },
+        )
+    }
 
 /**
  * Holds the active tab's inner [Navigator] so the shell can pop a tab's pushed screens from outside
@@ -222,12 +278,17 @@ private fun SampleTabContent(tab: SampleTab) {
  * current tab must go through [navigatorFor] rather than reading [navigator] directly.
  */
 @Stable
-class SampleActiveTabNavigator {
+class SampleActiveTabNavigator(
+    rootResets: Set<String> = emptySet(),
+) {
     var tabKey: String? by mutableStateOf(null)
         private set
 
     var navigator: Navigator? by mutableStateOf(null)
         private set
+
+    /** Tabs left through a switch; each reopens at its root when it is next composed. */
+    private val rootResetsOnEntry = rootResets.toMutableSet()
 
     /** Registers [navigator] as [tabKey]'s stack, replacing any previous registration. */
     fun register(tabKey: String, navigator: Navigator) {
@@ -241,6 +302,35 @@ class SampleActiveTabNavigator {
             this.navigator = null
             this.tabKey = null
         }
+    }
+
+    /**
+     * Marks [tabKey] to reopen at its root the next time it is composed.
+     *
+     * The shell calls this when a switch leaves the tab instead of popping it on the spot, so the
+     * exit animation shows the screen that was visible.
+     */
+    fun resetToRootOnNextEntry(tabKey: String) {
+        rootResetsOnEntry += tabKey
+    }
+
+    /** True while [tabKey] is waiting to reopen at its root. */
+    fun rootResetPending(tabKey: String): Boolean = tabKey in rootResetsOnEntry
+
+    /** Clears [tabKey]'s pending reset after the tab has been composed with it applied. */
+    fun clearRootReset(tabKey: String) {
+        rootResetsOnEntry -= tabKey
+    }
+
+    companion object {
+        /**
+         * Saves the tabs waiting to reopen at their root, so a rotation or process restore keeps
+         * the same policy. The navigator registration is rebuilt by composition and is not saved.
+         */
+        val Saver: Saver<SampleActiveTabNavigator, List<String>> = Saver(
+            save = { it.rootResetsOnEntry.toList() },
+            restore = { SampleActiveTabNavigator(rootResets = it.toSet()) },
+        )
     }
 
     /** The navigator registered for [tabKey], or null while another (outgoing) tab owns it. */

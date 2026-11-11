@@ -56,7 +56,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   on `:core:repository:demo` (it would drag the JVM-only `StringGenerator` into JS). All apps share
   `SampleRoute`/`SampleRouteUrl`, so URLs are derived from one pure codec.
 - **Features emit `SageEvent`s; the app owns navigation.** The pure policy lives in `:core:nav`:
-  `navActionFor` decides `ShowTopLevel` (select that tab, clearing the outgoing tab's stack),
+  `navActionFor` decides `ShowTopLevel` (select that tab),
   `Push` (onto the active tab), or `Pop` (the shared Back policy). Don't navigate from a feature
   module.
 - **Back is one policy:** `backActionFor(tab, canPop)` is shared by the top-bar arrow, platform

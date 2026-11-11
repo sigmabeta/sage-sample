@@ -13,7 +13,7 @@ import net.sigmabeta.sage.sample.models.contentDetailIdFromRoute
  * contract is testable without a `Navigator` or Compose.
  */
 sealed interface SampleNavAction {
-    /** Select the destination's tab, clearing the outgoing tab's stack — the top-level tab switch. */
+    /** Select the destination's tab — the top-level tab switch. */
     data class ShowTopLevel(val destination: SampleDestination) : SampleNavAction
 
     /**

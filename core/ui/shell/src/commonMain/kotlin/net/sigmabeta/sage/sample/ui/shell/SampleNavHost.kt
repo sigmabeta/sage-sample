@@ -32,6 +32,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -50,12 +51,11 @@ import kotlin.math.roundToInt
  * Each tab owns its retained inner [cafe.adriel.voyager.navigator.Navigator] (see [SampleTab]), so
  * switching away leaves that tab's root view model and UI state in place. Visiting a top-level
  * screen slides the old tab down and out while the new one slides in (see [SampleCurrentTab]).
- * Selecting a tab pops the
- * outgoing tab to its root,
- * discarding any pushed screen; re-tapping the current tab does the same. Feature navigation lands
- * through [LocalSampleNavEffects]: a top-level route selects a tab, a pushed route stays on the
- * active tab, and `NavigateBack` runs the same [backActionFor] policy as the top-bar arrow and
- * platform Back. `ShowSnackbar` is rendered by the scaffold's host instead.
+ * A tab left through a switch keeps its stack on screen for that exit and reopens at its root
+ * the next time it is shown; re-tapping the current tab returns it to its root in place. Feature
+ * navigation lands through [LocalSampleNavEffects]: a top-level route selects a tab, a pushed
+ * route stays on the active tab, and `NavigateBack` runs the same [backActionFor] policy as the
+ * top-bar arrow and platform Back. `ShowSnackbar` is rendered by the scaffold's host instead.
  *
  * [onOuterBack] is the policy's `Outer` branch: the host decides what lies above the shell (the
  * Android activity finishes; desktop has nothing). Chrome, title reporting and width class are
@@ -71,7 +71,9 @@ fun SampleNavHost(onOuterBack: () -> Unit = {}) {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Unit) {
-    val activeTabNavigator = remember { SampleActiveTabNavigator() }
+    val activeTabNavigator = rememberSaveable(saver = SampleActiveTabNavigator.Saver) {
+        SampleActiveTabNavigator()
+    }
     val shellNavigation = rememberShellNavigation(tabNavigator, activeTabNavigator, onOuterBack)
 
     // `activeScreen` is the top of the current tab's stack. Before the first tab registers its
@@ -256,7 +258,9 @@ private class DefaultSampleShellNavigation(
     override fun navigateTo(route: SampleRoute) {
         pendingBrowserRoute = route
         val target = tabFor(route.tab) ?: return
-        if (tabNavigator.current.key != target.key) {
+        val current = tabNavigator.current
+        if (current.key != target.key) {
+            activeTabNavigator.resetToRootOnNextEntry(current.key)
             tabNavigator.current = target
             return
         }
@@ -304,14 +308,19 @@ private class DefaultSampleShellNavigation(
     }
 
     /**
-     * Selecting a tab first clears the outgoing tab's pushed screens, then switches. Re-tapping
-     * the current tab only runs the clear, so it returns that tab to its root in place.
+     * Switches tabs without touching the outgoing tab's stack, so its exit animation keeps
+     * showing the screen the user was on; the outgoing tab is marked to reopen at its root the
+     * next time it is composed. Re-tapping the current tab instead pops it to its root in place,
+     * because that change is the whole point of the tap.
      */
     fun selectTab(target: SampleTab) {
-        activeTabNavigator.navigator?.popAll()
-        if (tabNavigator.current.key != target.key) {
-            tabNavigator.current = target
+        val current = tabNavigator.current as SampleTab
+        if (current.key == target.key) {
+            activeTabNavigator.navigator?.popAll()
+            return
         }
+        activeTabNavigator.resetToRootOnNextEntry(current.key)
+        tabNavigator.current = target
     }
 
     /**

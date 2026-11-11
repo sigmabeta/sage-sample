@@ -449,9 +449,11 @@ the tabbed shell; each app supplies only its platform seams:
 - **Home, Browse and Search are tabs** (`SampleTabs.kt`), each owning a retained inner
   `Navigator` and a stable root screen. The `NavigationBar` on compact windows and the
   `NavigationRail` at 600 dp and wider highlight `tabNavigator.current`, so a pushed screen
-  keeps its owning tab selected. Switching tabs pops the outgoing tab to its root (`popAll`),
-  discarding that tab's pushed screens, while the tab you return to keeps its root view model
-  and UI state (including the Search query and scroll position).
+  keeps its owning tab selected. Switching tabs leaves the outgoing tab's stack alone, so the
+  tab-switch slide moves out exactly the screen the user was on; that tab is marked to reopen at
+  its root the next time it is shown, and the reset is applied when it is composed again rather
+  than on screen. Re-tapping the active tab returns it to its root in place. The tab you return to
+  keeps its root view model and UI state (including the Search query and scroll position).
 - **Back is one policy** (`backActionFor`): a pushed screen pops inside the active tab, Search
   at its root returns Home, and Home/Browse roots fall through to the host (Android finishes
   the activity; desktop has nothing above the shell). The top-bar arrow, platform Back, and
@@ -468,7 +470,7 @@ the tabbed shell; each app supplies only its platform seams:
 - **Feature navigation is translated, not re-implemented.** Features emit SAGE
   `SageEvent`s (`NavigateTo`, `NavigateSingleTopLevel`, `NavigateBack`) through
   `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known top-level route to
-  `ShowTopLevel` (select that tab, clearing the outgoing tab's stack) and any other route to
+  `ShowTopLevel` (select that tab) and any other route to
   `Push` onto the active tab (Settings included), so a feature can reach Settings the same way
   the hamburger does. `NavigateBack` runs the shared Back policy, and unknown routes or event
   types are ignored.

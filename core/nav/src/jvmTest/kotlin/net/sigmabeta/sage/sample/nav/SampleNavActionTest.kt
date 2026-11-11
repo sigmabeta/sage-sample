@@ -10,8 +10,8 @@ import org.junit.Test
 
 /**
  * Turning a feature event into a back-stack operation is app policy: the feature only names a
- * route. Top-level routes select their tab (clearing the outgoing tab's stack); every other route
- * pushes onto the active tab, exactly like the hamburger's Settings push.
+ * route. Top-level routes select their tab; every other route pushes onto the active tab, exactly
+ * like the hamburger's Settings push.
  */
 class SampleNavActionTest {
     @Test

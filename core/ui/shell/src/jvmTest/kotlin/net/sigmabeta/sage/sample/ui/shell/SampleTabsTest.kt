@@ -1,9 +1,12 @@
 package net.sigmabeta.sage.sample.ui.shell
 import net.sigmabeta.sage.sample.nav.SampleDestination
 
+import androidx.compose.runtime.saveable.SaverScope
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -61,5 +64,39 @@ class SampleTabsTest {
         SampleDestination.entries.forEach { destination ->
             assertEquals(destination, screenFor(destination).destination)
         }
+    }
+
+    /**
+     * A switch marks the tab it leaves rather than popping it, so the tab's exit animation can
+     * still show the screen the user was on. The tab's navigator saver restores the marked tab at
+     * its root, and the mark is cleared once that composition succeeds.
+     */
+    @Test
+    fun `a tab left by a switch is marked to reopen at its root until it is composed`() {
+        val activeTabNavigator = SampleActiveTabNavigator()
+
+        activeTabNavigator.resetToRootOnNextEntry(BrowseTab.key)
+
+        assertTrue(activeTabNavigator.rootResetPending(BrowseTab.key))
+        assertFalse(activeTabNavigator.rootResetPending(HomeTab.key))
+
+        activeTabNavigator.clearRootReset(BrowseTab.key)
+
+        assertFalse(activeTabNavigator.rootResetPending(BrowseTab.key))
+    }
+
+    /** A rotation or process restore keeps the pending reset, so the tab still reopens at root. */
+    @Test
+    fun `a pending reset survives a saved-state round trip`() {
+        val activeTabNavigator = SampleActiveTabNavigator()
+        activeTabNavigator.resetToRootOnNextEntry(BrowseTab.key)
+
+        val saved = with(SampleActiveTabNavigator.Saver) {
+            SaverScope { true }.save(activeTabNavigator)
+        }
+        val restored = SampleActiveTabNavigator.Saver.restore(checkNotNull(saved))
+
+        assertTrue(checkNotNull(restored).rootResetPending(BrowseTab.key))
+        assertFalse(checkNotNull(restored).rootResetPending(HomeTab.key))
     }
 }

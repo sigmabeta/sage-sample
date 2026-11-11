@@ -11,7 +11,7 @@ sealed interface SampleBackAction {
     /** Pop the active tab's inner stack, back to its root if only one pushed screen remains. */
     data object Pop : SampleBackAction
 
-    /** Leave the current tab root for another top-level tab, clearing the outgoing stack. */
+    /** Leave the current tab root for another top-level tab. */
     data class ShowTab(val destination: SampleDestination) : SampleBackAction
 
     /** Nothing left in the tabbed shell: let the host's default Back behaviour run. */
