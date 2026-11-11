@@ -16,7 +16,7 @@ import net.sigmabeta.sage.sample.models.ArtworkCorner
 /**
  * Base time a row's label takes to leave, and to return, before [LocalAnimationScale] stretches it.
  */
-private const val LABEL_BASE_MILLIS = 100
+private const val LABEL_BASE_MILLIS = 200
 
 /**
  * The label half of a row's shared-element transition.
