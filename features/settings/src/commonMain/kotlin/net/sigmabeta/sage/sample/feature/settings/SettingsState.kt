@@ -14,6 +14,7 @@ import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
@@ -32,6 +33,7 @@ data class SettingsState(
     val themeMode: ThemeMode = ThemeMode.DEFAULT,
     val fontChoice: FontChoice = FontChoice.DEFAULT,
     val simulateDelay: SimulateDelay = SimulateDelay.DEFAULT,
+    val animationScale: AnimationScale = AnimationScale.DEFAULT,
     val demoOutcome: DemoOutcome = DemoOutcome.DEFAULT,
     val homeShowsSameContent: Boolean = DEFAULT_HOME_SHOWS_SAME_CONTENT,
     /** Progress of the "Reset demo data" action; the row shows inline progress while loading. */
@@ -52,6 +54,7 @@ data class SettingsState(
         fontDropdown(stringProvider),
         sectionHeader(stringProvider, SampleStringId.SETTINGS_SECTION_SIMULATION),
         simulateDelayDropdown(stringProvider),
+        animationScaleDropdown(stringProvider),
         demoOutcomeDropdown(stringProvider),
         homeShowsSameContentToggle(stringProvider),
         resetDemoDataRow(stringProvider),
@@ -119,6 +122,23 @@ data class SettingsState(
         )
     }
 
+    private fun animationScaleDropdown(stringProvider: StringProvider): ListModel {
+        val settingId = SampleStringId.SETTINGS_LABEL_ANIMATION_SCALE.name
+        return DropdownSettingListModel.ofLabels(
+            settingId = settingId,
+            name = stringProvider.getString(SampleStringId.SETTINGS_LABEL_ANIMATION_SCALE),
+            selectedPosition = animationScale.ordinal,
+            labels = AnimationScale.entries
+                .map { stringProvider.getString(it.labelId()) }
+                .toImmutableList(),
+            expanded = expandedDropdownId == settingId,
+            onExpandClicked = SettingsAction.DropdownExpandClicked(settingId),
+            onNewOptionSelected = { index ->
+                SettingsAction.AnimationScaleSelected(AnimationScale.entries[index])
+            },
+        )
+    }
+
     private fun demoOutcomeDropdown(stringProvider: StringProvider): ListModel {
         val settingId = SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
         return DropdownSettingListModel.ofLabels(
@@ -181,6 +201,13 @@ data class SettingsState(
         SimulateDelay.ONE_SECOND -> SampleStringId.SETTINGS_DELAY_ONE_SECOND
         SimulateDelay.TWO_SECONDS -> SampleStringId.SETTINGS_DELAY_TWO_SECONDS
         SimulateDelay.FIVE_SECONDS -> SampleStringId.SETTINGS_DELAY_FIVE_SECONDS
+    }
+
+    private fun AnimationScale.labelId(): SampleStringId = when (this) {
+        AnimationScale.ONE_X -> SampleStringId.SETTINGS_ANIMATION_SCALE_ONE_X
+        AnimationScale.TWO_X -> SampleStringId.SETTINGS_ANIMATION_SCALE_TWO_X
+        AnimationScale.THREE_X -> SampleStringId.SETTINGS_ANIMATION_SCALE_THREE_X
+        AnimationScale.FIVE_X -> SampleStringId.SETTINGS_ANIMATION_SCALE_FIVE_X
     }
 
     private fun DemoOutcome.labelId(): SampleStringId = when (this) {

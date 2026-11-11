@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.models.HomeItem
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
@@ -156,6 +157,7 @@ class RemoteRepositoriesTest {
         override val themeMode: StateFlow<ThemeMode> = MutableStateFlow(ThemeMode.DEFAULT)
         override val fontChoice: StateFlow<FontChoice> = MutableStateFlow(FontChoice.DEFAULT)
         override val simulateDelay: StateFlow<SimulateDelay> = MutableStateFlow(SimulateDelay.DEFAULT)
+        override val animationScale: StateFlow<AnimationScale> = MutableStateFlow(AnimationScale.DEFAULT)
         override val homeShowsSameContent: StateFlow<Boolean> = MutableStateFlow(true)
 
         private val outcome = MutableStateFlow(DemoOutcome.DEFAULT)
@@ -164,6 +166,7 @@ class RemoteRepositoriesTest {
         override fun setThemeMode(mode: ThemeMode) = Unit
         override fun setFontChoice(choice: FontChoice) = Unit
         override fun setSimulateDelay(delay: SimulateDelay) = Unit
+        override fun setAnimationScale(scale: AnimationScale) = Unit
         override fun setHomeShowsSameContent(showSameContent: Boolean) = Unit
         override fun setDemoOutcome(outcome: DemoOutcome) {
             this.outcome.value = outcome

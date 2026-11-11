@@ -20,17 +20,19 @@ plugins {
 | `ThemeMode` | `LIGHT`, `DARK`, `SYSTEM` (default). `isDark(systemDark)` resolves the system case. `fromStorageValue` falls back to the default. |
 | `FontChoice` | `STANDARD` (platform family, default), `INTER` (bundled). Compose-free: each app maps it to a `FontFamily`. |
 | `SimulateDelay` | `NONE` (default), `ONE_SECOND`, `TWO_SECONDS`, `FIVE_SECONDS`, each with `millis`. |
+| `AnimationScale` | `ONE_X` (default), `TWO_X`, `THREE_X`, `FIVE_X`, each with its `Float` multiplier. The shell supplies it as the renderers' `LocalAnimationScale`. |
 | `DemoOutcome` | `CONTENT` (default), `EMPTY`, `ERROR`. `select(content, empty, error)` is the shared branch helper; `demoOutcomeFailure()` is the one exception every generated datasource throws for `ERROR`. |
 
 ### `SampleSettingsManager`
 
 A `StateFlow`-based interface for `themeMode`, `fontChoice`, `simulateDelay`,
-`homeShowsSameContent`, and `demoOutcome`, plus a setter for each. `StateFlow` because the
-composition roots read the current value without collecting, while screens still react to changes.
+`animationScale`, `homeShowsSameContent`, and `demoOutcome`, plus a setter for each. `StateFlow`
+because the composition roots read the current value without collecting, while screens still react
+to changes.
 
 `StorageSampleSettingsManager` (`@SingleIn(AppScope)`, `@ContributesBinding`) implements it over
 SAGE's key-value `Storage`, one string key per preference (`setting.appearance.theme`,
-`setting.debug.demo_outcome`, …). Missing or unrecognised values fall back to each preference's
+`setting.debug.animation_scale`, …). Missing or unrecognised values fall back to each preference's
 default instead of failing a screen.
 
 ### Delay seam

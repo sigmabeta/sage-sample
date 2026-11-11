@@ -45,6 +45,11 @@ class StorageSampleSettingsManager(
         .map(::homeShowsSameContentFromStorage)
         .stateIn(scope, SharingStarted.Eagerly, DEFAULT_HOME_SHOWS_SAME_CONTENT)
 
+    override val animationScale: StateFlow<AnimationScale> = storage
+        .savedStringFlow(KEY_ANIMATION_SCALE)
+        .map { AnimationScale.fromStorageValue(it) }
+        .stateIn(scope, SharingStarted.Eagerly, AnimationScale.DEFAULT)
+
     override val demoOutcome: StateFlow<DemoOutcome> = storage
         .savedStringFlow(KEY_DEMO_OUTCOME)
         .map { DemoOutcome.fromStorageValue(it) }
@@ -58,6 +63,9 @@ class StorageSampleSettingsManager(
     override fun setSimulateDelay(delay: SimulateDelay) =
         storage.saveString(KEY_SIMULATE_DELAY, delay.name)
 
+    override fun setAnimationScale(scale: AnimationScale) =
+        storage.saveString(KEY_ANIMATION_SCALE, scale.name)
+
     override fun setHomeShowsSameContent(showSameContent: Boolean) =
         storage.saveString(KEY_HOME_SHOWS_SAME_CONTENT, showSameContent.toString())
 
@@ -68,6 +76,7 @@ class StorageSampleSettingsManager(
         const val KEY_THEME_MODE = "setting.appearance.theme"
         const val KEY_FONT_CHOICE = "setting.appearance.font"
         const val KEY_SIMULATE_DELAY = "setting.debug.simulate_delay"
+        const val KEY_ANIMATION_SCALE = "setting.debug.animation_scale"
         const val KEY_HOME_SHOWS_SAME_CONTENT = "setting.debug.home_shows_same_content"
         const val KEY_DEMO_OUTCOME = "setting.debug.demo_outcome"
     }

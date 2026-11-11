@@ -18,6 +18,7 @@ import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
 import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoDataResetter
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
@@ -51,6 +52,7 @@ class SettingsViewModelTest {
             initialThemeMode = ThemeMode.DARK,
             initialFontChoice = FontChoice.INTER,
             initialSimulateDelay = SimulateDelay.ONE_SECOND,
+            initialAnimationScale = AnimationScale.ONE_X,
             initialDemoOutcome = DemoOutcome.ERROR,
             initialHomeShowsSameContent = true,
         )
@@ -61,6 +63,7 @@ class SettingsViewModelTest {
         assertEquals(ThemeMode.DARK.ordinal, themeDropdown(items).selectedPosition)
         assertEquals(FontChoice.INTER.ordinal, fontDropdown(items).selectedPosition)
         assertEquals(SimulateDelay.ONE_SECOND.ordinal, delayDropdown(items).selectedPosition)
+        assertEquals(AnimationScale.ONE_X.ordinal, animationScaleDropdown(items).selectedPosition)
         assertEquals(DemoOutcome.ERROR.ordinal, demoOutcomeDropdown(items).selectedPosition)
         assertEquals(true, homeShowsSameContentToggle(items).checked)
         assertEquals("9.9.9", items.filterIsInstance<LabelValueListModel>()[0].value)
@@ -114,6 +117,26 @@ class SettingsViewModelTest {
         assertEquals(listOf(SimulateDelay.FIVE_SECONDS), settings.setSimulateDelayCalls)
         assertEquals(SimulateDelay.FIVE_SECONDS.ordinal, delayDropdown(viewModel.uiStateActual.value.listItems).selectedPosition)
         assertFalse(delayDropdown(viewModel.uiStateActual.value.listItems).expanded)
+    }
+
+    @Test
+    fun `selecting an animation scale writes through and collapses the dropdown`() = runTest(dispatcher) {
+        val settings = FakeSettingsManager()
+        val viewModel = createViewModel(settings = settings)
+
+        viewModel.sendAction(SettingsAction.DropdownExpandClicked(ANIMATION_SCALE_SETTING_ID))
+        advanceUntilIdle()
+        assertTrue(animationScaleDropdown(viewModel.uiStateActual.value.listItems).expanded)
+
+        viewModel.sendAction(SettingsAction.AnimationScaleSelected(AnimationScale.FIVE_X))
+        advanceUntilIdle()
+
+        assertEquals(listOf(AnimationScale.FIVE_X), settings.setAnimationScaleCalls)
+        assertEquals(
+            AnimationScale.FIVE_X.ordinal,
+            animationScaleDropdown(viewModel.uiStateActual.value.listItems).selectedPosition,
+        )
+        assertFalse(animationScaleDropdown(viewModel.uiStateActual.value.listItems).expanded)
     }
 
     @Test
@@ -265,6 +288,10 @@ class SettingsViewModelTest {
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
 
+    private fun animationScaleDropdown(items: List<ListModel>): DropdownSettingListModel =
+        items.filterIsInstance<DropdownSettingListModel>()
+            .single { it.name == SampleStringId.SETTINGS_LABEL_ANIMATION_SCALE.toString() }
+
     private fun demoOutcomeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.toString() }
@@ -283,6 +310,7 @@ class SettingsViewModelTest {
         val THEME_SETTING_ID = SampleStringId.SETTINGS_LABEL_THEME.name
         val FONT_SETTING_ID = SampleStringId.SETTINGS_LABEL_FONT.name
         val DELAY_SETTING_ID = SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.name
+        val ANIMATION_SCALE_SETTING_ID = SampleStringId.SETTINGS_LABEL_ANIMATION_SCALE.name
         val DEMO_OUTCOME_SETTING_ID = SampleStringId.SETTINGS_LABEL_DEMO_OUTCOME.name
         val RESET_ROW_ACTION = SettingsAction.ResetDemoDataClicked
     }

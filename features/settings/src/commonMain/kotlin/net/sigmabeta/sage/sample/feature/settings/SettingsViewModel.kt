@@ -18,6 +18,7 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoDataResetter
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
@@ -72,6 +73,11 @@ class SettingsViewModel(
             }
         }
         viewModelScope.launch {
+            settingsManager.animationScale.collect { scale ->
+                updateState { it.copy(animationScale = scale) }
+            }
+        }
+        viewModelScope.launch {
             settingsManager.demoOutcome.collect { outcome ->
                 updateState { it.copy(demoOutcome = outcome) }
             }
@@ -104,6 +110,11 @@ class SettingsViewModel(
 
             is SettingsAction.SimulateDelaySelected -> {
                 settingsManager.setSimulateDelay(action.delay)
+                collapseDropdown()
+            }
+
+            is SettingsAction.AnimationScaleSelected -> {
+                settingsManager.setAnimationScale(action.scale)
                 collapseDropdown()
             }
 

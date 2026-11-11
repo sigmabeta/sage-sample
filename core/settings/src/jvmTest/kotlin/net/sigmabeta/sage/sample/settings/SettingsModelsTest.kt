@@ -69,6 +69,27 @@ class SettingsModelsTest {
     }
 
     @Test
+    fun `animation scale parses every stored name and keeps its multiplier`() {
+        assertEquals(AnimationScale.ONE_X, AnimationScale.fromStorageValue("ONE_X"))
+        assertEquals(AnimationScale.TWO_X, AnimationScale.fromStorageValue("TWO_X"))
+        assertEquals(AnimationScale.THREE_X, AnimationScale.fromStorageValue("THREE_X"))
+        assertEquals(AnimationScale.FIVE_X, AnimationScale.fromStorageValue("FIVE_X"))
+
+        assertEquals(1f, AnimationScale.ONE_X.multiplier)
+        assertEquals(2f, AnimationScale.TWO_X.multiplier)
+        assertEquals(3f, AnimationScale.THREE_X.multiplier)
+        assertEquals(5f, AnimationScale.FIVE_X.multiplier)
+    }
+
+    @Test
+    fun `animation scale falls back to one time for missing or unknown values`() {
+        assertEquals(AnimationScale.ONE_X, AnimationScale.fromStorageValue(null))
+        assertEquals(AnimationScale.ONE_X, AnimationScale.fromStorageValue(""))
+        assertEquals(AnimationScale.ONE_X, AnimationScale.fromStorageValue("BOGUS"))
+        assertEquals(AnimationScale.ONE_X, AnimationScale.DEFAULT)
+    }
+
+    @Test
     fun `demo outcome parses every stored name`() {
         assertEquals(DemoOutcome.CONTENT, DemoOutcome.fromStorageValue("CONTENT"))
         assertEquals(DemoOutcome.EMPTY, DemoOutcome.fromStorageValue("EMPTY"))

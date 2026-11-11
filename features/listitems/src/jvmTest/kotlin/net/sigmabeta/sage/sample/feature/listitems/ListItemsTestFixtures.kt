@@ -14,6 +14,7 @@ import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
@@ -48,12 +49,14 @@ internal class FakeSampleSettingsManager(
     private val themeModeState = MutableStateFlow(ThemeMode.DEFAULT)
     private val fontChoiceState = MutableStateFlow(FontChoice.DEFAULT)
     private val simulateDelayState = MutableStateFlow(SimulateDelay.DEFAULT)
+    private val animationScaleState = MutableStateFlow(AnimationScale.DEFAULT)
     private val homeShowsSameContentState = MutableStateFlow(DEFAULT_HOME_SHOWS_SAME_CONTENT)
 
     override val demoOutcome: StateFlow<DemoOutcome> = demoOutcomeState.asStateFlow()
     override val themeMode: StateFlow<ThemeMode> = themeModeState.asStateFlow()
     override val fontChoice: StateFlow<FontChoice> = fontChoiceState.asStateFlow()
     override val simulateDelay: StateFlow<SimulateDelay> = simulateDelayState.asStateFlow()
+    override val animationScale: StateFlow<AnimationScale> = animationScaleState.asStateFlow()
     override val homeShowsSameContent: StateFlow<Boolean> = homeShowsSameContentState.asStateFlow()
 
     override fun setDemoOutcome(outcome: DemoOutcome) {
@@ -70,6 +73,10 @@ internal class FakeSampleSettingsManager(
 
     override fun setSimulateDelay(delay: SimulateDelay) {
         simulateDelayState.value = delay
+    }
+
+    override fun setAnimationScale(scale: AnimationScale) {
+        animationScaleState.value = scale
     }
 
     override fun setHomeShowsSameContent(showSameContent: Boolean) {

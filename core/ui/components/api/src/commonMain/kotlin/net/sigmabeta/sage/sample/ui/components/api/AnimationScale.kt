@@ -10,10 +10,11 @@ import kotlin.math.roundToInt
  * up from a single value — and so a settings-driven value can replace it later without touching the
  * call sites: they read [LocalAnimationScale], and whatever hosts the UI provides it.
  *
- * Two is deliberate rather than neutral: it is the exaggerated setting the transitions were tuned
- * against while they were being prototyped.
+ * The fallback is the authored speed, matching the Settings default: a preview or host that never
+ * provides the local should not silently run in slow motion. Slow-motion inspection is a choice made
+ * in Settings, not the resting state. `:core:ui:shell`'s test keeps the two defaults from drifting.
  */
-const val DEFAULT_ANIMATION_SCALE: Float = 3f
+const val DEFAULT_ANIMATION_SCALE: Float = 1f
 
 /**
  * The scale animations currently run at. Provided by the app shell; renderers read it where they

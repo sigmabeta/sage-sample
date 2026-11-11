@@ -37,6 +37,18 @@ class StorageSampleSettingsManagerTest {
         assertEquals(DemoOutcome.ERROR, manager().demoOutcome.value)
     }
 
+    @Test
+    fun `animation scale defaults to one time when nothing is stored`() {
+        assertEquals(AnimationScale.ONE_X, manager().animationScale.value)
+    }
+
+    @Test
+    fun `animation scale persists through storage for a new manager`() {
+        manager().setAnimationScale(AnimationScale.FIVE_X)
+
+        assertEquals(AnimationScale.FIVE_X, manager().animationScale.value)
+    }
+
     private fun manager(): StorageSampleSettingsManager =
         StorageSampleSettingsManager(storage = storage, scope = scope)
 }

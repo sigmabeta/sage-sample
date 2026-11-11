@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.sample.feature.settings.SettingsState
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
@@ -49,6 +50,7 @@ private fun settingsState(
     themeMode = ThemeMode.SYSTEM,
     fontChoice = FontChoice.STANDARD,
     simulateDelay = SimulateDelay.NONE,
+    animationScale = AnimationScale.ONE_X,
     demoOutcome = DemoOutcome.CONTENT,
     homeShowsSameContent = true,
     appVersion = "0.1.0",

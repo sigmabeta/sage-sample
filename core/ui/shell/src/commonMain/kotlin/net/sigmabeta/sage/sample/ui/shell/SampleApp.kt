@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
+import net.sigmabeta.sage.sample.ui.components.api.LocalAnimationScale
 import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
 
 /**
@@ -47,12 +48,14 @@ fun SampleApp(
 ) {
     val themeMode by settingsManager.themeMode.collectAsState()
     val fontChoice by settingsManager.fontChoice.collectAsState()
+    val animationScale by settingsManager.animationScale.collectAsState()
     val fontFamily = remember(fontChoice, interFontFamily) {
         fontFamilyFor(fontChoice, interFontFamily)
     }
     val lifecycleOwner = screenLifecycleOwner ?: LocalLifecycleOwner.current
 
     CompositionLocalProvider(
+        LocalAnimationScale provides animationScale.multiplier,
         LocalSamplePlatformBack provides platformBack,
         LocalSampleScreenContainer provides screenContainer,
         LocalSampleBrowserNavigation provides browserNavigation,

@@ -15,6 +15,12 @@ interface SampleSettingsManager {
     val simulateDelay: StateFlow<SimulateDelay>
 
     /**
+     * How much slower screen-level animation runs. The shell provides it as the renderers'
+     * `LocalAnimationScale`, so a change applies to the next transition without an app restart.
+     */
+    val animationScale: StateFlow<AnimationScale>
+
+    /**
      * When true, Home renders one stable instance of every registered module in priority order,
      * so every visit shows the same rows in the same order. Off gives a fresh randomized plan
      * with 2–10 instances per visit.
@@ -30,6 +36,7 @@ interface SampleSettingsManager {
     fun setThemeMode(mode: ThemeMode)
     fun setFontChoice(choice: FontChoice)
     fun setSimulateDelay(delay: SimulateDelay)
+    fun setAnimationScale(scale: AnimationScale)
     fun setHomeShowsSameContent(showSameContent: Boolean)
     fun setDemoOutcome(outcome: DemoOutcome)
 }

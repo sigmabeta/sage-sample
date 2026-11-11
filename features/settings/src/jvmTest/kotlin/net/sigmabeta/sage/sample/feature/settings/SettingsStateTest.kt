@@ -11,6 +11,7 @@ import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
 import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
@@ -31,6 +32,7 @@ class SettingsStateTest {
                 fontDropdown(items),
                 SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_SIMULATION.toString()),
                 delayDropdown(items),
+                animationScaleDropdown(items),
                 demoOutcomeDropdown(items),
                 homeShowsSameContentToggle(items),
                 resetDemoDataRow(items),
@@ -92,6 +94,24 @@ class SettingsStateTest {
     }
 
     @Test
+    fun `animation scale dropdown lists every multiplier in enum order and selects the current one`() {
+        val dropdown = animationScaleDropdown(
+            SettingsState(animationScale = AnimationScale.TWO_X).toListItems(FakeStringProvider),
+        )
+
+        assertEquals(
+            listOf(
+                SampleStringId.SETTINGS_ANIMATION_SCALE_ONE_X.toString(),
+                SampleStringId.SETTINGS_ANIMATION_SCALE_TWO_X.toString(),
+                SampleStringId.SETTINGS_ANIMATION_SCALE_THREE_X.toString(),
+                SampleStringId.SETTINGS_ANIMATION_SCALE_FIVE_X.toString(),
+            ),
+            dropdown.options.map { it.first },
+        )
+        assertEquals(AnimationScale.TWO_X.ordinal, dropdown.selectedPosition)
+    }
+
+    @Test
     fun `demo outcome dropdown lists every outcome in enum order and selects the current one`() {
         val dropdown = demoOutcomeDropdown(
             SettingsState(demoOutcome = DemoOutcome.ERROR).toListItems(FakeStringProvider),
@@ -113,6 +133,7 @@ class SettingsStateTest {
         val theme = themeDropdown(SettingsState().toListItems(FakeStringProvider))
         val font = fontDropdown(SettingsState().toListItems(FakeStringProvider))
         val delay = delayDropdown(SettingsState().toListItems(FakeStringProvider))
+        val animationScale = animationScaleDropdown(SettingsState().toListItems(FakeStringProvider))
         val outcome = demoOutcomeDropdown(SettingsState().toListItems(FakeStringProvider))
 
         assertEquals(
@@ -128,6 +149,10 @@ class SettingsStateTest {
             delay.options.map { it.second.clickAction() },
         )
         assertEquals(
+            AnimationScale.entries.map { SettingsAction.AnimationScaleSelected(it) },
+            animationScale.options.map { it.second.clickAction() },
+        )
+        assertEquals(
             DemoOutcome.entries.map { SettingsAction.DemoOutcomeSelected(it) },
             outcome.options.map { it.second.clickAction() },
         )
@@ -141,6 +166,7 @@ class SettingsStateTest {
         assertTrue(themeDropdown(items).expanded)
         assertTrue(!fontDropdown(items).expanded)
         assertTrue(!delayDropdown(items).expanded)
+        assertTrue(!animationScaleDropdown(items).expanded)
         assertTrue(!demoOutcomeDropdown(items).expanded)
     }
 
@@ -241,6 +267,10 @@ class SettingsStateTest {
     private fun delayDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
             .single { it.name == SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.toString() }
+
+    private fun animationScaleDropdown(items: List<ListModel>): DropdownSettingListModel =
+        items.filterIsInstance<DropdownSettingListModel>()
+            .single { it.name == SampleStringId.SETTINGS_LABEL_ANIMATION_SCALE.toString() }
 
     private fun demoOutcomeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()

@@ -17,8 +17,9 @@ plugins {
 `SettingsState.toListItems` builds, in order:
 
 1. **Appearance** — theme dropdown (`ThemeMode`), font dropdown (`FontChoice`)
-2. **Simulation** — simulate-delay dropdown (`SimulateDelay`), demo-outcome dropdown
-   (`DemoOutcome`), "Home shows same content" checkbox, "Reset demo data" row
+2. **Simulation** — simulate-delay dropdown (`SimulateDelay`), animation-scale dropdown
+   (`AnimationScale`), demo-outcome dropdown (`DemoOutcome`), "Home shows same content" checkbox,
+   "Reset demo data" row
 3. **About** — app version, build date (display-only `LabelValueListModel`s)
 
 Dropdowns are closed sets: option order mirrors each enum's `entries`, so the selected index maps
@@ -28,8 +29,9 @@ straight back to a value. At most one dropdown is expanded; re-tapping the open 
 
 `SettingsViewModel : SampleListViewModel<SettingsState>`:
 
-- Collects `themeMode`, `fontChoice`, `simulateDelay`, `demoOutcome` and `homeShowsSameContent` from
-  the app-scoped manager, so changes made elsewhere (or restored from storage) appear here.
+- Collects `themeMode`, `fontChoice`, `simulateDelay`, `animationScale`, `demoOutcome` and
+  `homeShowsSameContent` from the app-scoped manager, so changes made elsewhere (or restored from
+  storage) appear here.
 - `DropdownExpandClicked` toggles `expandedDropdownId`; a selection writes to the manager and
   collapses the dropdown.
 - `HomeShowsSameContentToggled` writes the inverse of the current value.
