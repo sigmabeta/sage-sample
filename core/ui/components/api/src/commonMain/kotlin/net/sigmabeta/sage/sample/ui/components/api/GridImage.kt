@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +32,7 @@ import net.sigmabeta.sage.sample.ui.components.api.subs.TraceSection
 import net.sigmabeta.sage.sample.ui.components.api.subs.gridCellOffscreenLayerEnabled
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.GridImageListModel
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 
 @Composable
 fun GridImage(
@@ -65,6 +65,15 @@ private fun GridImageContent(
 ) {
     val sourceInfo = model.sourceInfo
 
+    // The label and its scrim leave first on a push — the rest of the transition waits for them —
+    // and come back once the artwork has landed. Only the cell whose image is the shared element
+    // takes part: every other cell on a returning screen keeps its label.
+    val label = rememberImageLabelChoreography(
+        sourceInfo = sourceInfo,
+        corner = GridCellCorner,
+        arrivingFrom = HERO_ARTWORK_CORNER,
+    )
+
     val textColor = animateColorAsState(
         targetValue = if (model.active) {
             MaterialTheme.colorScheme.primary
@@ -83,7 +92,7 @@ private fun GridImageContent(
                 sourceInfo = sourceInfo,
                 imagePlaceholder = model.imagePlaceholder,
                 contentDescription = model.name,
-                modifier = Modifier.fillMaxSize().sharedImageElement(sourceInfo),
+                modifier = Modifier.fillMaxSize().then(label.imageModifier),
             )
 
             TintedText(
@@ -96,6 +105,8 @@ private fun GridImageContent(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    // Draw-phase alpha, so the label fading does not recompose the cell every frame.
+                    .graphicsLayer { alpha = label.alpha }
                     .background(brush = NameScrim)
                     .padding(NameInnerPadding)
                     .padding(top = NameExtraTopPadding), // For extra scrim
@@ -112,8 +123,7 @@ private fun GridImageContent(
         // Android, where the cached layer costs an extra GPU surface per visible cell without
         // a matching win.
         .then(if (gridCellOffscreenLayerEnabled) OffscreenCellLayer else Modifier)
-        .clickable { actionSink.sendAction(model.clickAction) }
-        .sharedImageBounds(sourceInfo, GridCellShape)
+        .clickable { label.click { actionSink.sendAction(model.clickAction) } }
 
     val maxWidthDp = model.maxWidthDp
     if (maxWidthDp != null) {
@@ -154,4 +164,4 @@ private val OffscreenCellLayer = Modifier.graphicsLayer {
 }
 
 /** Matches the grid cell's [ElevatedRoundRect] radius, so the overlay clip agrees with it. */
-private val GridCellShape = RoundedCornerShape(16.dp)
+private val GridCellCorner = ArtworkCorner.Rounded(16)

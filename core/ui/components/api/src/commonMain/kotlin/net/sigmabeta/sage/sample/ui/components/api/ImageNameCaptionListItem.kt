@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,6 +32,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.SearchResultListModel
 import net.sigmabeta.sage.images.SourceInfo
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 import net.sigmabeta.sage.ui.Icon
 
 @Composable
@@ -111,14 +111,17 @@ private fun ImageNameCaptionListItem(
         ElevatedCircle(
             modifier = Modifier
                 .size(ImageSize.THUMBNAIL.size)
-                .align(Alignment.CenterVertically)
-                .sharedImageBounds(sourceInfo, CircleShape),
+                .align(Alignment.CenterVertically),
         ) {
             CrossfadeImage(
                 sourceInfo = sourceInfo,
                 imagePlaceholder = imagePlaceholder,
                 contentDescription = null,
-                modifier = Modifier.sharedImageElement(sourceInfo),
+                modifier = Modifier.sharedImageElement(
+                    sourceInfo = sourceInfo,
+                    corner = ArtworkCorner.Circle,
+                    arrivingFrom = HERO_ARTWORK_CORNER,
+                ),
             )
         }
 

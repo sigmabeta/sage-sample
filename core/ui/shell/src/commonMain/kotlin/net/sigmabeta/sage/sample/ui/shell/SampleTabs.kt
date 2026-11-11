@@ -5,12 +5,17 @@ import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.nav.SampleDestination
 import net.sigmabeta.sage.sample.nav.activeScreenFor
 import net.sigmabeta.sage.sample.nav.backActionFor
+import net.sigmabeta.sage.sample.ui.components.api.BASE_FADE_IN_MILLIS
+import net.sigmabeta.sage.sample.ui.components.api.BASE_FADE_OUT_MILLIS
+import net.sigmabeta.sage.sample.ui.components.api.LocalAnimationScale
 import net.sigmabeta.sage.sample.ui.components.api.LocalScreenTransitionScope
+import net.sigmabeta.sage.sample.ui.components.api.scaledMillis
 import net.sigmabeta.sage.sample.ui.components.api.text
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,7 +26,19 @@ import cafe.adriel.voyager.core.screen.ScreenKey
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import cafe.adriel.voyager.transitions.SlideTransition
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.unit.IntOffset
+import cafe.adriel.voyager.core.stack.StackEvent
+import cafe.adriel.voyager.transitions.ScreenTransition
 import net.sigmabeta.sage.ui.vector
 
 /**
@@ -94,7 +111,40 @@ private fun SampleTabContent(tab: SampleTab) {
         }
 
         val screens = LocalSampleScreenContainer.current
-        SlideTransition(navigator) { screen ->
+
+        // One scale for the whole move: the fade specs stretch linearly, and the spring's natural
+        // period is stretched with them (see screenSlideSpec), so slowing the transition down keeps
+        // its shape instead of ending in a fade tail behind a slide that already settled.
+        val animationScale = LocalAnimationScale.current
+        val fadeInSpec = remember(animationScale) {
+            tween<Float>(scaledMillis(BASE_FADE_IN_MILLIS, animationScale))
+        }
+        val fadeOutSpec = remember(animationScale) {
+            tween<Float>(scaledMillis(BASE_FADE_OUT_MILLIS, animationScale))
+        }
+        val slideSpec = remember(animationScale) { screenSlideSpec(animationScale) }
+
+        // Voyager's SlideTransition moves the screens but leaves them fully opaque, so a push reads
+        // as one page sliding over another. Adding a fade to the same offsets makes the content
+        // that has no shared element dissolve while the artwork that does travels: the overlap
+        // stops looking like two stacked pages.
+        ScreenTransition(
+            navigator = navigator,
+            transition = {
+                val (initialOffset, targetOffset) = when (navigator.lastEvent) {
+                    StackEvent.Pop -> ({ size: Int -> -size }) to ({ size: Int -> size })
+                    else -> ({ size: Int -> size }) to ({ size: Int -> -size })
+                }
+
+                (
+                    slideInHorizontally(slideSpec, initialOffset) +
+                        fadeIn(fadeInSpec)
+                    ) togetherWith (
+                    slideOutHorizontally(slideSpec, targetOffset) +
+                        fadeOut(fadeOutSpec)
+                    )
+            },
+        ) { screen ->
             // `this` is the screen's slot in the navigator's AnimatedContent: the scope the shared
             // elements below use to know which transition they belong to. Both the outgoing and
             // the incoming screen get their own, which is what lets an image morph between them.
@@ -179,3 +229,14 @@ internal fun screenFor(
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
 }
+
+/**
+ * The slide's spring, at Voyager's default stiffness when [scale] is one.
+ *
+ * A spring has no duration, so the scale is applied to what shapes its timing: its period is
+ * proportional to `1 / sqrt(stiffness)`, hence the squared divisor.
+ */
+private fun screenSlideSpec(scale: Float): FiniteAnimationSpec<IntOffset> = spring(
+    stiffness = Spring.StiffnessMediumLow / (scale * scale),
+    visibilityThreshold = IntOffset.VisibilityThreshold,
+)

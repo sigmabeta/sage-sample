@@ -14,6 +14,10 @@ kotlin {
             dependencies {
                 // Re-exported: consumers get SAGE's ListModel vocabulary and this module's
                 // renderers from one dependency.
+                // `ArtworkCorner`, the corner a destination's artwork arrives from: part of the
+                // route payload the renderers read through `LocalArtworkHandoff`.
+                implementation(projects.core.models.api)
+
                 api(libs.sage.common.ui.components)
                 api(libs.sage.common.ui.strings)
                 api(projects.core.strings.api)

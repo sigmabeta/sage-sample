@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.ui.components.api
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -88,12 +89,16 @@ private fun SectionContentColumn(
     // path animates that: the section is a single lazy item (so `animateItem()` only sees the
     // section, which keeps its key) and these children aren't lazy items at all. Cross-fade the two
     // phases so the block doesn't pop.
+    val animationScale = LocalAnimationScale.current
     AnimatedContent(
         targetState = model.sectionItems,
         // Keyed by phase, not by content: a re-emitted list with the same phase (an `active`
         // row, a pagination flag, a page appended below the existing rows) must not re-trigger it.
         contentKey = { it.isPlaceholderPhase() },
-        transitionSpec = { fadeIn() togetherWith fadeOut() },
+        transitionSpec = {
+            fadeIn(tween(scaledMillis(BASE_FADE_IN_MILLIS, animationScale))) togetherWith
+                fadeOut(tween(scaledMillis(BASE_FADE_OUT_MILLIS, animationScale)))
+        },
         label = "SectionContent.phase",
         modifier = modifier
             .fillMaxWidth()

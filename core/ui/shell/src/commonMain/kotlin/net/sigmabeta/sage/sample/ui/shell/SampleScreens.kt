@@ -39,6 +39,7 @@ import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
 import net.sigmabeta.sage.sample.bitmaps.GeneratedImageFetcher
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.sample.ui.components.api.ArtworkHandoff
 import net.sigmabeta.sage.sample.ui.components.api.Content
 import net.sigmabeta.sage.sample.ui.components.api.LocalArtworkHandoff
 import net.sigmabeta.sage.sample.ui.components.api.SearchContent
@@ -190,14 +191,17 @@ data class ContentDetailScreen(
      * same size means the same `generated://` URL, and therefore the same memory-cache entry the
      * row populated.
      */
-    private fun artworkHandoff(): String? {
+    private fun artworkHandoff(): ArtworkHandoff? {
         val id = contentId ?: return null
         val size = artworkSize ?: return null
 
-        return GeneratedImageFetcher.urlFor(
-            seed = contentHeroImageSeed(id),
-            width = size.width,
-            height = size.height,
+        return ArtworkHandoff(
+            url = GeneratedImageFetcher.urlFor(
+                seed = contentHeroImageSeed(id),
+                width = size.width,
+                height = size.height,
+            ),
+            corner = size.corner,
         )
     }
 }

@@ -26,6 +26,7 @@ import net.sigmabeta.sage.sample.ui.components.api.subs.CrossfadeImage
 import net.sigmabeta.sage.sample.ui.components.api.subs.TintedText
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.WideItemListModel
+import net.sigmabeta.sage.sample.models.ArtworkCorner
 
 @Composable
 fun WideItem(
@@ -61,13 +62,16 @@ fun WideItem(
             modifier = Modifier
                 .fillMaxHeight()
                 .aspectRatio(1.0f)
-                .sharedImageBounds(sourceInfo, WideItemShape),
         ) {
             CrossfadeImage(
                 sourceInfo = sourceInfo,
                 imagePlaceholder = model.imagePlaceholder,
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize().sharedImageElement(sourceInfo),
+                modifier = Modifier.fillMaxSize().sharedImageElement(
+                    sourceInfo = sourceInfo,
+                    corner = ArtworkCorner.Rounded(WIDE_ITEM_CORNER_RADIUS_DP),
+                    arrivingFrom = HERO_ARTWORK_CORNER,
+                ),
             )
         }
 
@@ -86,5 +90,7 @@ fun WideItem(
     }
 }
 
-/** Shared with the loading placeholder, so the two shapes cannot drift. */
-internal val WideItemShape = RoundedCornerShape(8.dp)
+private const val WIDE_ITEM_CORNER_RADIUS_DP = 8
+
+/** Shared with the loading placeholder and the shared-transition clip, so they cannot drift. */
+internal val WideItemShape = RoundedCornerShape(WIDE_ITEM_CORNER_RADIUS_DP.dp)
