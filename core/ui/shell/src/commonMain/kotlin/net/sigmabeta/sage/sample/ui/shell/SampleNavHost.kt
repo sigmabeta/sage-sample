@@ -112,6 +112,18 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
     DisposableEffect(browserNavigation) {
         onDispose { browserNavigation?.onShellDisposed() }
     }
+    // A native deep link (an Android intent or a desktop launch argument) is a one-shot route:
+    // apply it through the same external-navigation path as a browser URL, then consume it so a
+    // recreated host cannot replay it.
+    val deepLinkSource = LocalSampleDeepLinkSource.current
+    LaunchedEffect(deepLinkSource, shellNavigation) {
+        deepLinkSource?.pending?.collect { route ->
+            if (route != null) {
+                shellNavigation.navigateTo(route)
+                deepLinkSource.consume()
+            }
+        }
+    }
     LaunchedEffect(activeRouteKey, browserNavigation) {
         browserNavigation?.onRouteChanged(
             route = SampleRoute(
@@ -122,12 +134,12 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
             push = !shellNavigation.consumeReplaceReport(),
         )
     }
-    // A browser-driven tab switch registers its inner navigator one frame later; apply the
-    // pending screen once that registration lands.
-    val pendingBrowserRoute = shellNavigation.pendingBrowserRoute
-    LaunchedEffect(pendingBrowserRoute, activeNavigator, currentTab.key) {
-        if (pendingBrowserRoute != null && currentTab.destination == pendingBrowserRoute.tab) {
-            shellNavigation.applyPendingBrowserRoute()
+    // An external route that switches tabs registers its inner navigator one frame later; apply
+    // the pending screen once that registration lands.
+    val pendingExternalRoute = shellNavigation.pendingExternalRoute
+    LaunchedEffect(pendingExternalRoute, activeNavigator, currentTab.key) {
+        if (pendingExternalRoute != null && currentTab.destination == pendingExternalRoute.tab) {
+            shellNavigation.applyPendingExternalRoute()
         }
     }
 
@@ -213,10 +225,10 @@ private fun rememberShellNavigation(
 }
 
 /**
- * The shell's navigation operations, shared by tab taps, feature events and Back.
+ * The shell's navigation operations, shared by tab taps, feature events, Back and external routes.
  *
- * All three mutate the same two navigators, so keeping them together is what stops the bottom bar,
- * the top-bar arrow and platform Back from drifting apart.
+ * All of them mutate the same two navigators, so keeping them together is what stops the bottom
+ * bar, the top-bar arrow, platform Back and a deep link from drifting apart.
  */
 private class DefaultSampleShellNavigation(
     private val tabNavigator: TabNavigator,
@@ -226,14 +238,14 @@ private class DefaultSampleShellNavigation(
     SampleShellNavigation {
 
     /**
-     * The browser route waiting for its tab's inner navigator to register. Set by [navigateTo];
-     * cleared by [applyPendingBrowserRoute].
+     * The external route waiting for its tab's inner navigator to register. Set by [navigateTo];
+     * cleared by [applyPendingExternalRoute]. Shared by browser history and native deep links.
      */
-    var pendingBrowserRoute: SampleRoute? by mutableStateOf(null)
+    var pendingExternalRoute: SampleRoute? by mutableStateOf(null)
         private set
 
-    override val isBrowserNavigationPending: Boolean
-        get() = pendingBrowserRoute != null
+    override val isExternalNavigationPending: Boolean
+        get() = pendingExternalRoute != null
 
     /**
      * True when the next route report should replace the current browser entry instead of pushing
@@ -256,7 +268,7 @@ private class DefaultSampleShellNavigation(
     }
 
     override fun navigateTo(route: SampleRoute) {
-        pendingBrowserRoute = route
+        pendingExternalRoute = route
         val target = tabFor(route.tab) ?: return
         val current = tabNavigator.current
         if (current.key != target.key) {
@@ -266,25 +278,25 @@ private class DefaultSampleShellNavigation(
         }
         // Same tab: the navigator is already registered, so apply now instead of waiting for the
         // shell's pending-route effect.
-        applyPendingBrowserRoute()
+        applyPendingExternalRoute()
     }
 
-    /** Applies the pending route once its tab's navigator is available. */
-    fun applyPendingBrowserRoute() {
-        val route = pendingBrowserRoute ?: return
+    /** Applies the pending external route once its tab's navigator is available. */
+    fun applyPendingExternalRoute() {
+        val route = pendingExternalRoute ?: return
         val target = tabFor(route.tab) ?: return
         val navigator = activeTabNavigator.navigatorFor(target.key) ?: return
         navigator.popAll()
         if (!route.isRoot) {
             navigator.push(screenFor(route.screen, route.contentId))
         }
-        pendingBrowserRoute = null
+        pendingExternalRoute = null
     }
 
     override fun back() {
         // With an app entry behind the current URL, the browser owns Back: history.back() fires
         // popstate, which drives this shell through navigateTo.
-        if (pendingBrowserRoute == null && browserNavigation?.onBackRequested() == true) return
+        if (pendingExternalRoute == null && browserNavigation?.onBackRequested() == true) return
 
         val currentTab = tabNavigator.current as SampleTab
         val navigator = activeTabNavigator.navigatorFor(currentTab.key)

@@ -47,7 +47,7 @@ class BrowserHistoryNavigation : SampleBrowserNavigation {
 
     override fun onRouteChanged(route: SampleRoute, push: Boolean) {
         val navigation = shell ?: return
-        if (!ready || applying || navigation.isBrowserNavigationPending) return
+        if (!ready || applying || navigation.isExternalNavigationPending) return
         val url = SampleRouteUrl.encode(route)
         if (push) {
             if (window.location.pathname == url) return

@@ -24,6 +24,7 @@ decisions live here now; the Compose/Voyager host stays app-side.
 | `SampleChrome.kt` | `SampleScreenChrome`, `SampleTopBarLeading`, `SampleTopBarState`, `topBarState`, `routeKeyFor`, generic `activeScreenFor`, `widthClassFromDp`. |
 | `SampleScreenKeys.kt` | `contentDetailScreenKey(contentId)`. |
 | `SampleRoute.kt` | `SampleRoute` (tab + screen + optional content id) and `SampleRouteUrl` encode/decode. |
+| `SampleDeepLink.kt` | `SampleDeepLink.routeFor(value)`: `sagesample://` links (authority = first route segment) and bare paths, decoded by `SampleRouteUrl`. |
 | `SampleLifecycle.kt` | `foregroundActionFor(Lifecycle.Event)`. |
 
 ## What stays out of `:core:nav`
@@ -46,9 +47,10 @@ The nine duplicated policy test classes moved here once: `SampleDestinationTest`
 `SampleNavActionTest`, `SampleBackActionTest`, `SampleScreenLayoutTest`, `SampleTopBarStateTest`,
 `SampleChromePolicyTest`, `SampleContentDetailScreenKeyTest`, `ScreenLifecycleTest` — plus
 `SampleRouteUrlTest`, which pins `/home`, `/browse/list-items`, `/home/content-detail/{id}`,
-tab-less short links, canonical round trips, and malformed paths. The shared
-`SampleChromeTest`/`SampleTabsTest` live in `:core:ui:shell`; the apps keep only their platform
-tests.
+tab-less short links, canonical round trips, and malformed paths, and `SampleDeepLinkTest`, which
+pins the native `sagesample://` form, bare launch-argument paths, rejected schemes/routes and a
+canonical round trip. The shared `SampleChromeTest`/`SampleTabsTest` live in `:core:ui:shell`; the
+apps keep only their platform tests.
 
 ## Module facts
 

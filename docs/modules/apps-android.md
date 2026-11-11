@@ -22,8 +22,8 @@ generation). Both build types are unminified; release is unsigned.
 
 | File | Role |
 |---|---|
-| `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug. |
-| `MainActivity.kt` | Installs `LocalMetroViewModelFactory` and `LocalSampleStringProvider` above `SampleApp`, and supplies `finish()` as the outer Back action. |
+| `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug; holds the app-scoped `deepLinks` source. |
+| `MainActivity.kt` | Installs `LocalMetroViewModelFactory` and `LocalSampleStringProvider` above `SampleApp`, supplies `finish()` as the outer Back action, and offers `sagesample://` intent links from `onCreate`/`onNewIntent` to the shell. |
 | `di/SampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`. Exposes `settingsManager` and `stringProvider`; provides the application `Context`. |
 | `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), `AppInfo`. The app owns no text table. |
 | `storage/PreferencesStorage.kt` | Android `Storage` over Preferences DataStore (`sage_sample_settings`); disk-dispatched writes, flow reads. |
@@ -42,7 +42,20 @@ shared `SampleApp` from `:core:ui:shell`, passing the Android platform seams:
 | `interFontFamily` | the three Inter OTF weights from `res/font`. |
 | `screenContainer` | the default passthrough (Voyager already supplies per-screen stores). |
 | `screenLifecycleOwner` | `null` → the activity's `LocalLifecycleOwner`. |
+| `deepLinkSource` | `SampleApplication.deepLinks`, offered from `MainActivity`'s VIEW intents. |
 | `onOuterBack` | `finish()`. |
+
+Deep links: the manifest claims the `sagesample` scheme (`singleTop`, so a link tapped while the
+shell is on top arrives in `onNewIntent`). `MainActivity` decodes `intent.dataString` with
+`:core:nav`'s `SampleDeepLink` and offers it to the app-scoped `MutableSampleDeepLinkSource`; the
+shell applies it through the same external-navigation path as a browser URL and consumes it. A
+recreated activity only re-offers the link when `savedInstanceState` is null, so rotation does not
+reset the stack.
+
+```sh
+adb shell am start -a android.intent.action.VIEW \
+  -d "sagesample://browse/list-items" net.sigmabeta.sage.sample
+```
 
 The destinations, route mapping, Back policy, layout selection, chrome derivation and screen keys
 live in `:core:nav`; the screens, tabs and nav host live in `:core:ui:shell`. The app keeps no

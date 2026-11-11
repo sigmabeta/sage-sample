@@ -27,17 +27,20 @@ interface SampleBrowserNavigation {
     fun onShellDisposed()
 }
 
-/** The shell's navigation entry point for the browser host. */
+/**
+ * The shell's navigation entry point for hosts that own the route: the browser's URL and native
+ * deep links ([SampleDeepLinkSource]) both land here.
+ */
 interface SampleShellNavigation {
     /** Navigates to [route], switching tabs and rebuilding that tab's stack as needed. */
     fun navigateTo(route: SampleRoute)
 
     /**
-     * True while a browser-driven route waits for its tab's inner navigator to register. The host
-     * ignores route reports during that window so a stale pre-application route cannot push a
+     * True while an externally driven route waits for its tab's inner navigator to register. The
+     * host ignores route reports during that window so a stale pre-application route cannot push a
      * duplicate history entry.
      */
-    val isBrowserNavigationPending: Boolean
+    val isExternalNavigationPending: Boolean
 }
 
 /** Provided by `SampleApp`; null on hosts without a URL bar. */

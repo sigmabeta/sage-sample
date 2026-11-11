@@ -5,9 +5,16 @@ import coil3.SingletonImageLoader
 import dev.zacsweers.metro.createGraphFactory
 import net.sigmabeta.sage.sample.bitmaps.generatedImageLoader
 import net.sigmabeta.sage.sample.di.SampleAppGraph
+import net.sigmabeta.sage.sample.ui.shell.MutableSampleDeepLinkSource
 import net.sigmabeta.sage.ui.perf.isPerfMeasurementEnabled
 
 class SampleApplication : Application() {
+    /**
+     * Deep links offered by [MainActivity]'s intents. App-scoped so a link that arrives during
+     * activity startup survives recreation until the shell consumes it.
+     */
+    val deepLinks = MutableSampleDeepLinkSource()
+
     override fun onCreate() {
         super.onCreate()
         // Register before any composable resolves the singleton, so AsyncImage requests for

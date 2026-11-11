@@ -23,9 +23,11 @@ import net.sigmabeta.sage.sample.jvm.ui.rememberPersistedWindowState
 import net.sigmabeta.sage.sample.jvm.ui.rememberWindowFocusLifecycleOwner
 import net.sigmabeta.sage.sample.jvm.ui.navigation.HeldBackKeys
 import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
+import net.sigmabeta.sage.sample.nav.SampleDeepLink
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.shell.MutableSampleDeepLinkSource
 import net.sigmabeta.sage.sample.ui.shell.PerScreenSampleScreenContainer
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
 
@@ -44,9 +46,16 @@ import net.sigmabeta.sage.sample.ui.shell.SampleApp
  *
  * The window opens at the size the last run left it: [rememberPersistedWindowState] restores it
  * from the graph's `Storage` before the platform window exists.
+ *
+ * A launch argument such as `sagesample://browse/list-items` opens that route, using the same link
+ * parser as Android and the same shell navigation a browser URL drives. Arguments that are not app
+ * links are ignored.
  */
-fun main() {
+fun main(args: Array<String>) {
     val graph = createGraphFactory<JvmSampleAppGraph.Factory>().create()
+    val deepLinks = MutableSampleDeepLinkSource(
+        args.firstNotNullOfOrNull(SampleDeepLink::routeFor),
+    )
 
     // Register before any composable resolves the singleton, so AsyncImage requests for
     // `generated://` URLs reach :core:bitmaps' fetcher instead of the default loader.
@@ -100,6 +109,7 @@ fun main() {
                     platformBack = platformBack,
                     screenContainer = PerScreenSampleScreenContainer,
                     screenLifecycleOwner = screenLifecycleOwner,
+                    deepLinkSource = deepLinks,
                 )
             }
         }

@@ -35,6 +35,9 @@ import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
  *
  * [browserNavigation] is the browser's history bridge (null on Android/desktop). The shell reports
  * its active route to it and lets it handle Back when an app entry exists behind the current URL.
+ *
+ * [deepLinkSource] carries a native one-shot route (an Android intent, a desktop launch argument),
+ * or null when the host has none. The shell applies it once and consumes it.
  */
 @Composable
 fun SampleApp(
@@ -44,6 +47,7 @@ fun SampleApp(
     screenContainer: SampleScreenContainer = PassthroughSampleScreenContainer,
     screenLifecycleOwner: LifecycleOwner? = null,
     browserNavigation: SampleBrowserNavigation? = null,
+    deepLinkSource: SampleDeepLinkSource? = null,
     onOuterBack: () -> Unit = {},
 ) {
     val themeMode by settingsManager.themeMode.collectAsState()
@@ -59,6 +63,7 @@ fun SampleApp(
         LocalSamplePlatformBack provides platformBack,
         LocalSampleScreenContainer provides screenContainer,
         LocalSampleBrowserNavigation provides browserNavigation,
+        LocalSampleDeepLinkSource provides deepLinkSource,
         LocalScreenLifecycleOwner provides lifecycleOwner,
     ) {
         SampleTheme(

@@ -32,6 +32,7 @@ dependency. `jvmTest` holds the shared shell tests.
 | `SampleScreenContainer.kt` | `SampleScreenContainer` seam: wraps each screen with a per-screen ViewModel store where the navigator does not supply one. |
 | `PerScreenViewModelStore.kt` | `PerScreenSampleScreenContainer`: the desktop/web store (a Voyager `ScreenModel` owns the `ViewModelStore`). |
 | `SampleBrowserNavigation.kt` | Browser-history seam: the shell reports `SampleRoute`s and accepts deep links/`popstate` through `SampleShellNavigation`. Null on Android/desktop. |
+| `SampleDeepLink.kt` | Native deep-link seam: `SampleDeepLinkSource` (a pending route + `consume`) and the shared `MutableSampleDeepLinkSource` an Android/desktop host offers a decoded route to. Null on web. |
 | `jvmMain/GeneratedBitmapPreview.kt` | Desktop `@Preview` harness for `:core:bitmaps` placeholder art. |
 
 ## Platform seams
@@ -45,6 +46,7 @@ dependency. `jvmTest` holds the shared shell tests.
 | `screenContainer` | passthrough (Voyager supplies stores) | `PerScreenSampleScreenContainer` (store off a `ScreenModel`; desktop + web) |
 | `screenLifecycleOwner` | `null` → activity lifecycle | `rememberWindowFocusLifecycleOwner()` (desktop); composition owner on web |
 | `browserNavigation` | `null` | `null` (desktop) / `BrowserHistoryNavigation` (web) |
+| `deepLinkSource` | `SampleApplication.deepLinks` (offered by `MainActivity` intents) | `MutableSampleDeepLinkSource` from the launch argument (desktop) / `null` (web) |
 
 `onOuterBack` is the policy's `Outer` branch: Android supplies `finish()`, desktop leaves it empty.
 
@@ -61,7 +63,8 @@ preview harness; the Android target uses the AndroidX BOM + preview artifact.
 
 ## Tests
 
-`jvmTest` holds the shared `SampleChromeTest` (chrome defaults/reset) and `SampleTabsTest` (stable
+`jvmTest` holds the shared `SampleChromeTest` (chrome defaults/reset), `SampleTabsTest` (stable
 tab roots, one tab per top-level destination, every destination mapped to a screen, and the pending
-root reset a tab switch leaves behind). The pure
-policy tests stay in `:core:nav`; desktop-only Back-key tests stay in `:apps:jvm`.
+root reset a tab switch leaves behind), and `SampleDeepLinkSourceTest` (a pending native route is
+consumed once and a plain launch leaves it alone). The pure policy tests stay in `:core:nav`;
+desktop-only Back-key tests stay in `:apps:jvm`.

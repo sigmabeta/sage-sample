@@ -8,10 +8,22 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!--
+                Native deep links: sagesample://<route>, where the authority is the route's first
+                segment (sagesample://browse/list-items). `:core:nav`'s SampleDeepLink decides
+                whether a URI names an app destination, so this filter only claims the scheme.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="sagesample" />
             </intent-filter>
         </activity>
     </application>

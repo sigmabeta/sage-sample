@@ -43,6 +43,18 @@ cd sage-sample
 ./gradlew :apps:server:run -Psage.js=true   # build the browser bundle and serve it on :8080
 ```
 
+Both native apps accept the sample's deep links. The Android build registers `sagesample://`, and the
+desktop app reads a launch argument, so either can open a pushed screen directly:
+
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d "sagesample://browse/list-items" net.sigmabeta.sage.sample
+./gradlew :apps:jvm:run --args="sagesample://browse/list-items"
+```
+
+The browser already deep-links from its URL (`/browse/list-items`); see
+[Web app and server](#web-app-and-server).
+
 The server jobs require Node 22 and Yarn 1.x on `PATH` (the Kotlin/JS plugin is configured to use
 the system tools). Open <http://localhost:8080>; `SAGE_SAMPLE_PORT` and `SAGE_SAMPLE_BIND_HOST`
 override the listen address. A production distribution is
@@ -173,7 +185,8 @@ core/bitmaps/               KMP Compose module shared by every app
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
 core/models/api/            KMP domain models + Content detail route codec
-core/nav/                   KMP destinations, route/Back/layout/chrome policy, URL codec, screen keys
+core/nav/                   KMP destinations, route/Back/layout/chrome policy, URL + deep-link codec,
+                            screen keys
 core/strings/api/           SampleStringId: the one id vocabulary for all user-visible text
 core/strings/real/          SampleStringProvider: the single id -> English table
 core/ui/components/api/     KMP Compose renderer suite shared by every app
@@ -198,6 +211,7 @@ core/ui/shell/              KMP Compose app shell shared by every app
   SamplePlatformBack.kt     platform Back seam (Android BackHandler, desktop keys/mouse)
   SampleScreenContainer.kt  per-screen ViewModelStore seam (desktop + web implementation in the shell)
   SampleBrowserNavigation.kt  browser history seam (null on Android/desktop)
+  SampleDeepLink.kt         native one-shot deep-link seam + the shared host-side source
   PerScreenViewModelStore.kt  Voyager per-screen store used by desktop and web
   SampleNavHost.kt          also reports routes and applies browser-driven navigation
 core/ui/previews/           Paparazzi/@Preview harness shared by the screenshot modules
@@ -434,6 +448,13 @@ land on Home and are canonicalised. `BrowserHistoryNavigation` mirrors forward n
 `history.back()` whenever an app entry exists behind the current URL. Android and desktop pass no
 browser bridge, so their navigation behaviour is unchanged.
 
+The same route model carries native deep links. `SampleDeepLink` decodes
+`sagesample://browse/list-items` (the URI authority is the first route segment, so a link mirrors
+the web path) and also accepts a bare path for desktop launch arguments. Android claims the scheme
+in its manifest and offers the intent URI from `onCreate`/`onNewIntent`; desktop offers its first
+parseable argument. Both use the shared `MutableSampleDeepLinkSource` from `:core:ui:shell`, and
+`SampleNavHost` applies the pending route through the same `navigateTo` a browser URL uses.
+
 The renderer suite keeps one module that re-exports SAGE's `ListModel` types and owns a renderer
 for every SAGE model the sample uses, plus `subs/` building blocks and `@Preview` harnesses.
 Accessibility labels are `SampleStringId`s
@@ -474,6 +495,14 @@ the tabbed shell; each app supplies only its platform seams:
   `Push` onto the active tab (Settings included), so a feature can reach Settings the same way
   the hamburger does. `NavigateBack` runs the shared Back policy, and unknown routes or event
   types are ignored.
+- **Deep links share the browser's route model.** `:core:nav`'s `SampleDeepLink` decodes
+  `sagesample://browse/list-items` (the URI authority is the first route segment, so a link mirrors
+  the web path) and accepts a bare path for desktop launch arguments. Android's manifest claims
+  the scheme, `MainActivity` offers the intent URI from `onCreate`/`onNewIntent`, and desktop offers
+  its first parseable argument; each feeds a `MutableSampleDeepLinkSource` in `:core:ui:shell`.
+  `SampleNavHost` applies the pending route through `SampleShellNavigation.navigateTo` — the same
+  path a browser URL takes — and then consumes it, so rotation or a reopened window cannot replay
+  the link.
 - **The top bar comes from the active route.** The screen reports its SAGE
   `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState` uses the reported
   `title` and `shouldShowBack` (falling back to the destination label and `isTopLevel` until

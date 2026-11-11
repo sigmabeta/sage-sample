@@ -29,7 +29,7 @@ build's, not a stale cached one.
 
 | File | Role |
 |---|---|
-| `Main.kt` | Creates `JvmSampleAppGraph`, registers `generatedImageLoader` as Coil's singleton, and opens the window at the size it was closed with. Window-level Escape/Backspace handling emits into a `MutableSharedFlow` and runs the shared Back policy once per physical press (`HeldBackKeys`). |
+| `Main.kt` | Creates `JvmSampleAppGraph`, registers `generatedImageLoader` as Coil's singleton, opens the window at the size it was closed with, and opens the first launch argument that decodes as a `sagesample://` link. Window-level Escape/Backspace handling emits into a `MutableSharedFlow` and runs the shared Back policy once per physical press (`HeldBackKeys`). |
 | `di/JvmSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager`, `stringProvider` and `storage`. |
 | `di/JvmSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: the shared `SampleStringProvider`, `BluntHatchet`, `NoopAnalytics`, `AppInfo`, `JvmStorage`, `SageDispatchers` (main = `Dispatchers.Main`, backed by the Swing artifact), and an app-lifetime `CoroutineScope`. |
 | `storage/JvmStorage.kt` | `Storage` over a properties file (`~/.sage-sample/settings.properties`, overridable with `-Dsage.sample.settingsFile`). Type-namespaced keys, reactive `MutableStateFlow`s, atomic temp-file + move writes. |
@@ -87,5 +87,6 @@ test and the shell policy tests live in `:core:strings:real` and `:core:nav`.
 
 ```sh
 ./gradlew :apps:jvm:run
+./gradlew :apps:jvm:run --args="sagesample://browse/list-items"   # open a deep link
 ./gradlew :apps:jvm:assemble
 ```

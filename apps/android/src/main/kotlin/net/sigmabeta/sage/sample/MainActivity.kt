@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import net.sigmabeta.sage.sample.nav.SampleDeepLink
 import net.sigmabeta.sage.sample.ui.AndroidPlatformBack
 import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
@@ -21,6 +23,12 @@ class MainActivity : ComponentActivity() {
         // view models from it with metroViewModel().
         val graph = (application as SampleApplication).appGraph
 
+        // Only a fresh launch applies the intent's link. A recreated activity (rotation, process
+        // restore) keeps the shell state it saved instead of replaying the link on top of it.
+        if (savedInstanceState == null) {
+            offerDeepLink(intent)
+        }
+
         setContent {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
@@ -32,10 +40,28 @@ class MainActivity : ComponentActivity() {
                     settingsManager = graph.settingsManager,
                     interFontFamily = InterFontFamily,
                     platformBack = AndroidPlatformBack,
+                    deepLinkSource = (application as SampleApplication).deepLinks,
                     onOuterBack = { finish() },
                 )
             }
         }
+    }
+
+    /**
+     * `launchMode="singleTop"` makes a link tapped while this activity is on top arrive here
+     * instead of stacking a second shell; the intent's URI is decoded by the shared route codec.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        offerDeepLink(intent)
+    }
+
+    /** Offers the intent's deep link to the shell; a plain launcher intent has none. */
+    private fun offerDeepLink(intent: Intent?) {
+        (application as SampleApplication).deepLinks.offer(
+            intent?.dataString?.let(SampleDeepLink::routeFor),
+        )
     }
 }
 
