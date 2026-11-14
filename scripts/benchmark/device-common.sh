@@ -86,6 +86,32 @@ baseline_dir_for() {
   absolute_path "${SAGE_SAMPLE_PERF_BASELINE:-$ROOT/build/perfbench-baseline/device}/$label"
 }
 
+# The harness's device label for an attached serial: `<model>-<abi>` with every character outside
+# [A-Za-z0-9._-] replaced by '_'. It is the key the result documents, the baselines and the
+# InfluxDB device tag all share, so a device with no document can still be named.
+device_label_for() {
+  local serial="$1" model abi
+  model="$(bounded_probe adb -s "$serial" shell getprop ro.product.model 2>/dev/null | tr -d '\r')"
+  abi="$(bounded_probe adb -s "$serial" shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r')"
+  # -c on a newline-less printf, so the complement does not turn a trailing newline into '_'.
+  printf '%s-%s' "$model" "$abi" | tr -c 'A-Za-z0-9._-' '_'
+}
+
+# The benchmark's own explanation for a device that produced no document. A macrobenchmark
+# device-state refusal (LOW-BATTERY, a locked screen) writes its reason into that device's message
+# file, which is the only place the cause survives the failed Gradle task.
+device_note() {
+  local model="$1" dir file note
+  [ -n "$model" ] || return 0
+  dir="$(find "$ADDITIONAL_OUT" -maxdepth 4 -type d -name "$model - *" 2>/dev/null | head -1)"
+  [ -n "$dir" ] || return 0
+  file="$(find "$dir" -maxdepth 1 -name 'additionaltestoutput.benchmark.message_*' 2>/dev/null | head -1)"
+  [ -n "$file" ] || return 0
+  note="$(grep -m1 -E 'ERRORS \(not suppressed\)|low battery|Unable to|java\.lang\.' "$file" 2>/dev/null |
+    tr -d '\r' | cut -c1-200)"
+  printf '%s' "$note"
+}
+
 # `timeout` is GNU coreutils; macOS ships none by default. It only bounds the cheap hardware-id
 # probe, so fall back to a plain call rather than making the whole axis unavailable.
 bounded_probe() {
@@ -171,26 +197,47 @@ EOF
 
   echo "${B}On-device $AXIS benchmark${Z} — $device_count device(s): $(printf '%s' "$online" | tr '\n' ' ')"
 
+  # A dozing phone draws nothing: a startup axis never sees first content and a scroll axis records
+  # no frames, so the measurement fails for a reason that has nothing to do with the code. A farm
+  # phone is plugged in, so `stayon` keeps it awake for the whole axis instead of letting the screen
+  # time out between iterations — nothing new here touches the screen, so a plain wake is not enough.
+  # All three commands are idempotent. Best effort: a device that stays asleep shows up in the
+  # per-device pass below rather than failing here.
+  while IFS= read -r s; do
+    [ -n "$s" ] || continue
+    adb -s "$s" shell svc power stayon true >/dev/null 2>&1
+    adb -s "$s" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
+    adb -s "$s" shell wm dismiss-keyguard >/dev/null 2>&1
+  done <<<"$online"
+
   # ---- run this axis on every device ---------------------------------------
   # No serial is passed: AGP fans `connectedBenchmarkAndroidTest` out to every attached device, which
   # keeps the reused Gradle daemon in play (see the header on why pinning a serial doesn't).
   echo "==> Running the $AXIS benchmark (${TEST_CLASS##*.}) on all devices"
   rm -rf "$ADDITIONAL_OUT"
+  local bench_rc=0
   ./gradlew --console=plain \
     -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
-    :benchmark:connectedBenchmarkAndroidTest ||
-    die "the on-device $AXIS benchmark failed"
+    :benchmark:connectedBenchmarkAndroidTest 2>&1 |
+    tee "$OUT/last-run.log" || bench_rc=$?
+  if [ "$bench_rc" -ne 0 ]; then
+    # One phone refusing to start fails the whole Gradle task: macrobenchmark's LOW-BATTERY and other
+    # device-state checks abort that device's test, and AGP treats the task as failed. The phones
+    # that did measure have already written their documents, so keep them — the refusal belongs to
+    # one cell, not to everyone else's measurement.
+    echo "${Y}warning:${Z} the benchmark task exited $bench_rc — keeping the results it produced"
+  fi
 
   # ---- collect -------------------------------------------------------------
   rm -rf "$CURRENT"
   mkdir -p "$CURRENT"
-  local results_file
-  results_file="$(mktemp)"
-  find "$ADDITIONAL_OUT" -name "$RESULT_FILE" -type f 2>/dev/null | sort >"$results_file"
-  if [ ! -s "$results_file" ]; then
-    rm -f "$results_file"
-    die "the run produced no $RESULT_FILE under $ADDITIONAL_OUT"
-  fi
+  # Collected into an array up front, never read from inside the gate loop: the per-device diff runs
+  # Gradle, which would otherwise inherit the loop's stdin and swallow the remaining filenames.
+  local results=()
+  local found
+  while IFS= read -r found; do
+    [ -n "$found" ] && results+=("$found")
+  done <<<"$(find "$ADDITIONAL_OUT" -name "$RESULT_FILE" -type f 2>/dev/null | sort)"
 
   # ---- record or gate, per device ------------------------------------------
   local regressed=0
@@ -198,7 +245,7 @@ EOF
   local compared=0
   local recorded=0
   local f baseline label report mean
-  while IFS= read -r f; do
+  for f in ${results[@]+"${results[@]}"}; do
     baseline="$(baseline_dir_for "$f")"
     label="$(basename "$baseline")"
     mkdir -p "$CURRENT/$label"
@@ -217,8 +264,9 @@ EOF
     # Diff against the sanitized copy, never $f: AGP's per-device output dir is named after the
     # device (e.g. "Pixel 6a - 13"), and its spaces would be split by Gradle's --args into bogus
     # positional arguments. $CURRENT/$label/$RESULT_FILE is the space-free copy made above.
+    # </dev/null: never let the diff's Gradle run read the caller's stdin.
     report="$(./gradlew -q --console=plain :testing:perfbench:run \
-      --args="diff --a $baseline/$RESULT_FILE --b $CURRENT/$label/$RESULT_FILE --json" 2>/dev/null)"
+      --args="diff --a $baseline/$RESULT_FILE --b $CURRENT/$label/$RESULT_FILE --json" </dev/null 2>/dev/null)"
     if [ $? -ne 0 ]; then
       flag "$label: diff failed for the $AXIS axis"
       flagged=1
@@ -241,12 +289,35 @@ EOF
     else
       printf '    %-24s %sx  %sok%s\n' "$label" "$mean" "$G" "$Z"
     fi
-  done <"$results_file"
-  rm -f "$results_file"
+  done
+
+  # ---- devices that produced nothing ---------------------------------------
+  # A device the run attached but that has no document refused to start (macrobenchmark's
+  # LOW-BATTERY and other device-state checks abort its test) or never reached the measurement.
+  # Name each one and fail the axis, but only their own cells: every phone that did measure has
+  # already printed its verdict above, and the farm attributes the outcome per device from those
+  # lines. This is what stops one drained phone from discarding the whole night's data.
+  local missing=0
+  local missing_labels=""
+  local s model label note
+  while IFS= read -r s; do
+    [ -n "$s" ] || continue
+    model="$(bounded_probe adb -s "$s" shell getprop ro.product.model 2>/dev/null | tr -d '\r')"
+    label="$(device_label_for "$s")"
+    [ -f "$CURRENT/$label/$RESULT_FILE" ] && continue
+    note="$(device_note "$model")"
+    flag "$label: no $AXIS result — ${note:-the benchmark produced no document for this device}"
+    missing=$((missing + 1))
+    missing_labels="$missing_labels $label"
+  done <<<"$online"
 
   # ---- verdict -------------------------------------------------------------
   if [ "$regressed" -eq 1 ]; then
     echo "${R}${B}x the $AXIS axis regressed on at least one device${Z} — re-run once to rule out noise, or --record to accept"
+    return "$EXIT_FAIL"
+  fi
+  if [ "$missing" -gt 0 ]; then
+    echo "${R}${B}x no $AXIS result from${missing_labels}${Z} — charge and unlock the device(s) and re-run"
     return "$EXIT_FAIL"
   fi
   if [ "$flagged" -eq 1 ]; then
