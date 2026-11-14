@@ -216,6 +216,9 @@ EOF
   echo "==> Running the $AXIS benchmark (${TEST_CLASS##*.}) on all devices"
   rm -rf "$ADDITIONAL_OUT"
   local bench_rc=0
+  # tee needs $OUT to exist; on a fresh checkout nothing has created it yet, and under pipefail a
+  # failed tee would read as a failed benchmark.
+  mkdir -p "$OUT"
   ./gradlew --console=plain \
     -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
     :benchmark:connectedBenchmarkAndroidTest 2>&1 |
