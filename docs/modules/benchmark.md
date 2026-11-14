@@ -93,6 +93,12 @@ baseline is never committed; the first run (or `--record`) writes it under
 identity so a new device records a fresh baseline rather than gating one device's numbers against
 another's.
 
+Outputs land under `build/perfbench-device/<axis>/current/<model>-<abi>/`: the run's
+`results-<axis>.json`, and — only when that device was actually compared against its baseline — the
+`perfbench diff --json` report as `diff-<axis>.json` beside it. A recording run, a failed diff, or a
+refused compare (scenario drift) leaves no `diff-<axis>.json`, so a consumer such as sagefarm's
+publisher can treat the file's presence as "this result was compared".
+
 A phone attached over two transports at once (mDNS *and* IP) would be run twice and collide, so the
 scripts group the online serials by `ro.serialno` and **skip** rather than produce the opaque crash.
 

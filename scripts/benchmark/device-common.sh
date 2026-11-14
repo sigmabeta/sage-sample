@@ -55,6 +55,7 @@ RECORD=0
 OUT="$ROOT/build/perfbench-device/$AXIS"
 CURRENT="$OUT/current"
 RESULT_FILE="results-$AXIS.json"
+DIFF_FILE="diff-$AXIS.json"
 
 if [ -t 1 ]; then R=$'\e[31m'; G=$'\e[32m'; Y=$'\e[33m'; B=$'\e[1m'; Z=$'\e[0m'; else R= G= Y= B= Z=; fi
 
@@ -118,7 +119,8 @@ Options:
 Environment:
   SAGE_SAMPLE_PERF_BASELINE   baseline root (default build/perfbench-baseline/device)
 
-Artifacts: build/perfbench-device/$AXIS/ (current/<device>/$RESULT_FILE).
+Artifacts: build/perfbench-device/$AXIS/ (current/<device>/$RESULT_FILE, plus
+current/<device>/$DIFF_FILE — the perfbench diff --json report — when the device was compared).
 EOF
         return 0
         ;;
@@ -200,6 +202,8 @@ EOF
     baseline="$(baseline_dir_for "$f")"
     label="$(basename "$baseline")"
     mkdir -p "$CURRENT/$label"
+    # A refused or failed compare must leave no diff document behind for a consumer to pick up.
+    rm -f "$CURRENT/$label/$DIFF_FILE"
     cp "$f" "$CURRENT/$label/$RESULT_FILE"
 
     if [ "$RECORD" -eq 1 ] || [ ! -f "$baseline/$RESULT_FILE" ]; then
@@ -226,6 +230,9 @@ EOF
       flagged=1
       continue
     fi
+    # Keep the diff beside the result it compared, so a consumer (sagefarm's publisher reads
+    # diff-<axis>.json next to results-<axis>.json) needn't re-run the compare.
+    printf '%s\n' "$report" >"$CURRENT/$label/$DIFF_FILE"
     mean="$(printf '%s' "$report" | jq -r '.geometric_mean')"
     compared=$((compared + 1))
     if awk -v m="$mean" -v t="$THRESHOLD" 'BEGIN { exit !(m < t) }'; then
