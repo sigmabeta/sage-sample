@@ -220,6 +220,17 @@ and `core/viewmodel/`, `features/*` (pure JVM), `testing/perfbench-core/` (resul
 
 ## Agent skills
 
+### Issue tracker
+
+Configured in the agent's machine-level instructions, not in this repo, so there is no
+`docs/agents/issue-tracker.md`. `.scratch/` is read-only legacy history; never write new tickets
+there.
+
+### Triage labels
+
+The five default roles, each label equal to its name (`needs-triage`, `needs-info`,
+`ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See
