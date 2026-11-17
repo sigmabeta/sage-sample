@@ -4,6 +4,7 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.storage.common.Storage
 import net.sigmabeta.sage.ui.StringProvider
@@ -39,6 +40,12 @@ interface JvmSampleAppGraph : ViewModelGraph {
      * closed with are startup state, not a screen's. The settings managers resolve it on their own.
      */
     val storage: Storage
+
+    /**
+     * The Sign-in gate reads the identity state at the composition root before any screen exists,
+     * so the app-scoped repository is a graph accessor rather than a per-screen view model.
+     */
+    val identityRepository: IdentityRepository
 
     @DependencyGraph.Factory
     fun interface Factory {

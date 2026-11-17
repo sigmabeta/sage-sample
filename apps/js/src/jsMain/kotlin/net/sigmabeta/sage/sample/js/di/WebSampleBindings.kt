@@ -23,6 +23,7 @@ import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.js.WebBuildInfo
 import net.sigmabeta.sage.sample.js.navigation.BrowserHistoryNavigation
 import net.sigmabeta.sage.sample.js.storage.LocalStorageStorage
+import net.sigmabeta.sage.sample.repository.remote.RemoteSessionState
 import net.sigmabeta.sage.sample.repository.remote.SampleApiClient
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.ui.shell.SampleBrowserNavigation
@@ -95,23 +96,16 @@ object WebSampleBindings {
     }
 
     /**
-     * The API lives on the page's origin by default. `?api=` overrides it for a webpack dev server
-     * running on a different port from `apps:server`.
+     * The API lives on the page's origin, and only there: the Session is an HttpOnly, `SameSite=Lax`
+     * cookie that same-origin requests carry. [session] is where a content call's 401 sends the
+     * client to Signed out.
      */
     @Provides
     @SingleIn(AppScope::class)
-    fun provideApiClient(httpClient: HttpClient): SampleApiClient =
-        SampleApiClient(httpClient, apiBaseUrl())
+    fun provideApiClient(httpClient: HttpClient, session: RemoteSessionState): SampleApiClient =
+        SampleApiClient(httpClient, window.location.origin, session)
 
     @Provides
     @SingleIn(AppScope::class)
     fun provideBrowserNavigation(): SampleBrowserNavigation = BrowserHistoryNavigation()
-
-    private fun apiBaseUrl(): String = window.location.search
-        .removePrefix("?")
-        .split('&')
-        .firstOrNull { it.startsWith("api=") }
-        ?.substringAfter("api=")
-        ?.takeIf { it.isNotBlank() }
-        ?: window.location.origin
 }

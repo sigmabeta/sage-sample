@@ -27,8 +27,8 @@ Nothing in the browser app may depend on this module.
 `jvmSharedMain` is the `sage.kmp` source set both the Android and JVM targets compile, so the JDK
 crypto (`javax.crypto`, `java.security`) is available there and the implementations exist once.
 Both take a `SampleDatabase` by constructor; this module never builds one. On the JVM use
-`SampleDatabases.file(path)` (or `.inMemory()` in tests); Android needs a `Context`-taking builder,
-which `:core:database` does not have yet.
+`SampleDatabases.file(path)` (or `.inMemory()` in tests); on Android use
+`AndroidSampleDatabases.file(context)`.
 
 ## Rules
 

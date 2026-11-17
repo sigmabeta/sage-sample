@@ -83,6 +83,8 @@ dependencies {
     // Binds the in-process demo repositories for this app's graph; the browser binds the
     // HTTP-backed implementations instead.
     implementation(projects.core.repository.demo)
+    // The app provides the demo identity source's SampleDatabase (only it knows where the file lives).
+    implementation(projects.core.database)
 
     // Android platform seams used directly by this module.
     implementation(projects.core.bitmaps)

@@ -13,6 +13,8 @@ import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.logging.BluntHatchet
 import net.sigmabeta.sage.logging.Hatchet
+import net.sigmabeta.sage.sample.database.SampleDatabase
+import net.sigmabeta.sage.sample.database.SampleDatabases
 import net.sigmabeta.sage.sample.jvm.JvmBuildInfo
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
 import net.sigmabeta.sage.sample.jvm.storage.JvmStorage
@@ -64,6 +66,18 @@ object JvmSampleBindings {
     fun provideStorage(): Storage = JvmStorage(settingsFile())
 
     /**
+     * The Users and Sessions database behind the in-process identity source in
+     * `:core:repository:demo`, beside the settings file.
+     */
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideSampleDatabase(): SampleDatabase {
+        val directory = settingsFile().absoluteFile.parentFile
+        directory.mkdirs()
+        return SampleDatabases.file(File(directory, DATABASE_FILE_NAME).path)
+    }
+
+    /**
      * SAGE's coroutine seam. `main` is the AWT event queue on desktop, which is why the module
      * depends on `kotlinx-coroutines-swing`.
      */
@@ -81,6 +95,8 @@ object JvmSampleBindings {
     @SingleIn(AppScope::class)
     fun provideCoroutineScope(dispatchers: SageDispatchers): CoroutineScope =
         CoroutineScope(dispatchers.computation)
+
+    private const val DATABASE_FILE_NAME = "sage-sample.db"
 
     private fun settingsFile(): File {
         val overridePath = System.getProperty("sage.sample.settingsFile")

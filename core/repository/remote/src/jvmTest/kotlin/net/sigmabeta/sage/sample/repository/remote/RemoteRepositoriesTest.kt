@@ -54,7 +54,7 @@ class RemoteRepositoriesTest {
                 json(Json { ignoreUnknownKeys = true })
             }
         }
-        return SampleApiClient(http, "http://sample.test")
+        return SampleApiClient(http, "http://sample.test", RemoteSessionState())
     }
 
     @Test

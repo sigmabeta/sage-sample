@@ -18,6 +18,14 @@ dependencies {
     api(libs.sage.common.ui.strings)
     api(libs.sage.common.appcomm)
 
+    // The in-process identity source: Users and Sessions through `:core:identity`'s rules, over a
+    // `SampleDatabase` the app provides (this module never builds one), the Session token kept in
+    // SAGE Storage, and the slow PBKDF2 work moved onto SAGE's computation dispatcher.
+    api(projects.core.identity)
+    implementation(libs.sage.common.storage.common)
+    implementation(libs.sage.common.coroutines)
+
+    testImplementation(projects.core.identity.fake)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
 }
