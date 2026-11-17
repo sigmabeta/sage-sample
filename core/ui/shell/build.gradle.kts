@@ -32,6 +32,7 @@ kotlin {
                 api(projects.features.contentdetail)
                 api(projects.features.home)
                 api(projects.features.listitems)
+                api(projects.features.login)
                 api(projects.features.search)
                 api(projects.features.settings)
 

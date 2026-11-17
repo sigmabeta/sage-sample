@@ -4,6 +4,7 @@ import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.ui.shell.SampleBrowserNavigation
 import net.sigmabeta.sage.ui.StringProvider
@@ -27,6 +28,9 @@ interface WebSampleAppGraph : ViewModelGraph {
 
     /** Mirrors routes into the URL bar and drives the shell from Back/Forward. */
     val browserNavigation: SampleBrowserNavigation
+
+    /** The client's Session; the Sign-in gate in the shell follows its state. */
+    val identityRepository: IdentityRepository
 
     @DependencyGraph.Factory
     fun interface Factory {

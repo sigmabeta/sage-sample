@@ -33,6 +33,7 @@ import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.sample.feature.browse.BrowseViewModel
 import net.sigmabeta.sage.sample.feature.contentdetail.ContentDetailViewModel
 import net.sigmabeta.sage.sample.feature.home.HomeViewModel
+import net.sigmabeta.sage.sample.feature.login.LoginViewModel
 import net.sigmabeta.sage.sample.feature.listitems.GridOfImagesViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
@@ -222,6 +223,19 @@ data object SettingsScreen : SampleScreen {
     @Composable
     override fun Content() {
         SampleListScreen(metroViewModel<SettingsViewModel>())
+    }
+}
+
+/**
+ * Login, shown by the Sign-in gate while the client is Signed out.
+ *
+ * Not a [SampleScreen]: Login is no app destination, so no route, deep link or browser URL names
+ * it and it never sits on a tab's stack. The gate hosts it in its own navigator instead.
+ */
+data object LoginScreen : Screen {
+    @Composable
+    override fun Content() {
+        SampleListScreen(metroViewModel<LoginViewModel>())
     }
 }
 
