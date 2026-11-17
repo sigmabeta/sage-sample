@@ -204,6 +204,8 @@ core/bitmaps/               KMP Compose module shared by every app
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
+core/database/              Room KMP Users + Sessions over bundled SQLite (Android + JVM, no JS)
+  schemas/                  committed Room schema JSON, one file per version
 core/models/api/            KMP domain models + Content detail route codec
 core/nav/                   KMP destinations, route/Back/layout/chrome policy, URL + deep-link codec,
                             screen keys

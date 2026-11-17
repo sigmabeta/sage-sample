@@ -91,7 +91,9 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:shell` and
   `:core:ui:theme:api` apply `sage.kmp` + `sage.kmp.js` (the UI/renderer modules also
   `sage.compose.kmp`). `:core:repository:demo` is JVM-only (`sage.jvm` + `metro`) because SAGE's
-  `StringGenerator` lives in a JVM source set. `:features:*:screenshot` applies the sample's
+  `StringGenerator` lives in a JVM source set. `:core:database` applies `sage.kmp` + `ksp` (Room's
+  compiler) and deliberately not `sage.kmp.js`: Room has no JS target, so the browser app must never
+  depend on it. `:features:*:screenshot` applies the sample's
   `sagesample.screenshot` convention (from `build-logic/`), which layers `sage.android` +
   `sage.compose.android` + Paparazzi; `:apps:jvm` applies `sage.jvm` + `sage.di` + Compose Desktop
   (the Compose compiler and JetBrains Compose plugins); `:apps:android` applies
@@ -104,6 +106,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 - **Tests live beside their module:** converted KMP modules use `src/jvmTest` (JUnit 4, no JS
   test target); `:apps:server` and `:apps:jvm` use `src/test`; `:core:bitmaps` tests the seeded
   `specFor` value and fetcher routing in `src/jvmTest` (no Skia);
+  `:core:database` round-trips its DAOs over an in-memory bundled-SQLite database in `src/jvmTest`;
   `:core:nav` owns the pure shell policy tests and `:core:ui:shell` owns the tab/chrome tests in
   its `jvmTest` source set; the apps keep only host-local tests; `:features:*:screenshot` uses
   Paparazzi over committed LFS goldens. No emulator, device suite, or native code.
