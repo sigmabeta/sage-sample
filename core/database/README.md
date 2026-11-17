@@ -1,0 +1,50 @@
+# `:core:database`
+
+The sample's durable store for Users and their Sessions: a Room KMP database over the bundled SQLite
+driver, the same stack chipbox uses. It holds rows only; password hashing, token generation, expiry
+and every other credential rule belong to `:core:identity`, which is this module's only intended
+caller. See `docs/adr/0001-server-held-users-and-sessions.md` and `GLOSSARY.md`.
+
+```kotlin
+plugins {
+    alias(libs.plugins.sage.kmp)   // Android + JVM; no sage.kmp.js — Room has no JS target
+    alias(libs.plugins.ksp)        // room-compiler, run per target (kspAndroid, kspJvm)
+}
+```
+
+Nothing in the browser app may depend on this module.
+
+## Schema (version 1)
+
+| Table | Columns | Constraints |
+|---|---|---|
+| `users` | `id`, `username`, `password_hash`, `salt`, `kdf_algorithm`, `kdf_iterations` | `id` primary key (stable, chosen by the caller); `username` unique |
+| `sessions` | `token_hash`, `user_id`, `created_at`, `expires_at` | `token_hash` primary key; `user_id` → `users.id` (cascade on delete), indexed; many rows per User |
+
+The verifier and token columns are opaque strings encoded by `:core:identity`; only hashes of
+Session tokens are stored. Times are epoch milliseconds.
+
+The schema JSON is exported by KSP (`room.schemaLocation`) to `schemas/` and committed. A schema
+change bumps the version, commits the new JSON next to the old one, and ships a `Migration`. There is
+no `fallbackToDestructiveMigration` anywhere: these rows are the identity a User signs in with.
+
+## Contents
+
+| Type | Source set | Role |
+|---|---|---|
+| `SampleDatabase` | `commonMain` | `@Database` with `userDao()` / `sessionDao()`; `SampleDatabaseConstructor` actuals are KSP-generated per target |
+| `UserEntity`, `UserDao` | `commonMain` | insert (aborts on a taken id or username), find by username, find by id |
+| `SessionEntity`, `SessionDao` | `commonMain` | insert (aborts on a reused hash or unknown User), find by token hash, list a User's Sessions oldest first, delete by token hash |
+| `SampleDatabases` | `jvmMain` | `inMemory()` for tests and `file(path)` for a durable database, both on `BundledSQLiteDriver` with `Dispatchers.IO` queries |
+
+There is no Android builder yet: Android's `Room.databaseBuilder` needs a `Context`, so the first
+Android caller adds one in `androidMain`.
+
+## Tests
+
+`src/jvmTest` (JUnit 4) round-trips every DAO through `SampleDatabases.inMemory()` and checks that a
+file database keeps its rows across reopening:
+
+```sh
+./gradlew :core:database:jvmTest
+```

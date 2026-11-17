@@ -66,7 +66,8 @@ jobs:
           -x :features:settings:screenshot:test
           :core:models:api:jvmTest :core:nav:jvmTest :core:settings:jvmTest
           :core:viewmodel:jvmTest :core:repository:api:jvmTest :core:repository:remote:jvmTest
-          :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest
+          :core:bitmaps:jvmTest :core:database:jvmTest :core:strings:real:jvmTest
+          :core:ui:shell:jvmTest
           :features:browse:jvmTest :features:contentdetail:jvmTest :features:home:jvmTest
           :features:listitems:jvmTest :features:search:jvmTest :features:settings:jvmTest
           :testing:perfbench-core:jvmTest :testing:perfbench:test

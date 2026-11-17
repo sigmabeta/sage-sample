@@ -49,6 +49,7 @@ include(
     ":testing:perfbench",
     ":testing:perfbench-core",
     ":core:bitmaps",
+    ":core:database",
     ":core:models:api",
     ":core:nav",
     ":core:repository:api",
