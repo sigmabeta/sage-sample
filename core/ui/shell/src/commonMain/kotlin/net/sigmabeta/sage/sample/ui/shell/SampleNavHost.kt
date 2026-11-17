@@ -65,14 +65,23 @@ import kotlin.math.roundToInt
  * [signInGate], so a Session lost mid-use can come back to it, and on opening applies the gate's
  * route to restore. With a browser bridge the URL is that request instead: it is never rewritten
  * while gated, and the bridge applies it when the shell is ready.
+ *
+ * [onSignOut] runs a feature's [net.sigmabeta.sage.sample.repository.SignOutRequested]. The host
+ * owns it, because the sign-out outlives the shell: ending the Session takes this shell out of
+ * composition.
  */
 @Composable
-internal fun SampleNavHost(signInGate: SampleSignInGateHolder, onOuterBack: () -> Unit = {}) {
+internal fun SampleNavHost(
+    signInGate: SampleSignInGateHolder,
+    onOuterBack: () -> Unit = {},
+    onSignOut: () -> Unit = {},
+) {
     TabNavigator(tab = HomeTab) { tabNavigator ->
         SampleTabbedShell(
             tabNavigator = tabNavigator,
             signInGate = signInGate,
             onOuterBack = onOuterBack,
+            onSignOut = onSignOut,
         )
     }
 }
@@ -83,6 +92,7 @@ private fun SampleTabbedShell(
     tabNavigator: TabNavigator,
     signInGate: SampleSignInGateHolder,
     onOuterBack: () -> Unit,
+    onSignOut: () -> Unit,
 ) {
     val activeTabNavigator = rememberSaveable(saver = SampleActiveTabNavigator.Saver) {
         SampleActiveTabNavigator()
@@ -171,9 +181,10 @@ private fun SampleTabbedShell(
         SampleTitleBarSink { reported -> titleBar = reported }
     }
     val widthClass = currentWidthClass()
+    val signOut by rememberUpdatedState(onSignOut)
     val navEffects = remember(activeNavigator, shellNavigation, snackbarHostState) {
         SampleNavEffects { event ->
-            handleEffect(event, shellNavigation, snackbarHostState, coroutineScope)
+            handleEffect(event, shellNavigation, snackbarHostState, coroutineScope) { signOut() }
         }
     }
 
@@ -380,13 +391,15 @@ private class DefaultSampleShellNavigation(
 
 /**
  * Applies a feature's one-shot effect: a snackbar is rendered by the scaffold's host, and every
- * other event goes through [navActionFor] to the shell's navigation operations.
+ * other event goes through [navActionFor] to the shell's navigation operations. A deliberate Sign
+ * out goes to [onSignOut], the host's hand-off to the Sign-in gate.
  */
 private fun handleEffect(
     event: SageEvent,
     shellNavigation: DefaultSampleShellNavigation,
     snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
+    onSignOut: () -> Unit,
 ) {
     if (event !is SageEvent.ShowSnackbar) {
         when (val action = navActionFor(event)) {
@@ -400,6 +413,8 @@ private fun handleEffect(
                 )
 
             SampleNavAction.Pop -> shellNavigation.back()
+
+            SampleNavAction.SignOut -> onSignOut()
 
             null -> Unit
         }
