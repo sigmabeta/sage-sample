@@ -221,6 +221,7 @@ class RemoteIdentityRepositoryTest {
                         .also { if (contentStatus == HttpStatusCode.Unauthorized) contentStatus = HttpStatusCode.OK }
 
                 request.method == HttpMethod.Post -> json(SIGNED_IN_BODY)
+
                 else -> null
             }
         }
