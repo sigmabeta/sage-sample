@@ -42,8 +42,10 @@ import net.sigmabeta.sage.sample.repository.demo.DemoContent
  * only place the server touches data; every generator lives in `:core:repository:demo`, which the
  * Android/desktop demo sources also use.
  *
- * The same function is mounted by `main()` and by the route tests, so tests exercise the shipped
- * stack.
+ * [identity] backs `/api/session` and the Session gate in front of every other `/api` route but
+ * health; [secureCookie] marks the Session cookie `Secure`. The same function is mounted by `main()`
+ * (over Room) and by the route tests (over fakes or an in-memory database), so tests exercise the
+ * shipped stack.
  */
 fun Application.configureSampleServer(identity: ServerIdentity, secureCookie: Boolean = false) {
     install(ContentNegotiation) {
