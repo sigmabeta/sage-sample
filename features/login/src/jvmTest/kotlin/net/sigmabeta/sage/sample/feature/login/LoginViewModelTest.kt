@@ -1,5 +1,6 @@
 package net.sigmabeta.sage.sample.feature.login
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -14,6 +15,7 @@ import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
 import net.sigmabeta.sage.sample.ui.components.models.FormMessageListModel
 import net.sigmabeta.sage.sample.ui.components.models.FormMessageTone
 import net.sigmabeta.sage.sample.ui.components.models.TextFieldChanged
+import net.sigmabeta.sage.sample.ui.components.models.TextFieldDone
 import net.sigmabeta.sage.sample.ui.components.models.TextFieldListModel
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -106,6 +108,72 @@ class LoginViewModelTest {
         viewModel.sendAction(TextFieldChanged(USERNAME_FIELD_ID, ""))
 
         assertFalse(button(items(viewModel)).enabled)
+    }
+
+    @Test
+    fun `Sign in sends the exact credentials and locks the form while the attempt is in flight`() =
+        runTest(dispatcher) {
+            val repository = FakeIdentityRepository(gate = CompletableDeferred())
+            val viewModel = createViewModel(repository)
+            viewModel.fill(username = " demo", password = "sage ")
+
+            viewModel.sendAction(LoginAction.SubmitClicked)
+
+            assertEquals(listOf(" demo" to "sage "), repository.signInCalls)
+            val items = items(viewModel)
+            assertFalse(username(items).enabled)
+            assertFalse(password(items).enabled)
+            assertEquals("LOGIN_SUBMITTING", button(items).label)
+            assertFalse(button(items).enabled)
+            assertEquals(listOf("LOGIN_DEMO_ACCOUNT_HINT" to FormMessageTone.INFO), messages(items))
+        }
+
+    @Test
+    fun `a second Sign in while one is in flight is ignored`() = runTest(dispatcher) {
+        val repository = FakeIdentityRepository(gate = CompletableDeferred())
+        val viewModel = createViewModel(repository)
+        viewModel.fill()
+
+        viewModel.sendAction(LoginAction.SubmitClicked)
+        viewModel.sendAction(LoginAction.SubmitClicked)
+        viewModel.sendAction(TextFieldDone(PASSWORD_FIELD_ID))
+
+        assertEquals(1, repository.signInCalls.size)
+    }
+
+    @Test
+    fun `Sign in on an incomplete form does nothing`() = runTest(dispatcher) {
+        val repository = FakeIdentityRepository()
+        val viewModel = createViewModel(repository)
+        viewModel.sendAction(TextFieldChanged(USERNAME_FIELD_ID, "demo"))
+
+        viewModel.sendAction(LoginAction.SubmitClicked)
+        viewModel.sendAction(TextFieldDone(PASSWORD_FIELD_ID))
+
+        assertEquals(emptyList<Pair<String, String>>(), repository.signInCalls)
+        assertEquals("LOGIN_SUBMIT", button(items(viewModel)).label)
+    }
+
+    @Test
+    fun `Done on the password field signs in`() = runTest(dispatcher) {
+        val repository = FakeIdentityRepository(gate = CompletableDeferred())
+        val viewModel = createViewModel(repository)
+        viewModel.fill()
+
+        viewModel.sendAction(TextFieldDone(PASSWORD_FIELD_ID))
+
+        assertEquals(listOf("demo" to "sage"), repository.signInCalls)
+    }
+
+    @Test
+    fun `Done on the username field does not sign in`() = runTest(dispatcher) {
+        val repository = FakeIdentityRepository()
+        val viewModel = createViewModel(repository)
+        viewModel.fill()
+
+        viewModel.sendAction(TextFieldDone(USERNAME_FIELD_ID))
+
+        assertEquals(emptyList<Pair<String, String>>(), repository.signInCalls)
     }
 
     private fun LoginViewModel.fill(username: String = "demo", password: String = "sage") {
