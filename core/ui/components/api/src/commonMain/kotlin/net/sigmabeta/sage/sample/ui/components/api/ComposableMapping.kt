@@ -42,6 +42,9 @@ import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.components.SubsectionHeaderListModel
 import net.sigmabeta.sage.components.SubsectionListModel
 import net.sigmabeta.sage.components.WideItemListModel
+import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
+import net.sigmabeta.sage.sample.ui.components.models.FormMessageListModel
+import net.sigmabeta.sage.sample.ui.components.models.TextFieldListModel
 
 @Suppress("MaxLineLength")
 @Composable
@@ -122,6 +125,13 @@ fun ListModel.Content(
             is SubsectionListModel -> Subsection(model = this, actionSink = sink, modifier = mod, padding = pad)
 
             is WideItemListModel -> WideItem(model = this, actionSink = sink, modifier = mod, padding = pad)
+
+            // The sample's own form rows (`:core:ui:components:models`).
+            is TextFieldListModel -> TextFieldListItem(model = this, actionSink = sink, modifier = mod, padding = pad)
+
+            is ButtonListModel -> ButtonListItem(model = this, actionSink = sink, modifier = mod, padding = pad)
+
+            is FormMessageListModel -> FormMessageListItem(model = this, modifier = mod, padding = pad)
 
             // A DraggableListModel is meant for the reorderable path (SAGE's ReorderableScreen
             // supplies the handle; wrap it in a DraggableListItem). If one reaches a normal list,
