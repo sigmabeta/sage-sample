@@ -36,9 +36,11 @@ no `fallbackToDestructiveMigration` anywhere: these rows are the identity a User
 | `UserEntity`, `UserDao` | `commonMain` | insert (aborts on a taken id or username), find by username, find by id |
 | `SessionEntity`, `SessionDao` | `commonMain` | insert (aborts on a reused hash or unknown User), find by token hash, list a User's Sessions oldest first, delete by token hash |
 | `SampleDatabases` | `jvmMain` | `inMemory()` for tests and `file(path)` for a durable database, both on `BundledSQLiteDriver` with `Dispatchers.IO` queries |
+| `AndroidSampleDatabases` | `androidMain` | `file(context, name = "sage-sample.db")`: a durable database under `context.getDatabasePath(name)`, same driver and query context |
 
-There is no Android builder yet: Android's `Room.databaseBuilder` needs a `Context`, so the first
-Android caller adds one in `androidMain`.
+The two builder objects are deliberately platform-only. A JVM library that Android also ships (such as
+`:core:repository:demo`) must not call `SampleDatabases`: the Android variant lacks it. Let the app
+provide the `SampleDatabase` instead.
 
 ## Tests
 

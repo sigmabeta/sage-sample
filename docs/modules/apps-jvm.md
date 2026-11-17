@@ -31,7 +31,7 @@ build's, not a stale cached one.
 |---|---|
 | `Main.kt` | Creates `JvmSampleAppGraph`, registers `generatedImageLoader` as Coil's singleton, opens the window at the size it was closed with, and opens the first launch argument that decodes as a `sagesample://` link. Window-level Escape/Backspace handling emits into a `MutableSharedFlow` and runs the shared Back policy once per physical press (`HeldBackKeys`). |
 | `di/JvmSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager`, `stringProvider` and `storage`. |
-| `di/JvmSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: the shared `SampleStringProvider`, `BluntHatchet`, `NoopAnalytics`, `AppInfo`, `JvmStorage`, `SageDispatchers` (main = `Dispatchers.Main`, backed by the Swing artifact), and an app-lifetime `CoroutineScope`. |
+| `di/JvmSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: the shared `SampleStringProvider`, `BluntHatchet`, `NoopAnalytics`, `AppInfo`, `JvmStorage`, the identity `SampleDatabase` (`sage-sample.db` beside the settings file), `SageDispatchers` (main = `Dispatchers.Main`, backed by the Swing artifact), and an app-lifetime `CoroutineScope`. |
 | `storage/JvmStorage.kt` | `Storage` over a properties file (`~/.sage-sample/settings.properties`, overridable with `-Dsage.sample.settingsFile`). Type-namespaced keys, reactive `MutableStateFlow`s, atomic temp-file + move writes. |
 | `ui/PersistedWindowState.kt` | Window size restored from that `Storage` before the platform window is created, and saved back (debounced) while the window is floating. The position is left to the platform. |
 | `JvmBuildInfo.kt` | Reads the generated properties into version/build-time constants. |

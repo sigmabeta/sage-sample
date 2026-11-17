@@ -30,7 +30,7 @@ measure first content without production paying for the callback.
 | `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug. |
 | `MainActivity.kt` | Installs `LocalMetroViewModelFactory`, `LocalSampleStringProvider` and (benchmark builds) `LocalFirstContentReporter` above `SampleApp`, supplies `finish()` as the outer Back action, and offers `sagesample://` intent links from `onCreate`/`onNewIntent` to the shell. |
 | `di/SampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`. Exposes `settingsManager` and `stringProvider`; provides the application `Context`. |
-| `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), `AppInfo`. The app owns no text table. |
+| `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), the identity `SampleDatabase` (`AndroidSampleDatabases.file(context)`), `AppInfo`. The app owns no text table. |
 | `storage/PreferencesStorage.kt` | Android `Storage` over Preferences DataStore (`sage_sample_settings`); disk-dispatched writes, flow reads. |
 
 The shared `MetroViewModelFactory` binding lives in `:core:viewmodel`, so both graphs resolve it
