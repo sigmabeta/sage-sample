@@ -214,11 +214,13 @@ core/nav/                   KMP destinations, route/Back/layout/chrome policy, U
                             screen keys
 core/strings/api/           SampleStringId: the one id vocabulary for all user-visible text
 core/strings/real/          SampleStringProvider: the single id -> English table
+core/ui/components/models/  Compose-free form models (text field, button, message) features build
 core/ui/components/api/     KMP Compose renderer suite shared by every app
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
   SearchContent.kt          app-owned search: adaptive grid with the field and status scrim
+  FormListItems.kt          text field, button and inline message rows for forms
   subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
@@ -270,6 +272,8 @@ features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
 features/listitems/screenshot/  Paparazzi goldens for all three List Items screens
+features/login/             sign-in form over IdentityRepository; emits LoginEvent.SignedIn
+features/login/screenshot/  Paparazzi goldens for Login (empty/filled/submitting/refused states)
 features/search/            query + two deterministic generated result sets (list rows, grid)
 features/search/screenshot/ Paparazzi goldens for Search
 features/settings/          theme, font, simulate-delay and same-content rows, app version and build date

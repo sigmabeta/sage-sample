@@ -88,7 +88,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `:core:settings`, `:core:repository:api` and `:core:repository:remote` apply `sage.kmp` +
   `sage.kmp.js` (the ones with Metro bindings also apply `metro` directly — `sage.di`'s
   top-level `implementation` does not fit KMP source sets). `:core:bitmaps`,
-  `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:shell` and
+  `:core:strings:api`, `:core:strings:real`, `:core:ui:components:models`, `:core:ui:components:api`, `:core:ui:shell` and
   `:core:ui:theme:api` apply `sage.kmp` + `sage.kmp.js` (the UI/renderer modules also
   `sage.compose.kmp`). `:core:repository:demo` is JVM-only (`sage.jvm` + `metro`) because SAGE's
   `StringGenerator` lives in a JVM source set. `:core:database` applies `sage.kmp` + `ksp` (Room's
