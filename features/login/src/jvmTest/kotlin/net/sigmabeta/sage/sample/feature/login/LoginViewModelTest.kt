@@ -13,6 +13,7 @@ import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
 import net.sigmabeta.sage.sample.ui.components.models.FormMessageListModel
 import net.sigmabeta.sage.sample.ui.components.models.FormMessageTone
+import net.sigmabeta.sage.sample.ui.components.models.TextFieldChanged
 import net.sigmabeta.sage.sample.ui.components.models.TextFieldListModel
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -72,6 +73,47 @@ class LoginViewModelTest {
             items.map { it::class },
         )
     }
+
+    @Test
+    fun `typing into both fields fills the form and enables Sign in`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.sendAction(TextFieldChanged(USERNAME_FIELD_ID, "demo"))
+        assertFalse("a username alone is not enough", button(items(viewModel)).enabled)
+
+        viewModel.sendAction(TextFieldChanged(PASSWORD_FIELD_ID, "sage"))
+
+        val items = items(viewModel)
+        assertEquals("demo", username(items).text)
+        assertEquals("sage", password(items).text)
+        assertTrue(button(items).enabled)
+    }
+
+    @Test
+    fun `a password alone does not enable Sign in`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+
+        viewModel.sendAction(TextFieldChanged(PASSWORD_FIELD_ID, "sage"))
+
+        assertFalse(button(items(viewModel)).enabled)
+    }
+
+    @Test
+    fun `emptying a filled field disables Sign in again`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        viewModel.fill()
+
+        viewModel.sendAction(TextFieldChanged(USERNAME_FIELD_ID, ""))
+
+        assertFalse(button(items(viewModel)).enabled)
+    }
+
+    private fun LoginViewModel.fill(username: String = "demo", password: String = "sage") {
+        sendAction(TextFieldChanged(USERNAME_FIELD_ID, username))
+        sendAction(TextFieldChanged(PASSWORD_FIELD_ID, password))
+    }
+
+    private fun items(viewModel: LoginViewModel): List<ListModel> = viewModel.uiStateActual.value.listItems
 
     private fun createViewModel(
         repository: FakeIdentityRepository = FakeIdentityRepository(),

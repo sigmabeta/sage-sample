@@ -12,6 +12,7 @@ import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
+import net.sigmabeta.sage.sample.ui.components.models.TextFieldChanged
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -34,5 +35,20 @@ class LoginViewModel(
         sendAction(SageAction.InitNoArgs)
     }
 
-    override fun handleAction(action: SageAction) = Unit
+    override fun handleAction(action: SageAction) {
+        when (action) {
+            is TextFieldChanged -> onFieldChanged(action.id, action.text)
+            else -> Unit
+        }
+    }
+
+    private fun onFieldChanged(id: Long, text: String) {
+        updateState { state ->
+            when (id) {
+                USERNAME_FIELD_ID -> state.copy(username = text)
+                PASSWORD_FIELD_ID -> state.copy(password = text)
+                else -> state
+            }
+        }
+    }
 }
