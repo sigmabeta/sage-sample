@@ -13,12 +13,14 @@ import androidx.room.RoomDatabaseConstructor
  * identity a User signs in with.
  */
 @Database(
-    entities = [UserEntity::class],
+    entities = [UserEntity::class, SessionEntity::class],
     version = 1,
 )
 @ConstructedBy(SampleDatabaseConstructor::class)
 abstract class SampleDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
+
+    abstract fun sessionDao(): SessionDao
 }
 
 /** Room's compiler generates each target's `actual` (KSP), so no hand-written actual exists. */
