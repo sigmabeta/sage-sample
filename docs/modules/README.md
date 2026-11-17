@@ -18,7 +18,7 @@ coordinates resolve to the included projects automatically.
 | [`:apps:android`](apps-android.md) | Android application | Activity, Metro app graph, Android platform seams, navigation shell |
 | [`:apps:jvm`](apps-jvm.md) | Compose Desktop application | Window entry point, desktop graph, JVM platform seams, same navigation shell |
 | [`:apps:js`](apps-js.md) | Kotlin/JS application | Browser entry point, web graph, localStorage/HTTP seams, same navigation shell |
-| [`:apps:server`](apps-server.md) | JVM application | Ktor JSON API over `DemoContent`; serves the browser bundle with an SPA fallback |
+| [`:apps:server`](apps-server.md) | JVM application | Ktor JSON API over `DemoContent` behind a Session gate; serves the browser bundle with an SPA fallback |
 | [`:benchmark`](benchmark.md) | Android test module | Device macrobenchmarks for UI scroll and startup, each started through the app's deep links |
 | [`:core:bitmaps`](core-bitmaps.md) | KMP Compose library | Deterministic placeholder art: generator, `@Preview` composable, `generated://` Coil fetcher |
 | [`:core:models:api`](core-models-api.md) | KMP library | Shared domain models + the Content detail route codec |
@@ -72,7 +72,7 @@ apps/server ──┘ (DemoContent)
 
 core/repository:demo  ── core/repository:api + core/settings + SAGE ui.strings (StringGenerator)
 core/repository:remote ── core/repository:api + core/settings + Ktor client
-apps/server ── core/repository:demo + core/repository:api
+apps/server ── core/repository:demo + core/repository:api + core/identity (Room Users/Sessions)
 
 features/*/screenshot ── features/* + core/ui/previews ── core/ui/components:api
                                                         └─ core/models + core/strings:real + core/ui/theme:api

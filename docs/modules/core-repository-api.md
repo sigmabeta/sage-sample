@@ -41,6 +41,11 @@ failing a screen.
 clamps `offset`/`limit` for both sides. `toDto`/`toDomain`/`toDomainOrNull` are shared so the
 server and client cannot drift.
 
+The Session resource, `SampleApiRoutes.SESSION` (`/api/session`), takes a `SignInRequest(username,
+password)` and answers with `SessionResponse(user: UserDto(id, username))`; failures are
+`ApiErrorResponse(error)`. The token itself rides in an HttpOnly cookie the server sets, so no DTO
+carries it. See `docs/modules/apps-server.md` for the statuses.
+
 ## Tests
 
 `RepositoryWireTest` round-trips every row and a full `ContentDetail`, checks every icon's wire name
