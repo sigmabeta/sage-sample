@@ -104,6 +104,7 @@ fun main(args: Array<String>) {
                 LocalSampleStringProvider provides graph.stringProvider,
             ) {
                 SampleApp(
+                    identityRepository = graph.identityRepository,
                     settingsManager = graph.settingsManager,
                     interFontFamily = InterFontFamily,
                     platformBack = platformBack,

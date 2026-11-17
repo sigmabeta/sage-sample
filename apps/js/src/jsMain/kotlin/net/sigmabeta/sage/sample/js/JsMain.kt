@@ -78,6 +78,7 @@ fun main() {
                     },
             ) {
                 SampleApp(
+                    identityRepository = graph.identityRepository,
                     settingsManager = graph.settingsManager,
                     platformBack = WebPlatformBack(backKeys),
                     screenContainer = PerScreenSampleScreenContainer,

@@ -60,17 +60,30 @@ import kotlin.math.roundToInt
  * [onOuterBack] is the policy's `Outer` branch: the host decides what lies above the shell (the
  * Android activity finishes; desktop has nothing). Chrome, title reporting and width class are
  * hoisted here once for every tab and pushed screen.
+ *
+ * The shell exists only while Signed in ([SampleSignInGateHost]). It reports its active route to
+ * [signInGate], so a Session lost mid-use can come back to it, and on opening applies the gate's
+ * route to restore. With a browser bridge the URL is that request instead: it is never rewritten
+ * while gated, and the bridge applies it when the shell is ready.
  */
 @Composable
-fun SampleNavHost(onOuterBack: () -> Unit = {}) {
+internal fun SampleNavHost(signInGate: SampleSignInGateHolder, onOuterBack: () -> Unit = {}) {
     TabNavigator(tab = HomeTab) { tabNavigator ->
-        SampleTabbedShell(tabNavigator = tabNavigator, onOuterBack = onOuterBack)
+        SampleTabbedShell(
+            tabNavigator = tabNavigator,
+            signInGate = signInGate,
+            onOuterBack = onOuterBack,
+        )
     }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Unit) {
+private fun SampleTabbedShell(
+    tabNavigator: TabNavigator,
+    signInGate: SampleSignInGateHolder,
+    onOuterBack: () -> Unit,
+) {
     val activeTabNavigator = rememberSaveable(saver = SampleActiveTabNavigator.Saver) {
         SampleActiveTabNavigator()
     }
@@ -112,6 +125,14 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
     DisposableEffect(browserNavigation) {
         onDispose { browserNavigation?.onShellDisposed() }
     }
+    // The route the Sign-in gate kept (a deep link that arrived while gated, or where a lost
+    // Session left off). Applied once, before any deep link that is still waiting, so the newest
+    // request wins. The browser applies its URL itself in onShellReady.
+    LaunchedEffect(signInGate, shellNavigation) {
+        val route = signInGate.gate.value.routeToRestore ?: return@LaunchedEffect
+        if (browserNavigation == null) shellNavigation.navigateTo(route)
+        signInGate.onRouteRestored()
+    }
     // A native deep link (an Android intent or a desktop launch argument) is a one-shot route:
     // apply it through the same external-navigation path as a browser URL, then consume it so a
     // recreated host cannot replay it.
@@ -125,12 +146,14 @@ private fun SampleTabbedShell(tabNavigator: TabNavigator, onOuterBack: () -> Uni
         }
     }
     LaunchedEffect(activeRouteKey, browserNavigation) {
+        val activeRoute = SampleRoute(
+            tab = currentTab.destination,
+            screen = activeScreen.destination,
+            contentId = (activeScreen as? ContentDetailScreen)?.contentId,
+        )
+        signInGate.onShellRoute(activeRoute)
         browserNavigation?.onRouteChanged(
-            route = SampleRoute(
-                tab = currentTab.destination,
-                screen = activeScreen.destination,
-                contentId = (activeScreen as? ContentDetailScreen)?.contentId,
-            ),
+            route = activeRoute,
             push = !shellNavigation.consumeReplaceReport(),
         )
     }
@@ -399,7 +422,7 @@ private fun handleEffect(
 
 /** Reads the window width in dp and maps it onto SAGE's [WidthClass]. */
 @Composable
-private fun currentWidthClass(): WidthClass {
+internal fun currentWidthClass(): WidthClass {
     val windowWidth = LocalWindowInfo.current.containerSize.width
     val density = LocalDensity.current
     val widthDp = with(density) { windowWidth.toDp().value }.roundToInt()

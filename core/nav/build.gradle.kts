@@ -15,6 +15,8 @@ kotlin {
             dependencies {
                 api(projects.core.models.api)
                 api(projects.core.strings.api)
+                // The Sign-in gate policy is defined over the identity seam's state and User.
+                api(projects.core.repository.api)
 
                 api(libs.sage.common.nav)
                 api(libs.sage.common.appcomm)
