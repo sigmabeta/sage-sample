@@ -20,7 +20,7 @@ import org.junit.Test
 class SampleServerTest {
     @Test
     fun `health reports ok`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         val response = client.get("/api/health")
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals(true, json(response.bodyAsText()).jsonObject["ok"]?.jsonPrimitive?.content?.toBoolean())
@@ -28,7 +28,7 @@ class SampleServerTest {
 
     @Test
     fun `home count and grid come from the shared demo content`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         val count = json(client.get("/api/home/count?seed=big_image_1").bodyAsText())
             .jsonObject["count"]?.jsonPrimitive?.int
         assertEquals(18, count)
@@ -40,7 +40,7 @@ class SampleServerTest {
 
     @Test
     fun `home item returns null past the catalog and validates its index`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         val pastEnd = json(client.get("/api/home/item?seed=big_image_1&index=99").bodyAsText())
         assertTrue(pastEnd.jsonObject["item"]?.toString() == "null")
 
@@ -52,7 +52,7 @@ class SampleServerTest {
 
     @Test
     fun `list items pages and clamps`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         val firstPage = json(client.get("/api/list-items?offset=0&limit=5").bodyAsText())
             .jsonObject["items"]!!.jsonArray
         assertEquals(5, firstPage.size)
@@ -69,7 +69,7 @@ class SampleServerTest {
 
     @Test
     fun `content detail returns content, null, and null for malformed ids`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         val known = json(client.get("/api/content?id=list-items:7").bodyAsText()).jsonObject["detail"]
         assertFalse(known?.toString() == "null")
 
@@ -82,7 +82,7 @@ class SampleServerTest {
 
     @Test
     fun `search returns deterministic results per kind`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         val first = client.get("/api/search?q=chrono&kind=list").bodyAsText()
         val second = client.get("/api/search?q=chrono&kind=list").bodyAsText()
         assertEquals(first, second)
@@ -98,7 +98,7 @@ class SampleServerTest {
 
     @Test
     fun `unknown api paths are a json 404`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         for (path in listOf("/api", "/api/nope", "/api/nope/deeper")) {
             val response = client.get(path)
             assertEquals(HttpStatusCode.NotFound, response.status)
@@ -111,14 +111,14 @@ class SampleServerTest {
 
     @Test
     fun `an app route containing a dot is not treated as a missing asset`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         // Content IDs may contain dots; the fallback only treats known asset extensions as files.
         assertTrue(client.get("/content-detail/a.b").status != HttpStatusCode.NotFound)
     }
 
     @Test
     fun `a missing asset is a real 404, not the spa shell`() = testApplication {
-        application { configureSampleServer() }
+        application { configureSampleServer(TestIdentity().identity) }
         assertEquals(HttpStatusCode.NotFound, client.get("/missing.js").status)
         assertEquals(HttpStatusCode.NotFound, client.get("/wasm/missing.wasm").status)
         assertEquals(HttpStatusCode.NotFound, client.get("/missing.png").status)

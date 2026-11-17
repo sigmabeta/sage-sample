@@ -35,6 +35,12 @@ object SampleApiRoutes {
     const val GRID_OF_IMAGES = "/api/grid-of-images"
 
     const val SEARCH = "/api/search"
+
+    /**
+     * The caller's Session: `POST` a [SignInRequest] to Sign in, `GET` the [SessionResponse], `DELETE`
+     * to Sign out. Public, like [HEALTH]; every other route needs a Session.
+     */
+    const val SESSION = "/api/session"
 }
 
 /** Query parameter names shared by the server routes and the browser client. */
@@ -140,6 +146,24 @@ data class HealthResponse(val ok: Boolean)
 
 @Serializable
 data class ApiErrorResponse(val error: String)
+
+/** The body of `POST` [SampleApiRoutes.SESSION]. Sent as `application/json`. */
+@Serializable
+data class SignInRequest(
+    val username: String,
+    val password: String,
+)
+
+/** A User as the API names it: the stable id and the username they sign in with. */
+@Serializable
+data class UserDto(
+    val id: String,
+    val username: String,
+)
+
+/** The signed-in User, from a successful Sign in or a `GET` of [SampleApiRoutes.SESSION]. */
+@Serializable
+data class SessionResponse(val user: UserDto)
 
 fun HomeItem.toDto(): HomeItemDto = HomeItemDto(id = id, title = title)
 

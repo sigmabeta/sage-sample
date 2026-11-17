@@ -4,6 +4,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
@@ -44,11 +45,15 @@ import net.sigmabeta.sage.sample.repository.demo.DemoContent
  * The same function is mounted by `main()` and by the route tests, so tests exercise the shipped
  * stack.
  */
-fun Application.configureSampleServer() {
+fun Application.configureSampleServer(identity: ServerIdentity, secureCookie: Boolean = false) {
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
     }
     install(StatusPages) {
+        // An unreadable JSON body (malformed, or missing a field) is the client's fault.
+        exception<BadRequestException> { call, _ ->
+            call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("Malformed request body"))
+        }
         exception<Throwable> { call, cause ->
             call.respond(
                 HttpStatusCode.InternalServerError,
@@ -61,6 +66,8 @@ fun Application.configureSampleServer() {
         get(SampleApiRoutes.HEALTH) {
             call.respond(HealthResponse(ok = true))
         }
+
+        sessionRoutes(identity, secureCookie)
 
         get(SampleApiRoutes.HOME_COUNT) {
             val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
