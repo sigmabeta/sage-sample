@@ -113,7 +113,9 @@ data class LoginState(
         LoginStatus.SUBMITTING -> null
 
         LoginStatus.REJECTED -> SampleStringId.LOGIN_REJECTED
+
         LoginStatus.THROTTLED -> SampleStringId.LOGIN_THROTTLED
+
         LoginStatus.UNREACHABLE -> SampleStringId.LOGIN_UNREACHABLE
     }
 

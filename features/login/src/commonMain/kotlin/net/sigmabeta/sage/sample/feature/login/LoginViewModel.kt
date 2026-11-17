@@ -84,7 +84,9 @@ class LoginViewModel(
             }
 
             SignInOutcome.Rejected -> updateState { it.copy(status = LoginStatus.REJECTED) }
+
             is SignInOutcome.Throttled -> updateState { it.copy(status = LoginStatus.THROTTLED) }
+
             SignInOutcome.Unreachable -> updateState { it.copy(status = LoginStatus.UNREACHABLE) }
         }
     }
