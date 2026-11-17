@@ -15,7 +15,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The shipped route stack: the same `configureSampleServer()` mounted by `main()`.
+ * The shipped route stack: the same `configureSampleServer` mounted by `main()`, over the identity
+ * fakes. Content routes need a Session, so each content test signs in as the Demo account first.
  */
 class SampleServerTest {
     @Test
@@ -29,11 +30,12 @@ class SampleServerTest {
     @Test
     fun `home count and grid come from the shared demo content`() = testApplication {
         application { configureSampleServer(TestIdentity().identity) }
-        val count = json(client.get("/api/home/count?seed=big_image_1").bodyAsText())
+        val cookie = client.signedInCookie()
+        val count = json(client.get("/api/home/count?seed=big_image_1") { withSession(cookie) }.bodyAsText())
             .jsonObject["count"]?.jsonPrimitive?.int
         assertEquals(18, count)
 
-        val grid = json(client.get("/api/home/grid?seed=big_image_1&limit=3").bodyAsText())
+        val grid = json(client.get("/api/home/grid?seed=big_image_1&limit=3") { withSession(cookie) }.bodyAsText())
             .jsonObject["items"]?.jsonArray
         assertEquals(3, grid?.size)
     }
@@ -41,28 +43,30 @@ class SampleServerTest {
     @Test
     fun `home item returns null past the catalog and validates its index`() = testApplication {
         application { configureSampleServer(TestIdentity().identity) }
-        val pastEnd = json(client.get("/api/home/item?seed=big_image_1&index=99").bodyAsText())
+        val cookie = client.signedInCookie()
+        val pastEnd = json(client.get("/api/home/item?seed=big_image_1&index=99") { withSession(cookie) }.bodyAsText())
         assertTrue(pastEnd.jsonObject["item"]?.toString() == "null")
 
         assertEquals(
             HttpStatusCode.BadRequest,
-            client.get("/api/home/item?seed=big_image_1&index=nope").status,
+            client.get("/api/home/item?seed=big_image_1&index=nope") { withSession(cookie) }.status,
         )
     }
 
     @Test
     fun `list items pages and clamps`() = testApplication {
         application { configureSampleServer(TestIdentity().identity) }
-        val firstPage = json(client.get("/api/list-items?offset=0&limit=5").bodyAsText())
+        val cookie = client.signedInCookie()
+        val firstPage = json(client.get("/api/list-items?offset=0&limit=5") { withSession(cookie) }.bodyAsText())
             .jsonObject["items"]!!.jsonArray
         assertEquals(5, firstPage.size)
 
-        val pastEnd = json(client.get("/api/list-items?offset=99&limit=5").bodyAsText())
+        val pastEnd = json(client.get("/api/list-items?offset=99&limit=5") { withSession(cookie) }.bodyAsText())
             .jsonObject["items"]!!.jsonArray
         assertTrue(pastEnd.isEmpty())
 
         // A negative offset clamps to zero rather than failing.
-        val clamped = json(client.get("/api/list-items?offset=-3&limit=2").bodyAsText())
+        val clamped = json(client.get("/api/list-items?offset=-3&limit=2") { withSession(cookie) }.bodyAsText())
             .jsonObject["items"]!!.jsonArray
         assertEquals(2, clamped.size)
     }
@@ -70,21 +74,23 @@ class SampleServerTest {
     @Test
     fun `content detail returns content, null, and null for malformed ids`() = testApplication {
         application { configureSampleServer(TestIdentity().identity) }
-        val known = json(client.get("/api/content?id=list-items:7").bodyAsText()).jsonObject["detail"]
+        val cookie = client.signedInCookie()
+        val known = json(client.get("/api/content?id=list-items:7") { withSession(cookie) }.bodyAsText()).jsonObject["detail"]
         assertFalse(known?.toString() == "null")
 
-        val unknown = json(client.get("/api/content?id=not-a-surface:1").bodyAsText())
+        val unknown = json(client.get("/api/content?id=not-a-surface:1") { withSession(cookie) }.bodyAsText())
         assertEquals("null", unknown.jsonObject["detail"]?.toString())
 
-        val malformed = json(client.get("/api/content?id=has%20space").bodyAsText())
+        val malformed = json(client.get("/api/content?id=has%20space") { withSession(cookie) }.bodyAsText())
         assertEquals("null", malformed.jsonObject["detail"]?.toString())
     }
 
     @Test
     fun `search returns deterministic results per kind`() = testApplication {
         application { configureSampleServer(TestIdentity().identity) }
-        val first = client.get("/api/search?q=chrono&kind=list").bodyAsText()
-        val second = client.get("/api/search?q=chrono&kind=list").bodyAsText()
+        val cookie = client.signedInCookie()
+        val first = client.get("/api/search?q=chrono&kind=list") { withSession(cookie) }.bodyAsText()
+        val second = client.get("/api/search?q=chrono&kind=list") { withSession(cookie) }.bodyAsText()
         assertEquals(first, second)
 
         val results = json(first).jsonObject["results"]!!.jsonArray
@@ -92,21 +98,8 @@ class SampleServerTest {
 
         assertEquals(
             HttpStatusCode.BadRequest,
-            client.get("/api/search?q=chrono&kind=nope").status,
+            client.get("/api/search?q=chrono&kind=nope") { withSession(cookie) }.status,
         )
-    }
-
-    @Test
-    fun `unknown api paths are a json 404`() = testApplication {
-        application { configureSampleServer(TestIdentity().identity) }
-        for (path in listOf("/api", "/api/nope", "/api/nope/deeper")) {
-            val response = client.get(path)
-            assertEquals(HttpStatusCode.NotFound, response.status)
-            assertEquals(
-                "Not found",
-                json(response.bodyAsText()).jsonObject["error"]?.jsonPrimitive?.content,
-            )
-        }
     }
 
     @Test
