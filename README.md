@@ -506,6 +506,27 @@ from the shared strings module; both composition roots install the graph's `Stri
 Navigation uses Voyager's `TabNavigator` (from SAGE's catalog). The shared `:core:ui:shell` owns
 the tabbed shell; each app supplies only its platform seams:
 
+- **The Sign-in gate sits above the tabs.** `SampleApp` takes the graph's `IdentityRepository`, and
+  `SampleSignInGateHost` follows its `state` through `SampleSignInGateHolder` (pure policy:
+  `:core:nav`'s `SampleSignInGate`). While the startup check runs (`Checking`) it shows a blank
+  surface; while Signed out it shows only Login: a centred title bar, no tabs, no hamburger, no
+  back arrow. Login is a plain Voyager `Screen` in its own root `Navigator`, not a
+  `SampleDestination`, so no route, URL or deep link names it, and its `LoginEvent`s are not
+  navigation. Platform Back on either surface falls through to the host (`gateBackActionFor`).
+- **Signed in, the shell is keyed on the User.** It is composed only while Signed in, inside
+  `key(user.id)`. A Sign out or a Session lost to a 401 removes it from composition, and Voyager
+  then disposes every tab's inner navigator with its screens and view models; the next Sign in
+  opens fresh tab stacks.
+- **The gate keeps the route to restore.** A deep link that arrives while gated is taken off the
+  `SampleDeepLinkSource`, held (the latest one wins) and consumed; the shell opens on it after
+  Sign in, Home otherwise. While open, the shell reports its active route to the gate, so a 401
+  restores the screen the user was on. A deliberate sign-out (`SampleSignInGateHolder.signOut`)
+  restores Home instead. The held route survives rotation as its `SampleRouteUrl` string, and the
+  holder is built from the current state, so a Signed-in rotation never flashes the blank surface.
+- **On the web the URL is the request.** While gated, `BrowserHistoryNavigation` is detached
+  (`onShellDisposed`) and the URL is never rewritten, so `/browse/list-items` opened Signed out is
+  still in the address bar at Login and is applied by `onShellReady` after Sign in. The shell
+  skips the gate's restore route when a browser bridge is present.
 - **Destinations** are in `SampleDestination`, which implements SAGE's `RouteDescriptor`.
 - **Home, Browse and Search are tabs** (`SampleTabs.kt`), each owning a retained inner
   `Navigator` and a stable root screen. The `NavigationBar` on compact windows and the
@@ -542,7 +563,8 @@ the tabbed shell; each app supplies only its platform seams:
   its first parseable argument; each feeds a `MutableSampleDeepLinkSource` in `:core:ui:shell`.
   `SampleNavHost` applies the pending route through `SampleShellNavigation.navigateTo` — the same
   path a browser URL takes — and then consumes it, so rotation or a reopened window cannot replay
-  the link.
+  the link. While Signed out the gate takes the link instead and the shell opens on it after Sign
+  in.
 - **The top bar comes from the active route.** The screen reports its SAGE
   `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState` uses the reported
   `title` and `shouldShowBack` (falling back to the destination label and `isTopLevel` until
