@@ -50,6 +50,8 @@ include(
     ":testing:perfbench-core",
     ":core:bitmaps",
     ":core:database",
+    ":core:identity",
+    ":core:identity:fake",
     ":core:models:api",
     ":core:nav",
     ":core:repository:api",

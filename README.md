@@ -206,6 +206,9 @@ core/bitmaps/               KMP Compose module shared by every app
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
 core/database/              Room KMP Users + Sessions over bundled SQLite (Android + JVM, no JS)
   schemas/                  committed Room schema JSON, one file per version
+core/identity/              UserDirectory, SessionStore, Demo accounts, sign-in limiter over
+                            :core:database (Android + JVM, no JS)
+  fake/                     in-memory UserDirectory/SessionStore + FakeClock for JVM tests
 core/models/api/            KMP domain models + Content detail route codec
 core/nav/                   KMP destinations, route/Back/layout/chrome policy, URL + deep-link codec,
                             screen keys
