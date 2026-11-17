@@ -14,6 +14,8 @@ import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.BuildConfig
+import net.sigmabeta.sage.sample.database.AndroidSampleDatabases
+import net.sigmabeta.sage.sample.database.SampleDatabase
 import net.sigmabeta.sage.sample.storage.PreferencesStorage
 import net.sigmabeta.sage.sample.storage.settingsDataStore
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
@@ -61,6 +63,14 @@ object SampleBindings {
         scope = scope,
         dispatchers = dispatchers,
     )
+
+    /**
+     * The Users and Sessions database behind the in-process identity source in
+     * `:core:repository:demo`, in the app's database directory.
+     */
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideSampleDatabase(context: Context): SampleDatabase = AndroidSampleDatabases.file(context)
 
     /** Version info shown in Settings' About section. */
     @Provides
