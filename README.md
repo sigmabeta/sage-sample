@@ -467,11 +467,15 @@ loading and error rows. If both calls come back empty, the screen shows its no-r
 `window.localStorage`, and binds `:core:repository:remote` instead of the demo sources. Artwork is
 drawn directly by `:core:bitmaps` (`LocalForceFakeImages`), so the browser needs no Coil fetcher.
 
-`:apps:server` is a stateless Ktor/Netty server. It serves the webpack bundle from
+`:apps:server` is a Ktor/Netty server that holds Users and Sessions in a Room database file
+(`SAGE_SAMPLE_DB_PATH`) through `:core:identity`. It serves the webpack bundle from
 `src/main/resources/static` with an SPA fallback (`/browse/list-items` and `/settings` both return
 `index.html`; a missing asset is a real 404) and a JSON API under `/api` backed by the same
-`DemoContent` generators the demo repositories use. Unknown `/api` paths return a JSON 404, never
-the shell. `SAGE_SAMPLE_PORT` / `SAGE_SAMPLE_BIND_HOST` control the listen address.
+`DemoContent` generators the demo repositories use. `/api/session` signs in (an HttpOnly,
+`SameSite=Lax` `sage_session` cookie), reads and ends a Session; every other `/api` route except
+`/api/health` is a 401 without one. Unknown `/api` paths are gated too, then a JSON 404, never the
+shell. `SAGE_SAMPLE_PORT` / `SAGE_SAMPLE_BIND_HOST` control the listen address and
+`SAGE_SAMPLE_SECURE_COOKIE` the cookie's `Secure` flag.
 
 `SampleRoute`/`SampleRouteUrl` (`:core:nav`) is the pure URL model:
 `/home`, `/browse/list-items`, `/home/content-detail/list-items:7`; short links such as `/settings`

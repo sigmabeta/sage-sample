@@ -1,8 +1,9 @@
 # `:apps:server`
 
-A stateless Ktor/Netty server that serves the browser bundle and the sample's JSON API. Every
-response comes from the deterministic generators in `:core:repository:demo`; there is no database,
-scan, or background work.
+A Ktor/Netty server that serves the browser bundle and the sample's JSON API. Content comes from
+the deterministic generators in `:core:repository:demo`. The server holds Users and Sessions in a
+Room database file through `:core:identity` (ADR 0001), and every content route needs a Session.
+There is no scan or background work.
 
 ## Plugins
 
@@ -29,7 +30,10 @@ plugins {
 
 | Route | Behaviour |
 |---|---|
-| `GET /api/health` | `{"ok":true}` |
+| `GET /api/health` | `{"ok":true}` (public) |
+| `POST /api/session` | Sign in: 200 `{"user":{"id","username"}}` + `sage_session` cookie; 401 `{"error":"Wrong username or password"}`; 429 + `Retry-After`; 400 for an unreadable body (public) |
+| `GET /api/session` | 200 `{"user":…}` or 401 `{"error":"Signed out"}` (public) |
+| `DELETE /api/session` | Sign out: 204, revokes and clears the cookie, also when Signed out (public) |
 | `GET /api/home/count?seed=` | The seed's catalog size |
 | `GET /api/home/item?seed=&index=` | The item or `{"item":null}`; 400 for a missing/invalid index |
 | `GET /api/home/grid?seed=&limit=` | The first `limit` items |
@@ -37,29 +41,42 @@ plugins {
 | `GET /api/list-items?offset=&limit=` | A clamped page of the 25-row List Items catalog |
 | `GET /api/grid-of-images?offset=&limit=` | A clamped page of the 50-row grid catalog |
 | `GET /api/search?q=&kind=list\|grid` | Deterministic results; 400 for an invalid kind |
-| Any other `/api…` | JSON 404 `{"error":"Not found"}` (never the SPA shell) |
+| Any other `/api…` | 401 when Signed out, else JSON 404 `{"error":"Not found"}` (never the SPA shell) |
 | App paths (`/`, `/settings`, `/browse/list-items`, …) | `static/index.html` |
 | Missing assets (paths with an extension) | Real 404 |
 
-`SampleApiRoutes`/`SampleApiParams` (in `:core:repository:api`) are the single source of truth for
-paths and query parameter names, shared with `:core:repository:remote`.
+Every `/api` route but health and `/api/session` answers a Signed out request with 401
+`{"error":"Sign in required"}`; the SPA shell and assets stay public. `POST`/`DELETE /api/session`
+without `Content-Type: application/json` are 415. The cookie is `HttpOnly`, `SameSite=Lax`,
+`Path=/`, `Max-Age` 30 days, and `Secure` iff `SAGE_SAMPLE_SECURE_COOKIE`.
+
+`SampleApiRoutes`/`SampleApiParams` and the wire DTOs (`SignInRequest`, `SessionResponse`,
+`UserDto`, `ApiErrorResponse`), all in `:core:repository:api`, are the single source of truth for
+paths, parameter names and bodies, shared with `:core:repository:remote`.
 
 ## Config
 
-`ServerConfig.fromEnv()` reads `SAGE_SAMPLE_PORT` (default 8080) and `SAGE_SAMPLE_BIND_HOST`
-(default 0.0.0.0). Pointing a phone on the LAN at the server works, but generated art is drawn
-client-side and there is no auth.
+`ServerConfig.fromEnv()` reads `SAGE_SAMPLE_PORT` (default 8080), `SAGE_SAMPLE_BIND_HOST`
+(default 0.0.0.0), `SAGE_SAMPLE_DB_PATH` (default `sage-sample.db` in the working directory) and
+`SAGE_SAMPLE_SECURE_COOKIE` (default off). Startup seeds the Demo accounts and warns when a
+non-loopback bind runs with the secure-cookie flag off (`warnsOfInsecureCookie()`). Pointing a phone
+on the LAN at the server works; generated art is drawn client-side.
 
 ## Files
 
 | File | Role |
 |---|---|
-| `Main.kt` | Reads config and starts `embeddedServer(Netty)`. |
-| `SampleServer.kt` | `configureSampleServer()`: content negotiation, status pages, API routes, JSON 404, bundle + SPA fallback. Shared by `main()` and the tests. |
-| `ServerConfig.kt` | Env-var config. |
+| `Main.kt` | Reads config, opens the database, seeds the Demo accounts, starts `embeddedServer(Netty)`. |
+| `SampleServer.kt` | `configureSampleServer(identity, secureCookie)`: content negotiation, status pages, API routes, JSON 404, bundle + SPA fallback. Shared by `main()` and the tests. |
+| `SessionRoutes.kt` | `ServerIdentity` (+ `overRoom`), the `/api/session` routes, the `sage_session` cookie. |
+| `SessionGate.kt` | `requireSession {}`: a transparent route node whose plugin 401s a Signed out request. |
+| `ServerConfig.kt` | Env-var config and the insecure-cookie warning predicate. |
 
 ## Tests
 
-`SampleServerTest` mounts the shipped route stack in Ktor's `testApplication` and covers health,
-home paging/validation, list paging/clamping, content detail nulls, deterministic search, JSON API
-404s, and missing-asset 404s.
+The tests mount the shipped route stack in Ktor's `testApplication`. `SessionRoutesTest` covers each
+Session status and the cookie flags over the `:core:identity:fake` fakes; `ApiGateTest` the 401
+gate, public routes and gated unknown paths; `SampleServerTest` (signed in) health, home
+paging/validation, list paging/clamping, content detail nulls, deterministic search and
+missing-asset 404s; `RoomIdentityServerTest` the Room-backed identity end to end; `ServerConfigTest`
+the env vars and the warning predicate.

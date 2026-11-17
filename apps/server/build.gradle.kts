@@ -72,6 +72,9 @@ dependencies {
     // constructs the Settings-aware demo repositories; it calls DemoContent directly.
     implementation(projects.core.repository.demo)
     implementation(projects.core.models.api)
+    // Users and Sessions: the shared credential rules over the server's Room database file.
+    implementation(projects.core.identity)
+    implementation(projects.core.database)
 
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
@@ -84,5 +87,6 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.junit4)
+    testImplementation(projects.core.identity.fake)
     testImplementation("io.ktor:ktor-server-test-host:${libs.versions.ktor.get()}")
 }

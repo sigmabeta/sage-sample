@@ -4,6 +4,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
@@ -41,14 +42,20 @@ import net.sigmabeta.sage.sample.repository.demo.DemoContent
  * only place the server touches data; every generator lives in `:core:repository:demo`, which the
  * Android/desktop demo sources also use.
  *
- * The same function is mounted by `main()` and by the route tests, so tests exercise the shipped
- * stack.
+ * [identity] backs `/api/session` and the Session gate in front of every other `/api` route but
+ * health; [secureCookie] marks the Session cookie `Secure`. The same function is mounted by `main()`
+ * (over Room) and by the route tests (over fakes or an in-memory database), so tests exercise the
+ * shipped stack.
  */
-fun Application.configureSampleServer() {
+fun Application.configureSampleServer(identity: ServerIdentity, secureCookie: Boolean = false) {
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
     }
     install(StatusPages) {
+        // An unreadable JSON body (malformed, or missing a field) is the client's fault.
+        exception<BadRequestException> { call, _ ->
+            call.respond(HttpStatusCode.BadRequest, ApiErrorResponse("Malformed request body"))
+        }
         exception<Throwable> { call, cause ->
             call.respond(
                 HttpStatusCode.InternalServerError,
@@ -62,84 +69,90 @@ fun Application.configureSampleServer() {
             call.respond(HealthResponse(ok = true))
         }
 
-        get(SampleApiRoutes.HOME_COUNT) {
-            val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
-            call.respond(HomeCountResponse(DemoContent.homeItemCount(seed)))
-        }
+        sessionRoutes(identity, secureCookie)
 
-        get(SampleApiRoutes.HOME_ITEM) {
-            val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
-            val index = call.parameters[SampleApiParams.INDEX]?.toIntOrNull()
-                ?: return@get call.badRequest("index")
-            call.respond(HomeItemResponse(DemoContent.homeItem(seed, index)?.toDto()))
-        }
-
-        get(SampleApiRoutes.HOME_GRID) {
-            val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
-            val (_, limit) = normalizedPage(
-                offset = null,
-                limit = call.parameters[SampleApiParams.LIMIT]?.toIntOrNull(),
-            )
-            call.respond(HomeItemsResponse(DemoContent.homeGrid(seed, limit).map { it.toDto() }))
-        }
-
-        get(SampleApiRoutes.CONTENT_DETAIL) {
-            val rawId = call.parameters[SampleApiParams.CONTENT_ID] ?: return@get call.badRequest("id")
-            val contentId = contentIdOrNull(rawId)
-            call.respond(
-                ContentDetailResponse(
-                    contentId?.let { DemoContent.contentDetail(it) }?.toDto(),
-                ),
-            )
-        }
-
-        get(SampleApiRoutes.LIST_ITEMS) {
-            val (offset, limit) = call.page()
-            call.respond(
-                SampleItemsResponse(
-                    DemoContent.sampleItems(
-                        offset = offset,
-                        limit = limit,
-                        total = net.sigmabeta.sage.sample.repository.LIST_ITEMS_ITEM_COUNT,
-                    ).map { it.toDto() },
-                ),
-            )
-        }
-
-        get(SampleApiRoutes.GRID_OF_IMAGES) {
-            val (offset, limit) = call.page()
-            call.respond(
-                SampleItemsResponse(
-                    DemoContent.sampleItems(
-                        offset = offset,
-                        limit = limit,
-                        total = net.sigmabeta.sage.sample.repository.GRID_OF_IMAGES_ITEM_COUNT,
-                    ).map { it.toDto() },
-                ),
-            )
-        }
-
-        get(SampleApiRoutes.SEARCH) {
-            val query = call.parameters[SampleApiParams.QUERY] ?: return@get call.badRequest("q")
-            val kindSegment = call.parameters[SampleApiParams.KIND] ?: return@get call.badRequest("kind")
-            val kind = SearchResultKind.entries.firstOrNull { it.routeSegment == kindSegment }
-                ?: return@get call.badRequest("kind")
-            call.respond(
-                SearchResultsResponse(
-                    DemoContent.searchResults(query, kind).map { it.toDto() },
-                ),
-            )
-        }
-
-        // Unknown /api paths are a JSON 404, never the SPA shell.
-        route("/api/{...}") {
-            handle {
-                call.respond(HttpStatusCode.NotFound, ApiErrorResponse("Not found"))
+        // Everything else under /api, unknown paths included, needs a Session: a Signed out
+        // client learns nothing about the API surface beyond health and the Session resource.
+        requireSession(identity.sessions) {
+            get(SampleApiRoutes.HOME_COUNT) {
+                val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
+                call.respond(HomeCountResponse(DemoContent.homeItemCount(seed)))
             }
-        }
-        route("/api") {
-            handle {
-                call.respond(HttpStatusCode.NotFound, ApiErrorResponse("Not found"))
+
+            get(SampleApiRoutes.HOME_ITEM) {
+                val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
+                val index = call.parameters[SampleApiParams.INDEX]?.toIntOrNull()
+                    ?: return@get call.badRequest("index")
+                call.respond(HomeItemResponse(DemoContent.homeItem(seed, index)?.toDto()))
+            }
+
+            get(SampleApiRoutes.HOME_GRID) {
+                val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
+                val (_, limit) = normalizedPage(
+                    offset = null,
+                    limit = call.parameters[SampleApiParams.LIMIT]?.toIntOrNull(),
+                )
+                call.respond(HomeItemsResponse(DemoContent.homeGrid(seed, limit).map { it.toDto() }))
+            }
+
+            get(SampleApiRoutes.CONTENT_DETAIL) {
+                val rawId = call.parameters[SampleApiParams.CONTENT_ID] ?: return@get call.badRequest("id")
+                val contentId = contentIdOrNull(rawId)
+                call.respond(
+                    ContentDetailResponse(
+                        contentId?.let { DemoContent.contentDetail(it) }?.toDto(),
+                    ),
+                )
+            }
+
+            get(SampleApiRoutes.LIST_ITEMS) {
+                val (offset, limit) = call.page()
+                call.respond(
+                    SampleItemsResponse(
+                        DemoContent.sampleItems(
+                            offset = offset,
+                            limit = limit,
+                            total = net.sigmabeta.sage.sample.repository.LIST_ITEMS_ITEM_COUNT,
+                        ).map { it.toDto() },
+                    ),
+                )
+            }
+
+            get(SampleApiRoutes.GRID_OF_IMAGES) {
+                val (offset, limit) = call.page()
+                call.respond(
+                    SampleItemsResponse(
+                        DemoContent.sampleItems(
+                            offset = offset,
+                            limit = limit,
+                            total = net.sigmabeta.sage.sample.repository.GRID_OF_IMAGES_ITEM_COUNT,
+                        ).map { it.toDto() },
+                    ),
+                )
+            }
+
+            get(SampleApiRoutes.SEARCH) {
+                val query = call.parameters[SampleApiParams.QUERY] ?: return@get call.badRequest("q")
+                val kindSegment = call.parameters[SampleApiParams.KIND] ?: return@get call.badRequest("kind")
+                val kind = SearchResultKind.entries.firstOrNull { it.routeSegment == kindSegment }
+                    ?: return@get call.badRequest("kind")
+                call.respond(
+                    SearchResultsResponse(
+                        DemoContent.searchResults(query, kind).map { it.toDto() },
+                    ),
+                )
+            }
+
+            // Unknown /api paths are a JSON 404, never the SPA shell.
+            route("/api/{...}") {
+                handle {
+                    call.respond(HttpStatusCode.NotFound, ApiErrorResponse("Not found"))
+                }
+            }
+            route("/api") {
+                handle {
+                    call.respond(HttpStatusCode.NotFound, ApiErrorResponse("Not found"))
+                }
             }
         }
 
