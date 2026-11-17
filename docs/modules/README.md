@@ -30,6 +30,7 @@ coordinates resolve to the included projects automatically.
 | [`:core:strings:api`](core-strings-api.md) | KMP library | One `SampleStringId` vocabulary for every user-visible string |
 | [`:core:strings:real`](core-strings-real.md) | KMP library | The single id → English table (`SampleStringProvider`) |
 | [`:core:ui:components:api`](core-ui-components-api.md) | KMP Compose library | Shared renderer suite: SAGE `ListModel` → composables, search chrome |
+| [`:core:ui:components:models`](core-ui-components-models.md) | KMP library | Compose-free form models (text field, button, message) that features build |
 | [`:core:ui:previews`](core-ui-previews.md) | Android test-support library | VM-free `ListState` rendering, device matrix and `FakeModelGenerator` |
 | [`:core:ui:shell`](core-ui-shell.md) | KMP Compose library | Shared composition root and Voyager navigation host |
 | [`:core:ui:theme:api`](core-ui-theme-api.md) | KMP Compose library | `SampleTheme` + the shared type scale |
@@ -42,6 +43,8 @@ coordinates resolve to the included projects automatically.
 | [`:features:home:screenshot`](features-home-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Home |
 | [`:features:listitems`](features-listitems.md) | KMP feature | Three list/grid screens, two of them paginated |
 | [`:features:listitems:screenshot`](features-listitems-screenshot.md) | Android screenshot leaf | Paparazzi goldens for List Items, List Items with Images and Grid of Images |
+| [`:features:login`](features-login.md) | KMP feature | Sign-in form over `IdentityRepository`; emits `LoginEvent.SignedIn` |
+| [`:features:login:screenshot`](features-login-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Login |
 | [`:features:search`](features-search.md) | KMP feature | Debounced search, two result sets, persisted recent searches |
 | [`:features:search:screenshot`](features-search-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Search |
 | [`:features:settings`](features-settings.md) | KMP feature | Preferences, demo controls, reset action, About rows |
@@ -64,6 +67,7 @@ apps/server ──┘ (DemoContent)
         └─ core/ui/shell ─┬─ features/* ── core/repository:api ── core/models
                           │        │
                           │        ├─ core/strings:api
+                          │        ├─ core/ui/components:models (form rows)
                           │        └─ core/ui/components:api (renderers)
                           ├─ core/nav         (shared shell policy + URL codec)
                           ├─ core/strings:real (text)
@@ -111,7 +115,7 @@ Rules that hold across the graph:
 |---|---|---|
 | `sage.jvm` | `:core:repository:demo`, `:apps:jvm`, `:apps:server` | Kotlin/JVM 17, detekt, ktlint |
 | `sage.di` | `:apps:jvm` | Metro compiler plugin (KMP modules apply `metro` directly) |
-| `sage.kmp` + `sage.kmp.js` | features, `:core:models:api`, `:core:nav`, `:core:settings`, `:core:viewmodel`, `:core:repository:api`, `:core:repository:remote`, `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Kotlin Multiplatform (Android + JVM, plus JS under `-Psage.js`) |
+| `sage.kmp` + `sage.kmp.js` | features, `:core:models:api`, `:core:nav`, `:core:settings`, `:core:viewmodel`, `:core:repository:api`, `:core:repository:remote`, `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:models`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Kotlin Multiplatform (Android + JVM, plus JS under `-Psage.js`) |
 | `sage.compose.kmp` | `:core:bitmaps`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Compose Multiplatform for the KMP targets |
 | `sagesample.screenshot` | `:features:*:screenshot` | `sage.android` + `sage.compose.android` + Paparazzi; derives the namespace from the module path; adds `:core:ui:previews`, `:core:strings:real`, SAGE `appcomm`/`list`; disables JUnit HTML/XML reports (Paparazzi alpha's reporter is not Gradle-9 compatible) |
 
