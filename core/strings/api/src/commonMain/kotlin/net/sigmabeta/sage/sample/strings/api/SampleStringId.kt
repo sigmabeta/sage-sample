@@ -128,4 +128,9 @@ enum class SampleStringId : SageStringId {
     SETTINGS_SECTION_ABOUT,
     SETTINGS_LABEL_APP_VERSION,
     SETTINGS_LABEL_BUILD_DATE,
+
+    // Favorites (User-scoped data on Content detail).
+    CONTENT_DETAIL_FAVORITE_ADD,
+    CONTENT_DETAIL_FAVORITE_REMOVE,
+    CONTENT_DETAIL_FAVORITE_FAILED,
 }
