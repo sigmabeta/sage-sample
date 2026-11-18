@@ -1,4 +1,4 @@
-package net.sigmabeta.sage.sample.repository
+package net.sigmabeta.sage.sample.repository.cache
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,6 +7,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.repository.IdentityRepository
+import net.sigmabeta.sage.sample.repository.IdentityState
+import net.sigmabeta.sage.sample.repository.SignInOutcome
+import net.sigmabeta.sage.sample.repository.User
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue

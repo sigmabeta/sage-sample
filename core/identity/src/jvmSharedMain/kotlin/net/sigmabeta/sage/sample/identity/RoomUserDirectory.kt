@@ -57,8 +57,6 @@ class RoomUserDirectory internal constructor(
         users.insert(row)
         return row.toUser()
     }
-
-    override suspend fun findById(id: String): User? = users.findById(id)?.toUser()
 }
 
 internal fun UserEntity.toUser(): User = User(id = id, username = username)

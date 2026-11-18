@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 // Back at a tab root leaves the tabbed shell: finish the activity, which is the
                 // platform's default Back behaviour.
                 SampleApp(
-                    identityRepository = launchHook.identityRepository,
+                    identityRepository = launchHook.gatedIdentity,
                     settingsManager = graph.settingsManager,
                     interFontFamily = InterFontFamily,
                     platformBack = AndroidPlatformBack,

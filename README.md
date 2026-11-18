@@ -198,6 +198,7 @@ apps/server/                Ktor server; serves the JS bundle and the JSON API
   ServerConfig.kt           SAGE_SAMPLE_PORT / SAGE_SAMPLE_BIND_HOST
   build.gradle.kts          copies the dev bundle for `run`, the production bundle for installDist
 core/repository/api/        KMP repository interfaces, wire DTOs + API route constants
+core/repository/cache/      KMP User-keyed favorites cache shared by the demo and remote sources
 core/repository/demo/       JVM deterministic sources bound by Android/desktop (and used by the server)
 core/repository/remote/     Ktor-client repository implementations used by the browser app
 core/bitmaps/               KMP Compose module shared by every app
@@ -450,7 +451,7 @@ keeps its name and thumbnail. The only fixed text on the screen is section chrom
 snackbar; titles, labels, CTA text, names and captions are generated. The first CTA is the
 signed-in User's favorite toggle, backed by `FavoritesRepository`: Room rows on Android/desktop
 (`DemoFavoritesRepository`), `/api/me/favorites` in the browser (`RemoteFavoritesRepository`), both
-over the User-keyed `CachedFavoritesRepository` in `:core:repository:api`.
+over the User-keyed `CachedFavoritesRepository` in `:core:repository:cache`.
 
 Search keeps the same feature-state / app-rendering split, with a search shell: the
 shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim

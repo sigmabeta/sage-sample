@@ -72,7 +72,14 @@ internal fun Route.sessionRoutes(identity: ServerIdentity, secureCookie: Boolean
     post(SampleApiRoutes.SESSION) {
         if (!call.requireJson()) return@post
         val request = call.receive<SignInRequest>()
-        when (val result = identity.signIn.signIn(request.username, request.password, call.request.origin.remoteHost)) {
+        val result = identity.signIn.signIn(
+            username = request.username,
+            password = request.password,
+            client = call.request.origin.remoteHost,
+            // One Session per client: signing in again replaces the one this cookie names.
+            replacing = call.sessionToken(),
+        )
+        when (result) {
             is SignInResult.SignedIn -> {
                 call.response.cookies.append(sessionCookie(result.issued.token, SESSION_LIFETIME, secureCookie))
                 call.respond(SessionResponse(result.issued.session.user.toDto()))

@@ -55,6 +55,7 @@ include(
     ":core:models:api",
     ":core:nav",
     ":core:repository:api",
+    ":core:repository:cache",
     ":core:repository:demo",
     ":core:repository:remote",
     ":core:settings",

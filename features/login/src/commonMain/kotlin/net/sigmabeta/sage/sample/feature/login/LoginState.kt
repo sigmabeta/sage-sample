@@ -85,7 +85,7 @@ data class LoginState(
             )
 
             failureMessage()?.let { id ->
-                add(FormMessageListModel(stringProvider.getString(id), FormMessageTone.ERROR))
+                add(FormMessageListModel(stringProvider.getString(id), FormMessageTone.ERROR, FAILURE_MESSAGE_ID))
             }
 
             add(
@@ -123,5 +123,6 @@ data class LoginState(
         /** Stable list ids, so the button keeps its slot while its label changes. */
         const val SUBMIT_BUTTON_ID = 3L
         const val DEMO_ACCOUNT_HINT_ID = 4L
+        const val FAILURE_MESSAGE_ID = 5L
     }
 }

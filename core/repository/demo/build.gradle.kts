@@ -9,6 +9,8 @@ plugins {
 
 dependencies {
     api(projects.core.repository.api)
+    // The User-keyed favorites cache, in front of the Room-backed source.
+    implementation(projects.core.repository.cache)
     // The demo sources read the Settings demo outcome (content/empty/error) per call.
     api(projects.core.settings)
     implementation(libs.sage.common.di)

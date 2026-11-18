@@ -17,6 +17,8 @@ kotlin {
             dependencies {
                 implementation(libs.sage.common.di)
                 api(projects.core.repository.api)
+                // The User-keyed favorites cache, in front of the HTTP source.
+                implementation(projects.core.repository.cache)
                 api(projects.core.settings)
 
                 api(libs.ktor.client.core)

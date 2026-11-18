@@ -24,6 +24,7 @@ coordinates resolve to the included projects automatically.
 | [`:core:models:api`](core-models-api.md) | KMP library | Shared domain models + the Content detail route codec |
 | [`:core:nav`](core-nav.md) | KMP library | Shared destinations, route/Back policy, layout and top-bar derivation, URL codec, screen keys |
 | [`:core:repository:api`](core-repository-api.md) | KMP library | Repository seams, JSON wire DTOs + mappings, API route/parameter constants |
+| [`:core:repository:cache`](core-repository-cache.md) | KMP library | User-keyed favorites cache over a `FavoritesSource`; used by the demo and remote favorites |
 | [`:core:repository:demo`](core-repository-demo.md) | JVM library | Deterministic in-process sources and generators; bound by Android/desktop and used by the server |
 | [`:core:repository:remote`](core-repository-remote.md) | KMP library | Ktor-client implementations of the seams; bound by the browser |
 | [`:core:settings`](core-settings.md) | KMP library | Persisted preferences, demo outcome, simulated delay, recent-search history |

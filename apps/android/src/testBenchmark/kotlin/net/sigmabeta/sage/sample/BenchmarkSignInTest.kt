@@ -38,7 +38,7 @@ class BenchmarkSignInTest {
     fun `signs a Demo account in and the gate never sees Signed out`() = runTest {
         val identity = FakeIdentity(accept = demo)
         val hook = hook(identity)
-        val seen = record(hook.repository.state)
+        val seen = record(hook.gatedIdentity.state)
 
         hook.request(DemoAccounts.DEMO)
         identity.state.value = IdentityState.SignedOut
@@ -47,7 +47,7 @@ class BenchmarkSignInTest {
         advanceUntilIdle()
 
         assertEquals(listOf("demo" to "sage"), identity.signIns)
-        assertEquals(IdentityState.SignedIn(demo), hook.repository.state.value)
+        assertEquals(IdentityState.SignedIn(demo), hook.gatedIdentity.state.value)
         assertFalse(IdentityState.SignedOut in seen)
     }
 
@@ -61,7 +61,7 @@ class BenchmarkSignInTest {
         advanceUntilIdle()
 
         assertTrue(identity.signIns.isEmpty())
-        assertEquals(IdentityState.SignedIn(demo), hook.repository.state.value)
+        assertEquals(IdentityState.SignedIn(demo), hook.gatedIdentity.state.value)
     }
 
     @Test
@@ -91,7 +91,7 @@ class BenchmarkSignInTest {
         identity.answer()
         advanceUntilIdle()
 
-        assertEquals(IdentityState.SignedOut, hook.repository.state.value)
+        assertEquals(IdentityState.SignedOut, hook.gatedIdentity.state.value)
     }
 
     @Test
@@ -102,7 +102,7 @@ class BenchmarkSignInTest {
         identity.state.value = IdentityState.SignedOut
         advanceUntilIdle()
 
-        assertEquals(IdentityState.SignedOut, hook.repository.state.value)
+        assertEquals(IdentityState.SignedOut, hook.gatedIdentity.state.value)
         assertTrue(identity.signIns.isEmpty())
     }
 

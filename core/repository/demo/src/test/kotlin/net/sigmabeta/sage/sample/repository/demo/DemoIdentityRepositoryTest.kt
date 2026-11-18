@@ -166,6 +166,32 @@ class DemoIdentityRepositoryTest {
     }
 
     @Test
+    fun `signing in again revokes the Session it replaces`() = runTest {
+        // One Session per device: the stored token is the device's Session, so a new one revokes it.
+        val repository = repository()
+        advanceUntilIdle()
+        repository.signIn("demo", "sage")
+        val first = storage.stored(DemoIdentityRepository.KEY_SESSION_TOKEN)!!
+
+        repository.signIn(DemoAccounts.DEMO2.username, DemoAccounts.DEMO2.password)
+
+        assertNull(sessions.lookup(first))
+        assertTrue(sessions.lookup(storage.stored(DemoIdentityRepository.KEY_SESSION_TOKEN)!!) != null)
+    }
+
+    @Test
+    fun `a rejected sign in keeps the stored Session`() = runTest {
+        val repository = repository()
+        advanceUntilIdle()
+        repository.signIn("demo", "sage")
+        val token = storage.stored(DemoIdentityRepository.KEY_SESSION_TOKEN)!!
+
+        repository.signIn("demo", "wrong")
+
+        assertTrue(sessions.lookup(token) != null)
+    }
+
+    @Test
     fun `sign out while signed out stays signed out`() = runTest {
         val repository = repository()
         advanceUntilIdle()

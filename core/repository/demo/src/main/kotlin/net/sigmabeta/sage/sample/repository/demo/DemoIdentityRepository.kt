@@ -62,8 +62,10 @@ class DemoIdentityRepository(
         // Sign in waits for startup, so the startup check can never clear or overwrite its token.
         startup.join()
         seeded.await()
+        // This install is one device, and its stored token is the one Session a device holds.
+        val replacing = storedToken()
         val result = withContext(dispatchers.computation) {
-            signInService.signIn(username, password, client = LOCAL_CLIENT)
+            signInService.signIn(username, password, client = LOCAL_CLIENT, replacing = replacing)
         }
         return when (result) {
             is SignInResult.SignedIn -> {

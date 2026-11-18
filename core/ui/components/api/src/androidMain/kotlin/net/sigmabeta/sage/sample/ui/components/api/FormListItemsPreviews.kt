@@ -49,8 +49,8 @@ private fun Form(enabled: Boolean) {
             Modifier,
             padding,
         )
-        FormMessageListItem(FormMessageListModel("Something went wrong.", FormMessageTone.ERROR), Modifier, padding)
-        ButtonListItem(ButtonListModel("Continue", SageAction.Noop, enabled = enabled), sink, Modifier, padding)
-        FormMessageListItem(FormMessageListModel("A hint under the form.", FormMessageTone.INFO), Modifier, padding)
+        FormMessageListItem(FormMessageListModel("Something went wrong.", FormMessageTone.ERROR, dataId = 3L), Modifier, padding)
+        ButtonListItem(ButtonListModel("Continue", SageAction.Noop, enabled = enabled, dataId = 4L), sink, Modifier, padding)
+        FormMessageListItem(FormMessageListModel("A hint under the form.", FormMessageTone.INFO, dataId = 5L), Modifier, padding)
     }
 }

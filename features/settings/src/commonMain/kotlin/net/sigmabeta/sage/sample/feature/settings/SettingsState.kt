@@ -63,6 +63,7 @@ data class SettingsState(
             ButtonListModel(
                 label = stringProvider.getString(SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT),
                 clickAction = SettingsAction.SignOutClicked,
+                dataId = SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT.name.hashCode().toLong(),
             ),
         )
     }

@@ -29,7 +29,6 @@ class FakeIdentityTest {
         assertNull(users.verify("alice", "pw "))
         assertNull(users.verify("bob", "pw"))
         assertNull(users.register("alice", "other"))
-        assertEquals(alice, users.findById(alice.id))
     }
 
     @Test

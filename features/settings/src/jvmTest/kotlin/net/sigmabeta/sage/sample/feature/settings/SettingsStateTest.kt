@@ -61,6 +61,7 @@ class SettingsStateTest {
                 ButtonListModel(
                     label = SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT.toString(),
                     clickAction = SettingsAction.SignOutClicked,
+                    dataId = SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT.name.hashCode().toLong(),
                 ),
                 SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_APPEARANCE.toString()),
             ),

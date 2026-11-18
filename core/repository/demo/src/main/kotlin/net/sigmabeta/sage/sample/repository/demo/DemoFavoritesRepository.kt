@@ -8,9 +8,9 @@ import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.database.FavoriteEntity
 import net.sigmabeta.sage.sample.database.SampleDatabase
 import net.sigmabeta.sage.sample.models.ContentId
-import net.sigmabeta.sage.sample.repository.CachedFavoritesRepository
+import net.sigmabeta.sage.sample.repository.cache.CachedFavoritesRepository
 import net.sigmabeta.sage.sample.repository.FavoritesRepository
-import net.sigmabeta.sage.sample.repository.FavoritesSource
+import net.sigmabeta.sage.sample.repository.cache.FavoritesSource
 import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.repository.User
 import kotlin.time.Clock
