@@ -20,7 +20,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   submodule is a detached HEAD at a pinned commit — this repo is what pins it.
 - On a fresh clone, initialise the submodule: `git submodule update --init --recursive`.
 - Read the `README.md` of every SAGE module you depend on (`sage/<module>/README.md`).
-- `local.properties` (gitignored) must point at an Android SDK with platform 36;
+- `local.properties` (gitignored) must point at an Android SDK with platform 37;
   `settings.gradle.kts` copies it into `sage/local.properties`. JDK 17+ (CI uses Temurin 21).
 
 ## Read before changing behaviour
@@ -166,7 +166,7 @@ scripts/ci/verify.sh --web                # ...plus the browser bundle + server 
 - **CI mirrors the script; change them together.** CI has `static-analysis`, `unit-test`,
   `screenshot` (Paparazzi, LFS checkout), `android` (lint + debug/release APK), `jvm-app`
   (desktop jar), and `web` (Node 22 + Yarn 1.x, JS lint/bundle, server distribution) jobs, on
-  Temurin 21 and SDK platform 36. Kotlin/JS uses the system Node/Yarn (`-Psage.js=true`); the root
+  Temurin 21 and SDK platform 37. Kotlin/JS uses the system Node/Yarn (`-Psage.js=true`); the root
   build disables the plugin's own download because `FAIL_ON_PROJECT_REPOS` rejects its project
   repositories.
 - Gradle prints thousands of task lines: redirect a long run to a file and grep it
