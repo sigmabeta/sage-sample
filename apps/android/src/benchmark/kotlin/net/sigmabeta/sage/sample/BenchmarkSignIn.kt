@@ -21,8 +21,8 @@ import net.sigmabeta.sage.sample.repository.IdentityState
  * This file lives in `src/benchmark`, so release and debug builds do not contain it
  * (`NoBenchmarkHookTest` asserts that).
  *
- * The Sign-in gate reads [repository], not [identity]. While a requested Sign in is unfinished,
- * [repository] reports [IdentityState.Checking] instead of [IdentityState.SignedOut], so the gate
+ * The Sign-in gate reads [gatedIdentity], not [identity]. While a requested Sign in is unfinished,
+ * [gatedIdentity] reports [IdentityState.Checking] instead of [IdentityState.SignedOut], so the gate
  * keeps its blank surface and a measured launch never draws Login. If the Sign in is rejected, the
  * real state shows through rather than leaving the gate blank forever.
  */
@@ -34,7 +34,7 @@ internal class BenchmarkSignIn(
     private var job: Job? = null
 
     /** What the gate observes: [identity], except that a Signed out in the middle of a Sign in is Checking. */
-    val repository: IdentityRepository = object : IdentityRepository by identity {
+    val gatedIdentity: IdentityRepository = object : IdentityRepository by identity {
         override val state: StateFlow<IdentityState> = combine(identity.state, pending) { state, signingIn ->
             if (signingIn && state == IdentityState.SignedOut) IdentityState.Checking else state
         }.stateIn(scope, SharingStarted.Eagerly, IdentityState.Checking)

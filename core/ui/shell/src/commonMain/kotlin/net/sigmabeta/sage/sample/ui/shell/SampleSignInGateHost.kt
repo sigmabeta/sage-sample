@@ -54,7 +54,7 @@ internal fun SampleSignInGateHost(identityRepository: IdentityRepository, onOute
     }
     val deepLinks = LocalSampleDeepLinkSource.current
     LaunchedEffect(holder, deepLinks) {
-        holder.follow(deepLinks)
+        holder.observeIdentityAndGatedDeepLinks(deepLinks)
     }
 
     val outerBack by rememberUpdatedState(onOuterBack)

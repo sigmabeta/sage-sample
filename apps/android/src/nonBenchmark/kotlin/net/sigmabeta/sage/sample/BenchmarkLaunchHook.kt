@@ -11,7 +11,7 @@ import net.sigmabeta.sage.sample.repository.IdentityRepository
  */
 @Suppress("UNUSED_PARAMETER")
 internal class BenchmarkLaunchHook(identity: IdentityRepository, scope: CoroutineScope) {
-    val identityRepository: IdentityRepository = identity
+    val gatedIdentity: IdentityRepository = identity
 
     @Suppress("UNUSED_PARAMETER")
     fun onIntent(intent: Intent?) = Unit

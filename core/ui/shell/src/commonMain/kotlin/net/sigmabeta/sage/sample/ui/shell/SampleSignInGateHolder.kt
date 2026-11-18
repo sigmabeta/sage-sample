@@ -25,7 +25,7 @@ import net.sigmabeta.sage.sample.repository.IdentityRepository
  * default: a recreated host (rotation, process restore) that is already Signed in must compose the
  * tab shell in its first frame, or the shell would leave composition and drop its tab stacks.
  *
- * [follow] runs for as long as the gate is on screen. While no shell is open it also takes native
+ * [observeIdentityAndGatedDeepLinks] runs for as long as the gate is on screen. While no shell is open it also takes native
  * deep links off the [SampleDeepLinkSource] and holds them as the route to restore, so a link that
  * arrives on Login survives until Sign in (and, through [saver], a rotation of the Login screen).
  * Once the shell is open, links are left in the source for the shell to apply.
@@ -42,7 +42,7 @@ class SampleSignInGateHolder(
     val gate: StateFlow<SampleSignInGate> = mutableGate.asStateFlow()
 
     /** Follows the identity seam and, while gated, holds [deepLinks]. Suspends until cancelled. */
-    suspend fun follow(deepLinks: SampleDeepLinkSource?) {
+    suspend fun observeIdentityAndGatedDeepLinks(deepLinks: SampleDeepLinkSource?) {
         coroutineScope {
             launch {
                 identity.state.collect { next -> mutableGate.update { it.onIdentity(next) } }

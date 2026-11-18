@@ -41,7 +41,7 @@ class SampleSignInGateHolderTest {
     fun `the holder follows the identity seam`() = runTest(UnconfinedTestDispatcher()) {
         val identity = FakeIdentity(IdentityState.Checking)
         val holder = SampleSignInGateHolder(identity)
-        backgroundScope.launch { holder.follow(deepLinks = null) }
+        backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks = null) }
 
         assertEquals(SampleGateSurface.Blank, holder.gate.value.surface)
         identity.state.value = IdentityState.SignedOut
@@ -56,7 +56,7 @@ class SampleSignInGateHolderTest {
             val identity = FakeIdentity(IdentityState.SignedOut)
             val deepLinks = MutableSampleDeepLinkSource()
             val holder = SampleSignInGateHolder(identity)
-            backgroundScope.launch { holder.follow(deepLinks) }
+            backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks) }
 
             deepLinks.offer(listItems)
 
@@ -70,7 +70,7 @@ class SampleSignInGateHolderTest {
         runTest(UnconfinedTestDispatcher()) {
             val deepLinks = MutableSampleDeepLinkSource(initial = listItems)
             val holder = SampleSignInGateHolder(FakeIdentity(IdentityState.Checking))
-            backgroundScope.launch { holder.follow(deepLinks) }
+            backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks) }
 
             assertNull(deepLinks.pending.value)
             assertEquals(listItems, holder.gate.value.routeToRestore)
@@ -85,7 +85,7 @@ class SampleSignInGateHolderTest {
         val identity = FakeIdentity(IdentityState.Checking)
         val deepLinks = MutableSampleDeepLinkSource()
         val holder = SampleSignInGateHolder(identity)
-        backgroundScope.launch { holder.follow(deepLinks) }
+        backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks) }
         runCurrent()
 
         deepLinks.offer(listItems)
@@ -103,7 +103,7 @@ class SampleSignInGateHolderTest {
         runTest(UnconfinedTestDispatcher()) {
             val deepLinks = MutableSampleDeepLinkSource()
             val holder = SampleSignInGateHolder(FakeIdentity(IdentityState.SignedIn(ada)))
-            backgroundScope.launch { holder.follow(deepLinks) }
+            backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks) }
 
             deepLinks.offer(listItems)
 
@@ -116,7 +116,7 @@ class SampleSignInGateHolderTest {
         runTest(UnconfinedTestDispatcher()) {
             val identity = FakeIdentity(IdentityState.SignedIn(ada))
             val holder = SampleSignInGateHolder(identity)
-            backgroundScope.launch { holder.follow(deepLinks = null) }
+            backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks = null) }
 
             holder.onShellRoute(listItems)
             identity.state.value = IdentityState.SignedOut
@@ -130,7 +130,7 @@ class SampleSignInGateHolderTest {
         runTest(UnconfinedTestDispatcher()) {
             val identity = FakeIdentity(IdentityState.SignedIn(ada))
             val holder = SampleSignInGateHolder(identity)
-            backgroundScope.launch { holder.follow(deepLinks = null) }
+            backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks = null) }
 
             holder.onShellRoute(settings)
             holder.signOut()
@@ -148,7 +148,7 @@ class SampleSignInGateHolderTest {
             val identity = FakeIdentity(IdentityState.SignedIn(ada))
             val browser = RecordingBrowserNavigation(identity)
             val holder = SampleSignInGateHolder(identity)
-            backgroundScope.launch { holder.follow(deepLinks = null) }
+            backgroundScope.launch { holder.observeIdentityAndGatedDeepLinks(deepLinks = null) }
 
             holder.onShellRoute(settings)
             holder.signOut(browser)
