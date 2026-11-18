@@ -28,7 +28,10 @@ data class IssuedSession(
  * named by an opaque token and ends when it is revoked or reaches [SESSION_LIFETIME].
  */
 interface SessionStore {
-    /** Signs [user] in with a new Session alongside any they already hold. */
+    /**
+     * Signs [user] in with a new Session alongside any they hold on other clients; [SignInService]
+     * revokes the signing-in client's own Session first.
+     */
     suspend fun create(user: User): IssuedSession
 
     /** The live Session [token] names, or `null` for an unknown, revoked or expired token. */

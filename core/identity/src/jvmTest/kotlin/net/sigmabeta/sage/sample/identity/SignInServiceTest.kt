@@ -4,6 +4,7 @@ import kotlinx.coroutines.test.runTest
 import net.sigmabeta.sage.sample.database.SampleDatabases
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -51,6 +52,25 @@ class SignInServiceTest {
 
         assertEquals(phone.issued.session.user, sessions.lookup(browser.issued.token)?.user)
         assertEquals(browser.issued.session.user, sessions.lookup(phone.issued.token)?.user)
+    }
+
+    @Test
+    fun `signing in again from one client revokes the session it replaces`() = runTest {
+        val first = service.signIn("demo", "sage", client = "phone") as SignInResult.SignedIn
+
+        val second = service.signIn("demo2", "sage", client = "phone", replacing = first.issued.token)
+
+        assertNull(sessions.lookup(first.issued.token))
+        assertEquals("demo2", sessions.lookup((second as SignInResult.SignedIn).issued.token)?.user?.username)
+    }
+
+    @Test
+    fun `a rejected sign in does not revoke the session it would replace`() = runTest {
+        val first = service.signIn("demo", "sage", client = "phone") as SignInResult.SignedIn
+
+        service.signIn("demo", "wrong", client = "phone", replacing = first.issued.token)
+
+        assertEquals(first.issued.session, sessions.lookup(first.issued.token))
     }
 
     @Test

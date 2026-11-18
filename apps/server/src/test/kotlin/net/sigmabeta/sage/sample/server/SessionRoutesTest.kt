@@ -140,6 +140,26 @@ class SessionRoutesTest {
     }
 
     @Test
+    fun `signing in again revokes the session the request's cookie names`() = sessionTest {
+        // One Session per client: a browser that signs in again replaces its Session.
+        val first = client.signedInCookie()
+
+        val second = client.signIn { withSession(first) }.sessionCookie()!!
+
+        assertEquals(HttpStatusCode.Unauthorized, client.get(SampleApiRoutes.SESSION) { withSession(first) }.status)
+        assertEquals(HttpStatusCode.OK, client.get(SampleApiRoutes.SESSION) { withSession(second) }.status)
+    }
+
+    @Test
+    fun `a rejected sign in leaves the cookie's session alone`() = sessionTest {
+        val cookie = client.signedInCookie()
+
+        client.signIn(password = "nope") { withSession(cookie) }
+
+        assertEquals(HttpStatusCode.OK, client.get(SampleApiRoutes.SESSION) { withSession(cookie) }.status)
+    }
+
+    @Test
     fun `signing out while already signed out still succeeds`() = sessionTest {
         val response = client.delete(SampleApiRoutes.SESSION) { contentType(ContentType.Application.Json) }
 

@@ -43,9 +43,11 @@ internal class TestIdentity {
 internal suspend fun HttpClient.signIn(
     username: String = DemoAccounts.DEMO.username,
     password: String = DemoAccounts.DEMO.password,
+    configure: HttpRequestBuilder.() -> Unit = {},
 ): HttpResponse = post(SampleApiRoutes.SESSION) {
     contentType(ContentType.Application.Json)
     setBody("""{"username":"$username","password":"$password"}""")
+    configure()
 }
 
 /** Signs in as the Demo account and returns the Session cookie to send with later requests. */
