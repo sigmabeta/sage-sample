@@ -170,8 +170,9 @@ class SampleSignInGateHolderTest {
     private data class Report(val route: SampleRoute, val push: Boolean, val signedIn: Boolean)
 
     /** Records route reports, and whether the Session was still open (bridge still attached). */
-    private class RecordingBrowserNavigation(private val identity: IdentityRepository) :
-        SampleBrowserNavigation {
+    private class RecordingBrowserNavigation(
+        private val identity: IdentityRepository,
+    ) : SampleBrowserNavigation {
         val reports = mutableListOf<Report>()
 
         override fun onShellReady(navigation: SampleShellNavigation) = Unit
