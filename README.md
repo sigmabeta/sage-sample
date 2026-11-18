@@ -18,8 +18,8 @@ SAGE itself is a Git submodule consumed through a Gradle composite build.
 | Tool | Version |
 |------|---------|
 | JDK | 17+ (CI uses Temurin 21) |
-| Android SDK | platform 36 |
-| Gradle | 9.5 (wrapper) |
+| Android SDK | platform 37 |
+| Gradle | 9.6 (wrapper) |
 | Git LFS | 3.x (the screenshot goldens are LFS objects) |
 | Node | 22 (only for the `-Psage.js` browser build) |
 | Yarn | 1.22.x (only for the `-Psage.js` browser build) |
