@@ -22,8 +22,8 @@ All in `net.sigmabeta.sage.sample.ui.components.models` (`FormListModels.kt`):
 | Type | What it is |
 |---|---|
 | `TextFieldListModel(id, label, text, masked, enabled, submitOnDone, resetKey)` | One labelled field. `masked` hides the text; `submitOnDone` makes IME Done send `TextFieldDone`. Bumping `resetKey` makes the renderer drop its local text and take `text` again. |
-| `ButtonListModel(label, clickAction, enabled, dataId)` | A full-width button that sends `clickAction`. |
-| `FormMessageListModel(text, tone, dataId)` | Inline text; `FormMessageTone` is `INFO` or `ERROR`. |
+| `ButtonListModel(label, clickAction, enabled, dataId)` | A full-width button that sends `clickAction`. `dataId` is required: a list id never derives from the label. |
+| `FormMessageListModel(text, tone, dataId)` | Inline text; `FormMessageTone` is `INFO` or `ERROR`. `dataId` is required, as for the button. |
 | `TextFieldChanged(id, text)` | `SageAction` sent on each edit. |
 | `TextFieldDone(id)` | `SageAction` sent on IME Done when `submitOnDone` is set. |
 

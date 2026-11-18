@@ -34,12 +34,17 @@ data class TextFieldListModel(
     override val columns = ListModel.COLUMNS_ALL
 }
 
-/** A full-width filled button, rendered by `ButtonListItem`; sends [clickAction] when [enabled]. */
+/**
+ * A full-width filled button, rendered by `ButtonListItem`; sends [clickAction] when [enabled].
+ *
+ * [dataId] is the caller's stable id, never derived from [label]: a label that changes (Sign in →
+ * Signing in…) or is translated must not move the button to a new list slot.
+ */
 data class ButtonListModel(
     val label: String,
     val clickAction: SageAction,
     val enabled: Boolean = true,
-    override val dataId: Long = label.hashCode().toLong(),
+    override val dataId: Long,
 ) : ListModel() {
     override val columns = ListModel.COLUMNS_ALL
 }
@@ -57,7 +62,8 @@ enum class FormMessageTone {
 data class FormMessageListModel(
     val text: String,
     val tone: FormMessageTone,
-    override val dataId: Long = text.hashCode().toLong(),
+    // The caller's stable id, never derived from [text], for the same reason as [ButtonListModel].
+    override val dataId: Long,
 ) : ListModel() {
     override val columns = ListModel.COLUMNS_ALL
 }
