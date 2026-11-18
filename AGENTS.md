@@ -85,7 +85,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   screen lifecycle owner, and its Inter family. Don't re-add a navigation host or a
   destination-to-screen mapping to an app.
 - **Module plugins:** `:features:*`, `:core:models:api`, `:core:nav`, `:core:viewmodel`,
-  `:core:settings`, `:core:repository:api` and `:core:repository:remote` apply `sage.kmp` +
+  `:core:settings`, `:core:repository:api`, `:core:repository:cache` and `:core:repository:remote` apply `sage.kmp` +
   `sage.kmp.js` (the ones with Metro bindings also apply `metro` directly — `sage.di`'s
   top-level `implementation` does not fit KMP source sets). `:core:bitmaps`,
   `:core:strings:api`, `:core:strings:real`, `:core:ui:components:models`, `:core:ui:components:api`, `:core:ui:shell` and

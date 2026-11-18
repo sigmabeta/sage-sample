@@ -7,10 +7,10 @@ import io.ktor.http.HttpMethod
 import kotlinx.coroutines.CoroutineScope
 import net.sigmabeta.sage.di.AppScope
 import net.sigmabeta.sage.sample.models.ContentId
-import net.sigmabeta.sage.sample.repository.CachedFavoritesRepository
+import net.sigmabeta.sage.sample.repository.cache.CachedFavoritesRepository
 import net.sigmabeta.sage.sample.repository.FavoritesRepository
 import net.sigmabeta.sage.sample.repository.FavoritesResponse
-import net.sigmabeta.sage.sample.repository.FavoritesSource
+import net.sigmabeta.sage.sample.repository.cache.FavoritesSource
 import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.repository.SampleApiRoutes
 import net.sigmabeta.sage.sample.repository.User
