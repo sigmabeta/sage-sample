@@ -32,10 +32,6 @@ class FakeUserDirectory : UserDirectory {
         byUsername[username] = user to password
         user
     }
-
-    override suspend fun findById(id: String): User? = synchronized(lock) {
-        byUsername.values.firstOrNull { (user, _) -> user.id == id }?.first
-    }
 }
 
 /**

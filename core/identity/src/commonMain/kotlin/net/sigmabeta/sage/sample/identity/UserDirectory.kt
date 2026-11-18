@@ -21,6 +21,4 @@ interface UserDirectory {
 
     /** Adds a User with a fresh stable id; `null` if [username] is already taken. */
     suspend fun register(username: String, password: String): User?
-
-    suspend fun findById(id: String): User?
 }

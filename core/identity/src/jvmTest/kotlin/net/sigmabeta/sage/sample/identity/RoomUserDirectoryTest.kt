@@ -83,9 +83,8 @@ class RoomUserDirectoryTest {
         val bob = directory.register("bob", "same password")!!
 
         assertNotEquals(alice.id, bob.id)
-        assertEquals(alice, directory.findById(alice.id))
-        assertEquals(bob, directory.findById(bob.id))
-        assertNull(directory.findById("no-such-id"))
+        assertEquals(alice, directory.verify("alice", "same password"))
+        assertEquals(bob, directory.verify("bob", "same password"))
     }
 
     @Test

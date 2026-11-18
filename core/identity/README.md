@@ -16,7 +16,7 @@ Nothing in the browser app may depend on this module.
 
 | Type | Source set | Role |
 |---|---|---|
-| `User`, `UserDirectory` | `commonMain` | `verify(username, password): User?`, `register(username, password): User?` (`null` if taken), `findById(id)` |
+| `User`, `UserDirectory` | `commonMain` | `verify(username, password): User?`, `register(username, password): User?` (`null` if taken) |
 | `Session`, `IssuedSession`, `SessionStore`, `SESSION_LIFETIME` | `commonMain` | `create(user): IssuedSession`, `lookup(token): Session?`, `revoke(token)`; 30-day absolute expiry |
 | `DemoAccount`, `DemoAccounts` | `commonMain` | `demo`/`sage` and `demo2`/`sage`; `seed(directory)` is idempotent |
 | `SignInLimiter`, `SignInAllowance` | `commonMain` | in-memory sliding window; `check`, `recordFailure`, `recordSuccess` |
