@@ -118,6 +118,23 @@ class SampleSignInGateHolderTest {
         }
 
     @Test
+    fun `a deliberate sign out on the web rewrites the URL to Home before the Session ends`() =
+        runTest(UnconfinedTestDispatcher()) {
+            // The browser applies its URL after the next Sign in, so a URL left on Settings would
+            // undo the gate's "a deliberate sign-out restores Home".
+            val identity = FakeIdentity(IdentityState.SignedIn(ada))
+            val browser = RecordingBrowserNavigation(identity)
+            val holder = SampleSignInGateHolder(identity)
+            backgroundScope.launch { holder.follow(deepLinks = null) }
+
+            holder.onShellRoute(settings)
+            holder.signOut(browser)
+
+            assertEquals(listOf(Report(SampleRoute.HOME, push = false, signedIn = true)), browser.reports)
+            assertEquals(1, identity.signOuts)
+        }
+
+    @Test
     fun `the restore route is cleared once the shell applied it`() {
         val holder = SampleSignInGateHolder(FakeIdentity(IdentityState.SignedOut), routeToRestore = listItems)
 
@@ -148,6 +165,25 @@ class SampleSignInGateHolderTest {
         val restored = checkNotNull(saver.restore(checkNotNull(saved)))
 
         assertNull(restored.gate.value.routeToRestore)
+    }
+
+    private data class Report(val route: SampleRoute, val push: Boolean, val signedIn: Boolean)
+
+    /** Records route reports, and whether the Session was still open (bridge still attached). */
+    private class RecordingBrowserNavigation(
+        private val identity: IdentityRepository,
+    ) : SampleBrowserNavigation {
+        val reports = mutableListOf<Report>()
+
+        override fun onShellReady(navigation: SampleShellNavigation) = Unit
+
+        override fun onRouteChanged(route: SampleRoute, push: Boolean) {
+            reports += Report(route, push, signedIn = identity.state.value is IdentityState.SignedIn)
+        }
+
+        override fun onBackRequested(): Boolean = false
+
+        override fun onShellDisposed() = Unit
     }
 
     private class FakeIdentity(initial: IdentityState) : IdentityRepository {

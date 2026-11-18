@@ -16,6 +16,8 @@ plugins {
 
 `SettingsState.toListItems` builds, in order:
 
+0. **Account** — only while a User is signed in: a section header, a "Signed in as <username>"
+   `LabelValueListModel`, and a "Sign out" `ButtonListModel` (no confirmation)
 1. **Appearance** — theme dropdown (`ThemeMode`), font dropdown (`FontChoice`)
 2. **Simulation** — simulate-delay dropdown (`SimulateDelay`), animation-scale dropdown
    (`AnimationScale`), demo-outcome dropdown (`DemoOutcome`), "Home shows same content" checkbox,
@@ -35,6 +37,10 @@ straight back to a value. At most one dropdown is expanded; re-tapping the open 
 - `DropdownExpandClicked` toggles `expandedDropdownId`; a selection writes to the manager and
   collapses the dropdown.
 - `HomeShowsSameContentToggled` writes the inverse of the current value.
+- Collects `IdentityRepository.state` into `signedInUser`. `SignOutClicked` emits
+  `SignOutRequested` (from `:core:repository:api`) and never calls `IdentityRepository.signOut()`:
+  the shell maps it to `SampleSignInGateHolder.signOut`, which marks the sign-out deliberate so the
+  next Sign in opens Home (on the web the URL is first replaced with Home's).
 - `ResetDemoDataClicked` runs `DemoDataResetter.reset()` on the disk dispatcher, replaces the row
   with inline progress (`LCE.Loading`), then shows a success/failure snackbar on the main
   dispatcher. The loading guard is set synchronously, so a double tap cannot start a parallel reset.

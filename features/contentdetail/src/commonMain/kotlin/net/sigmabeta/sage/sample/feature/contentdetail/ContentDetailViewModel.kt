@@ -6,12 +6,14 @@ import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import net.sigmabeta.sage.analytics.Analytics
 import net.sigmabeta.sage.analytics.AnalyticsScreen
 import net.sigmabeta.sage.appcomm.LCE
@@ -24,6 +26,7 @@ import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
 import net.sigmabeta.sage.ui.StringProvider
 import net.sigmabeta.sage.sample.repository.CONTENT_DETAIL_OPERATION_NAME
 import net.sigmabeta.sage.sample.repository.ContentDetailRepository
+import net.sigmabeta.sage.sample.repository.FavoritesRepository
 
 /**
  * Content detail's view model.
@@ -53,12 +56,14 @@ class ContentDetailViewModel(
     override val dispatchers: SageDispatchers,
     override val delayManager: SampleDelayManager,
     private val repository: ContentDetailRepository,
+    private val favorites: FavoritesRepository,
 ) : SampleListViewModel<ContentDetailState>() {
     override val screenIdentifier = AnalyticsScreen.NONE
 
     override fun initialState(): ContentDetailState = ContentDetailState()
 
     private var loadJob: Job? = null
+    private var favoritesJob: Job? = null
 
     init {
         sendAction(SageAction.InitNoArgs)
@@ -84,6 +89,8 @@ class ContentDetailViewModel(
 
             is ContentDetailAction.CtaClicked -> showClickedName(action.label)
 
+            is ContentDetailAction.ToggleFavorite -> toggleFavorite()
+
             is ContentDetailAction.ItemClicked -> navigateTo(action.contentId, action.artwork)
 
             is ContentDetailAction.RelatedClicked -> navigateTo(action.contentId, action.artwork)
@@ -104,6 +111,8 @@ class ContentDetailViewModel(
             )
         }
 
+        observeFavorite(contentId)
+
         loadJob = repository.load(contentId)
             .onEach { content ->
                 updateState { it.copy(content = content) }
@@ -111,10 +120,38 @@ class ContentDetailViewModel(
             .runInBackground()
     }
 
+    /** Mirrors whether the signed-in User has favorited [contentId] into the state. */
+    private fun observeFavorite(contentId: ContentId) {
+        favoritesJob?.cancel()
+        favoritesJob = favorites.favorites
+            .onEach { ids -> updateState { it.copy(isFavorite = contentId in ids) } }
+            .runInBackground()
+    }
+
+    /** Flips the favorite; the repository's flow updates the state, a failure shows a snackbar. */
+    private fun toggleFavorite() {
+        val current = internalUiState.value
+        val contentId = current.contentId ?: return
+        if (current.content !is LCE.Content) return
+        val wanted = !current.isFavorite
+        viewModelScope.launch {
+            if (!favorites.setFavorite(contentId, wanted)) {
+                emitEvent(
+                    SageEvent.ShowSnackbar(
+                        message = stringProvider.getString(SampleStringId.CONTENT_DETAIL_FAVORITE_FAILED),
+                        withDismissAction = false,
+                        source = "ContentDetailViewModel",
+                    ),
+                )
+            }
+        }
+    }
+
     /** A missing or malformed ID is a defined destination state, not an error. */
     private fun showNotFound() {
         loadJob?.cancel()
-        updateState { it.copy(contentId = null, content = LCE.Content(null)) }
+        favoritesJob?.cancel()
+        updateState { it.copy(contentId = null, content = LCE.Content(null), isFavorite = false) }
     }
 
     /** Pushes another detail on the active tab; Back returns to this one. */

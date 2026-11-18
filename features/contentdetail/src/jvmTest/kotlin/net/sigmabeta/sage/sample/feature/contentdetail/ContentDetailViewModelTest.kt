@@ -16,12 +16,15 @@ import kotlinx.coroutines.test.setMain
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
+import net.sigmabeta.sage.components.CtaListModel
 import net.sigmabeta.sage.components.EmptyStateListModel
 import net.sigmabeta.sage.components.ErrorStateListModel
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.SectionListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
+import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
+import net.sigmabeta.sage.ui.Icon
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -32,12 +35,14 @@ import org.junit.Test
 class ContentDetailViewModelTest {
     private lateinit var dispatcher: TestDispatcher
     private lateinit var repository: FakeContentDetailRepository
+    private lateinit var favorites: FakeFavoritesRepository
 
     @Before
     fun setUp() {
         dispatcher = StandardTestDispatcher()
         Dispatchers.setMain(dispatcher)
         repository = FakeContentDetailRepository()
+        favorites = FakeFavoritesRepository()
     }
 
     @After
@@ -233,6 +238,79 @@ class ContentDetailViewModelTest {
         assertEquals(CONTENT_DETAIL_FIXTURE.title, state.value.title.title)
     }
 
+    @Test
+    fun `the toggle reflects whether this content is a favorite`() = runTest {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        val id = ContentId("list-items:7")
+        favorites.held.value = setOf(id, ContentId("list-items:8"))
+        viewModel.sendAction(SageAction.InitWithString(id.value))
+        advanceUntilIdle()
+        repository.emit(id, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(id = id)))
+        advanceUntilIdle()
+
+        assertEquals(Icon.FavoriteFilled, toggleOf(state.value).icon)
+
+        favorites.held.value = emptySet()
+        advanceUntilIdle()
+
+        assertEquals(Icon.FavoriteEmpty, toggleOf(state.value).icon)
+    }
+
+    @Test
+    fun `tapping the toggle favorites then un-favorites the addressed content`() = runTest {
+        val viewModel = createViewModel()
+        val state = viewModel.uiStateActual
+        val id = ContentId("list-items:7")
+        viewModel.sendAction(SageAction.InitWithString(id.value))
+        advanceUntilIdle()
+        repository.emit(id, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(id = id)))
+        advanceUntilIdle()
+
+        viewModel.sendAction(ContentDetailAction.ToggleFavorite)
+        advanceUntilIdle()
+        assertEquals(Icon.FavoriteFilled, toggleOf(state.value).icon)
+
+        viewModel.sendAction(ContentDetailAction.ToggleFavorite)
+        advanceUntilIdle()
+        assertEquals(Icon.FavoriteEmpty, toggleOf(state.value).icon)
+
+        assertEquals(listOf(id to true, id to false), favorites.requests)
+    }
+
+    @Test
+    fun `a favorite that cannot be saved is reported in a snackbar`() = runTest {
+        val viewModel = createViewModel()
+        val events = collectEvents(viewModel)
+        val id = ContentId("list-items:7")
+        favorites.accept = false
+        viewModel.sendAction(SageAction.InitWithString(id.value))
+        advanceUntilIdle()
+        repository.emit(id, LCE.Content(CONTENT_DETAIL_FIXTURE.copy(id = id)))
+        advanceUntilIdle()
+
+        viewModel.sendAction(ContentDetailAction.ToggleFavorite)
+        advanceUntilIdle()
+
+        val snackbar = events.filterIsInstance<SageEvent.ShowSnackbar>().single()
+        assertEquals("str-CONTENT_DETAIL_FAVORITE_FAILED", snackbar.message)
+    }
+
+    @Test
+    fun `the toggle does nothing before any content is addressed`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.sendAction(ContentDetailAction.ToggleFavorite)
+        advanceUntilIdle()
+
+        assertTrue(favorites.requests.isEmpty())
+    }
+
+    private fun toggleOf(state: ListStateActual): CtaListModel =
+        state.listItems.filterIsInstance<SectionListModel>()[1].sectionItems
+            .filterIsInstance<CtaListModel>().first()
+
     private fun TestScope.collectEvents(
         viewModel: ContentDetailViewModel,
     ): MutableList<SageEvent> {
@@ -256,5 +334,6 @@ class ContentDetailViewModelTest {
             override fun delayMillis() = 0L
         },
         repository = repository,
+        favorites = favorites,
     )
 }

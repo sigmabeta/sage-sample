@@ -21,6 +21,9 @@ sealed class ContentDetailAction : SageAction() {
     data object HeroClicked : ContentDetailAction()
     data class CtaClicked(val label: String) : ContentDetailAction()
 
+    /** The favorite toggle: flips whether the signed-in User has favorited this detail. */
+    data object ToggleFavorite : ContentDetailAction()
+
     /** [artwork] is the row's thumbnail size, so the detail it opens starts from that bitmap. */
     data class ItemClicked(
         val contentId: ContentId,

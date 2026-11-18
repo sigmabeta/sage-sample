@@ -61,6 +61,8 @@ data class ContentDetailState(
      * row. `null` until the screen's init action lands, and in the not-found state.
      */
     val contentId: ContentId? = null,
+    /** Whether the signed-in User has favorited the loaded content; drives the leading toggle row. */
+    val isFavorite: Boolean = false,
 ) : ListState() {
     override val columnType = ColumnType.Staggered(CONTENT_DETAIL_COLUMN_WIDTH_DP, false)
 
@@ -105,7 +107,7 @@ data class ContentDetailState(
         stringProvider: StringProvider,
     ): List<ListModel> = listOf(
         heroSection(content, stringProvider),
-        ctaSection(content),
+        ctaSection(content, stringProvider),
         detailsSection(content, stringProvider),
         relatedSection(content, stringProvider),
         itemsSection(content, stringProvider),
@@ -164,13 +166,16 @@ data class ContentDetailState(
             clickAction = ContentDetailAction.HeroClicked,
         )
 
-    private fun ctaSection(content: LCE<ContentDetail>): ListModel =
+    private fun ctaSection(
+        content: LCE<ContentDetail>,
+        stringProvider: StringProvider,
+    ): ListModel =
         content.sectionWithStandardErrorAndLoading(
             sectionName = SECTION_NAME_CTA,
             loadingItemCount = 0,
             loadingWithHeader = false,
         ) {
-            data.actions.map { action ->
+            listOf(favoriteToggle(stringProvider)) + data.actions.map { action ->
                 CtaListModel(
                     icon = action.icon,
                     name = action.label,
@@ -178,6 +183,20 @@ data class ContentDetailState(
                 )
             }
         }
+
+    /** The leading row: adds this detail to the User's favorites, or removes it when it is one. */
+    private fun favoriteToggle(stringProvider: StringProvider): CtaListModel = CtaListModel(
+        icon = if (isFavorite) Icon.FavoriteFilled else Icon.FavoriteEmpty,
+        name = stringProvider.getString(
+            if (isFavorite) {
+                SampleStringId.CONTENT_DETAIL_FAVORITE_REMOVE
+            } else {
+                SampleStringId.CONTENT_DETAIL_FAVORITE_ADD
+            },
+        ),
+        clickAction = ContentDetailAction.ToggleFavorite,
+        dataId = ID_FAVORITE_TOGGLE,
+    )
 
     // The detail rows' labels and values come from the generated [ContentDetail.details], so the
     // screen carries no fixed metadata vocabulary. A blank field is omitted; when none remain,
@@ -299,6 +318,8 @@ data class ContentDetailState(
         /** `WideItem`'s corner radius, so the detail it opens starts from the row's shape. */
         const val WIDE_ITEM_CORNER_RADIUS_DP = 8
 
+        /** Stable across the add/remove label change, so the row updates in place. */
+        const val ID_FAVORITE_TOGGLE = 5_000_000_000_000L
         const val ID_PREFIX_SCROLLER = 1_000_000_000_000L
         const val ID_PREFIX_DETAILS = 2_000_000_000_000L
         const val ID_PREFIX_RELATED = 3_000_000_000_000L

@@ -3,8 +3,13 @@ package net.sigmabeta.sage.sample.repository.remote
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.isSuccess
 
 /**
@@ -48,6 +53,25 @@ class SampleApiClient(
                 )
             }
             return response.body()
+        }
+    }
+
+    /**
+     * Sends a state-changing [method] request (an empty JSON object body, as the server requires
+     * `application/json`) and fails on a non-2xx answer.
+     *
+     * Unlike [get], a 401 is never retried after the next Sign in: that would apply this User's
+     * change to whoever signs in next. It reports the refusal to [session] and fails instead.
+     */
+    suspend fun send(method: HttpMethod, path: String) {
+        val sentWith = session.state.value
+        val response = httpClient.request(url(path)) {
+            this.method = method
+            setBody(TextContent("{}", ContentType.Application.Json))
+        }
+        if (response.status == HttpStatusCode.Unauthorized) session.rejected(sentWith)
+        if (!response.status.isSuccess()) {
+            throw IllegalStateException("${method.value} $path failed (${response.status.value})")
         }
     }
 

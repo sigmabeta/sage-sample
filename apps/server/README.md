@@ -30,6 +30,7 @@ flag on whenever the server sits behind TLS.
 
 - `GET /api/health` → `{"ok":true}` (public)
 - `/api/session` (public) — see below
+- `/api/me/favorites` — the signed-in User's favorites; see below
 - `GET /api/home/{count,item,grid}` — the Home demo catalog
 - `GET /api/content?id=` — Content detail (`null` for unknown/malformed ids)
 - `GET /api/list-items` / `GET /api/grid-of-images` — paged demo rows
@@ -62,9 +63,28 @@ page cannot Sign a User out with a plain form post.
 (over `ServerIdentity.overRoom(SampleDatabases.file(dbPath))`) and the tests (over the
 `:core:identity:fake` fakes, or an in-memory Room database).
 
+### Favorites (User-scoped data)
+
+The User always comes from the Session cookie (the gate stores the admitted Session on the call, and
+routes read `call.signedInUser`); no route accepts a user id, and a user id in the query is ignored.
+
+| Request | Response |
+|---|---|
+| `GET /api/me/favorites` | 200 `{"contentIds":[...]}`, oldest favorite first |
+| `PUT /api/me/favorites/{contentId}` | 204; favoriting twice is fine |
+| `DELETE /api/me/favorites/{contentId}` | 204; un-favoriting an absent id is fine |
+| `PUT`/`DELETE` without `Content-Type: application/json` | 415 `{"error":"Expected application/json"}` |
+| an id outside `A-Za-z0-9_.:-` | 400 `{"error":"Missing or invalid 'contentId'"}` |
+| any of them without a Session | 401 `{"error":"Sign in required"}` |
+
+`configureSampleServer(identity, secureCookie, favorites)` takes a `FavoritesStore`: `main()` passes
+`RoomFavoritesStore(database)` (the `favorites` table beside Users and Sessions); tests use
+`InMemoryFavoritesStore`, the default.
+
 ## Tests
 
 `./gradlew :apps:server:test` runs the route tests through Ktor's `testApplication`:
 `SessionRoutesTest` (each Session status and the cookie flags), `ApiGateTest` (the 401 gate),
-`SampleServerTest` (content, signed in), `RoomIdentityServerTest` (Room end to end) and
+`FavoritesRoutesTest` (two Users' favorites stay separate, 401 without a Session),
+`RoomFavoritesServerTest` (favorites survive a restart), `SampleServerTest` (content, signed in), `RoomIdentityServerTest` (Room end to end) and
 `ServerConfigTest`.

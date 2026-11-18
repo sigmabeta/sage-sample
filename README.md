@@ -447,7 +447,10 @@ and hero artwork reuse that row's own name and artwork seed, so tapping a list r
 tile or search result opens the item the user actually saw. Related rows and content parts embed
 their parent ID (for example `content-detail:related:list-items:7:1`), so drilling into one also
 keeps its name and thumbnail. The only fixed text on the screen is section chrome and the click
-snackbar; titles, labels, CTA text, names and captions are generated.
+snackbar; titles, labels, CTA text, names and captions are generated. The first CTA is the
+signed-in User's favorite toggle, backed by `FavoritesRepository`: Room rows on Android/desktop
+(`DemoFavoritesRepository`), `/api/me/favorites` in the browser (`RemoteFavoritesRepository`), both
+over the User-keyed `CachedFavoritesRepository` in `:core:repository:api`.
 
 Search keeps the same feature-state / app-rendering split, with a search shell: the
 shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim

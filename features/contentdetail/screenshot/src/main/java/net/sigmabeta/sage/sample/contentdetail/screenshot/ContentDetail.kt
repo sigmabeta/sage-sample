@@ -27,6 +27,22 @@ internal fun ContentDetailLoaded(
 
 @DevicePreviews
 @Composable
+internal fun ContentDetailFavorited(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    syntheticWidthClass: WidthClass = previewWidthClass(),
+) {
+    ListScreenPreview(
+        screenState = ContentDetailState(
+            content = LCE.Content(FakeModelGenerator().randomContentDetail()),
+            isFavorite = true,
+        ),
+        darkTheme = darkTheme,
+        syntheticWidthClass = syntheticWidthClass,
+    )
+}
+
+@DevicePreviews
+@Composable
 internal fun ContentDetailLoading(
     darkTheme: Boolean = isSystemInDarkTheme(),
     syntheticWidthClass: WidthClass = previewWidthClass(),

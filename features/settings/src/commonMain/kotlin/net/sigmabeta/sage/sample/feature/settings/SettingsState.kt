@@ -14,6 +14,8 @@ import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.list.ListState
+import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
+import net.sigmabeta.sage.sample.repository.User
 import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
 import net.sigmabeta.sage.sample.settings.DemoOutcome
@@ -38,6 +40,8 @@ data class SettingsState(
     val homeShowsSameContent: Boolean = DEFAULT_HOME_SHOWS_SAME_CONTENT,
     /** Progress of the "Reset demo data" action; the row shows inline progress while loading. */
     val resetStatus: LCE<Unit> = LCE.Uninitialized,
+    /** The signed-in User; the Account section is shown only while there is one. */
+    val signedInUser: User? = null,
     val appVersion: String? = null,
     val buildDate: String? = null,
     /** `settingId` of the expanded dropdown, or null when all are collapsed. */
@@ -48,7 +52,22 @@ data class SettingsState(
         shouldShowBack = true,
     )
 
-    override fun toListItems(stringProvider: StringProvider): List<ListModel> = listOf(
+    override fun toListItems(stringProvider: StringProvider): List<ListModel> =
+        accountItems(stringProvider) + settingsItems(stringProvider)
+
+    private fun accountItems(stringProvider: StringProvider): List<ListModel> {
+        val user = signedInUser ?: return emptyList()
+        return listOf(
+            sectionHeader(stringProvider, SampleStringId.SETTINGS_ACCOUNT_SECTION),
+            labelValue(stringProvider, SampleStringId.SETTINGS_ACCOUNT_SIGNED_IN_AS, user.username),
+            ButtonListModel(
+                label = stringProvider.getString(SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT),
+                clickAction = SettingsAction.SignOutClicked,
+            ),
+        )
+    }
+
+    private fun settingsItems(stringProvider: StringProvider): List<ListModel> = listOf(
         sectionHeader(stringProvider, SampleStringId.SETTINGS_SECTION_APPEARANCE),
         themeDropdown(stringProvider),
         fontDropdown(stringProvider),

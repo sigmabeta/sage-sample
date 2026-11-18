@@ -27,6 +27,11 @@ class ContentDetailScreenshots(
     }
 
     @Test
+    fun contentDetailFavorited() = snapshot {
+        ContentDetailFavorited(syntheticWidthClass = deviceConfig.toWidthClass())
+    }
+
+    @Test
     fun contentDetailLoading() = snapshot {
         ContentDetailLoading(syntheticWidthClass = deviceConfig.toWidthClass())
     }

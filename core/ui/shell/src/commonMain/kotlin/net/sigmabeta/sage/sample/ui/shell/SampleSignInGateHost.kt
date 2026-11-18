@@ -17,11 +17,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import cafe.adriel.voyager.navigator.Navigator
+import kotlinx.coroutines.launch
 import net.sigmabeta.sage.components.TitleBarModel
 import net.sigmabeta.sage.sample.nav.SampleBackAction
 import net.sigmabeta.sage.sample.nav.SampleGateSurface
@@ -57,10 +59,18 @@ internal fun SampleSignInGateHost(identityRepository: IdentityRepository, onOute
 
     val outerBack by rememberUpdatedState(onOuterBack)
     val gate by holder.gate.collectAsState()
+    // A deliberate Sign out runs in the gate's scope: it ends the Session, which takes the shell
+    // (and every scope inside it) out of composition before the request may have finished.
+    val signOutScope = rememberCoroutineScope()
+    val browserNavigation = LocalSampleBrowserNavigation.current
 
     when (val surface = gate.surface) {
         is SampleGateSurface.Shell -> key(surface.user.id) {
-            SampleNavHost(signInGate = holder, onOuterBack = onOuterBack)
+            SampleNavHost(
+                signInGate = holder,
+                onOuterBack = onOuterBack,
+                onSignOut = { signOutScope.launch { holder.signOut(browserNavigation) } },
+            )
         }
 
         SampleGateSurface.Blank -> SampleBlankSurface(onBack = { gatedBack(surface, outerBack) })

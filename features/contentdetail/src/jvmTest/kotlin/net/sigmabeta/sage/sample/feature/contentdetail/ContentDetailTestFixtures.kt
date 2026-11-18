@@ -1,6 +1,8 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.repository.ContentDetailRepository
+import net.sigmabeta.sage.sample.repository.FavoritesRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import net.sigmabeta.sage.sample.models.ContentItem
 import net.sigmabeta.sage.sample.models.RelatedContent
 import net.sigmabeta.sage.sample.models.ContentAction
@@ -73,6 +75,24 @@ internal class FakeContentDetailRepository : ContentDetailRepository {
         streams.getOrPut(contentId) {
             MutableSharedFlow(replay = 1, extraBufferCapacity = 1)
         }
+}
+
+/** A [FavoritesRepository] held in memory; [accept] `false` makes every change fail. */
+internal class FakeFavoritesRepository : FavoritesRepository {
+    val held = MutableStateFlow<Set<ContentId>>(emptySet())
+    var accept = true
+
+    /** Every `setFavorite` call, in order. */
+    val requests = mutableListOf<Pair<ContentId, Boolean>>()
+
+    override val favorites: Flow<Set<ContentId>> = held
+
+    override suspend fun setFavorite(contentId: ContentId, favorite: Boolean): Boolean {
+        requests += contentId to favorite
+        if (!accept) return false
+        held.value = if (favorite) held.value + contentId else held.value - contentId
+        return true
+    }
 }
 
 /** A small content detail fixture with stable, easy-to-assert values. */
