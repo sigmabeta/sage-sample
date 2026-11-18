@@ -5,6 +5,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.sample.feature.settings.SettingsState
+import net.sigmabeta.sage.sample.repository.User
 import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
@@ -41,7 +42,7 @@ internal fun SettingsExpandedDropdown(
 }
 
 /**
- * A settled Settings screen with fixed About values. The version/build strings are normally
+ * A settled, signed-in Settings screen with fixed Account and About values. The version/build strings are normally
  * supplied by the app's build config, so the fixture pins them rather than reading the real build.
  */
 private fun settingsState(
@@ -53,6 +54,7 @@ private fun settingsState(
     animationScale = AnimationScale.ONE_X,
     demoOutcome = DemoOutcome.CONTENT,
     homeShowsSameContent = true,
+    signedInUser = User(id = "user-demo", username = "demo"),
     appVersion = "0.1.0",
     buildDate = "Nov 7, 2026",
     expandedDropdownId = expandedDropdownId,

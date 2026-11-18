@@ -2,6 +2,7 @@ package net.sigmabeta.sage.sample.nav
 
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.sample.models.ContentId
+import net.sigmabeta.sage.sample.repository.SignOutRequested
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -115,6 +116,14 @@ class SampleNavActionTest {
     @Test
     fun `back pops the current screen`() {
         assertEquals(SampleNavAction.Pop, navActionFor(SageEvent.NavigateBack(source = "test")))
+    }
+
+    @Test
+    fun `a sign-out request is a deliberate sign out, not a back-stack change`() {
+        assertEquals(
+            SampleNavAction.SignOut,
+            navActionFor(SignOutRequested(source = "test")),
+        )
     }
 
     @Test

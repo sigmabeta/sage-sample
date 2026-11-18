@@ -128,4 +128,9 @@ enum class SampleStringId : SageStringId {
     SETTINGS_SECTION_ABOUT,
     SETTINGS_LABEL_APP_VERSION,
     SETTINGS_LABEL_BUILD_DATE,
+
+    // Settings: Account section (sign-in).
+    SETTINGS_ACCOUNT_SECTION,
+    SETTINGS_ACCOUNT_SIGNED_IN_AS,
+    SETTINGS_ACCOUNT_SIGN_OUT,
 }

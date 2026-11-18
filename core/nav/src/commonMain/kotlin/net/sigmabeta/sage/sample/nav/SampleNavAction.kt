@@ -5,6 +5,7 @@ import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.models.contentDetailArtworkFromRoute
 import net.sigmabeta.sage.sample.models.contentDetailIdFromRoute
+import net.sigmabeta.sage.sample.repository.SignOutRequested
 
 /**
  * What a feature's navigation intent means for the app's single back stack.
@@ -32,6 +33,12 @@ sealed interface SampleNavAction {
 
     /** Back: apply the shared [backActionFor] policy rather than popping a navigator directly. */
     data object Pop : SampleNavAction
+
+    /**
+     * A deliberate Sign out: the shell hands it to the Sign-in gate, which ends the Session and
+     * opens Home after the next Sign in. Leaving the shell is the gate's job, not a stack change.
+     */
+    data object SignOut : SampleNavAction
 }
 
 /**
@@ -46,6 +53,7 @@ fun navActionFor(event: SageEvent): SampleNavAction? = when (event) {
     is SageEvent.NavigateTo -> navActionForRoute(event.destination)
     is SageEvent.NavigateSingleTopLevel -> navActionForRoute(event.destination)
     is SageEvent.NavigateBack -> SampleNavAction.Pop
+    is SignOutRequested -> SampleNavAction.SignOut
     else -> null
 }
 

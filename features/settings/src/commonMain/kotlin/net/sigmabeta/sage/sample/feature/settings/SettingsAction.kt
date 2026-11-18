@@ -22,4 +22,7 @@ sealed class SettingsAction : SageAction() {
     data class DemoOutcomeSelected(val outcome: DemoOutcome) : SettingsAction()
     data object HomeShowsSameContentToggled : SettingsAction()
     data object ResetDemoDataClicked : SettingsAction()
+
+    /** The Account section's Sign out button; no confirmation. */
+    data object SignOutClicked : SettingsAction()
 }

@@ -9,6 +9,9 @@ import net.sigmabeta.sage.analytics.AnalyticsScreenId
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
+import net.sigmabeta.sage.sample.repository.IdentityRepository
+import net.sigmabeta.sage.sample.repository.IdentityState
+import net.sigmabeta.sage.sample.repository.SignInOutcome
 import net.sigmabeta.sage.sample.settings.DEFAULT_HOME_SHOWS_SAME_CONTENT
 import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoDataResetter
@@ -115,6 +118,24 @@ internal class FakeDemoDataResetter(
         resetCalls += 1
         gate?.await()
         failure?.let { throw it }
+    }
+}
+
+/** A controllable [IdentityRepository]; counts [signOut] calls so tests can prove none happened. */
+internal class FakeIdentityRepository(
+    initial: IdentityState = IdentityState.SignedOut,
+) : IdentityRepository {
+    val mutableState = MutableStateFlow(initial)
+    override val state: StateFlow<IdentityState> = mutableState.asStateFlow()
+    var signOutCalls: Int = 0
+        private set
+
+    override suspend fun signIn(username: String, password: String): SignInOutcome =
+        error("Settings never signs in")
+
+    override suspend fun signOut() {
+        signOutCalls += 1
+        mutableState.value = IdentityState.SignedOut
     }
 }
 

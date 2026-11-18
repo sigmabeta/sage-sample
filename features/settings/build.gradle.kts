@@ -17,6 +17,8 @@ kotlin {
                 // the implementation is the in-process demo source or the HTTP client.
                 api(projects.core.repository.api)
                 implementation(projects.core.strings.api)
+                // The Account section's Sign out button is the sample's ButtonListModel.
+                api(projects.core.ui.components.models)
                 api(projects.core.viewmodel)
                 // The persisted preferences the screen edits; also exposes the delay seam.
                 api(projects.core.settings)
