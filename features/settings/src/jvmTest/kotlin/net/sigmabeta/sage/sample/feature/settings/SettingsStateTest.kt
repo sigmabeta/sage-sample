@@ -11,6 +11,8 @@ import net.sigmabeta.sage.components.LoadingType
 import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
 import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
+import net.sigmabeta.sage.sample.repository.User
 import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
@@ -42,6 +44,29 @@ class SettingsStateTest {
             ),
             items,
         )
+    }
+
+    @Test
+    fun `a signed-in User gets an Account section above everything else`() {
+        val items = SettingsState(signedInUser = ADA).toListItems(FakeStringProvider)
+
+        assertEquals(
+            listOf(
+                SectionHeaderListModel(SampleStringId.SETTINGS_ACCOUNT_SECTION.toString()),
+                LabelValueListModel(
+                    label = SampleStringId.SETTINGS_ACCOUNT_SIGNED_IN_AS.toString(),
+                    value = "ada",
+                    clickAction = SageAction.Noop,
+                ),
+                ButtonListModel(
+                    label = SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT.toString(),
+                    clickAction = SettingsAction.SignOutClicked,
+                ),
+                SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_APPEARANCE.toString()),
+            ),
+            items.take(4),
+        )
+        assertEquals(SettingsState().toListItems(FakeStringProvider), items.drop(3))
     }
 
     @Test
@@ -297,5 +322,9 @@ class SettingsStateTest {
     private fun ListModel.clickAction(): SageAction = when (this) {
         is net.sigmabeta.sage.components.SingleTextListModel -> clickAction
         else -> error("unexpected option model: $this")
+    }
+
+    private companion object {
+        val ADA = User(id = "user-ada", username = "ada")
     }
 }

@@ -16,6 +16,11 @@ import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
 import net.sigmabeta.sage.components.LoadingItemListModel
 import net.sigmabeta.sage.components.NameCaptionCheckboxListModel
+import net.sigmabeta.sage.components.SectionHeaderListModel
+import net.sigmabeta.sage.sample.repository.IdentityState
+import net.sigmabeta.sage.sample.repository.SignOutRequested
+import net.sigmabeta.sage.sample.repository.User
+import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
 import net.sigmabeta.sage.components.NameCaptionListModel
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.sample.settings.AnimationScale
@@ -255,7 +260,44 @@ class SettingsViewModelTest {
         assertTrue(viewModel.uiStateActual.value.listItems.none { it is LoadingItemListModel })
     }
 
+    @Test
+    fun `the Account section follows the identity state`() = runTest(dispatcher) {
+        val identity = FakeIdentityRepository(IdentityState.SignedIn(ADA))
+        val viewModel = createViewModel(identity = identity)
+
+        assertEquals(
+            ADA.username,
+            accountRow(viewModel.uiStateActual.value.listItems).value,
+        )
+        assertEquals(1, viewModel.uiStateActual.value.listItems.filterIsInstance<ButtonListModel>().size)
+
+        identity.mutableState.value = IdentityState.SignedOut
+        advanceUntilIdle()
+
+        val items = viewModel.uiStateActual.value.listItems
+        assertTrue(items.none { it is ButtonListModel })
+        assertTrue(items.first() is SectionHeaderListModel)
+        assertEquals(SampleStringId.SETTINGS_SECTION_APPEARANCE.toString(), (items.first() as SectionHeaderListModel).title)
+    }
+
+    @Test
+    fun `sign out asks the app to sign out and does not end the Session itself`() = runTest(dispatcher) {
+        val identity = FakeIdentityRepository(IdentityState.SignedIn(ADA))
+        val viewModel = createViewModel(identity = identity)
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(dispatcher) {
+            viewModel.uiEvents.collect { events += it }
+        }
+
+        viewModel.sendAction(SettingsAction.SignOutClicked)
+        advanceUntilIdle()
+
+        assertEquals(listOf<SageEvent>(SignOutRequested(source = "SettingsViewModel")), events)
+        assertEquals("the gate, not Settings, ends the Session", 0, identity.signOutCalls)
+    }
+
     private fun createViewModel(
+        identity: FakeIdentityRepository = FakeIdentityRepository(),
         settings: FakeSettingsManager = FakeSettingsManager(),
         appInfo: net.sigmabeta.sage.appinfo.AppInfo = testAppInfo(),
         resetter: DemoDataResetter = FakeDemoDataResetter(),
@@ -274,7 +316,12 @@ class SettingsViewModelTest {
         settingsManager = settings,
         demoDataResetter = resetter,
         appInfo = appInfo,
+        identityRepository = identity,
     )
+
+    private fun accountRow(items: List<ListModel>): LabelValueListModel =
+        items.filterIsInstance<LabelValueListModel>()
+            .single { it.label == SampleStringId.SETTINGS_ACCOUNT_SIGNED_IN_AS.toString() }
 
     private fun themeDropdown(items: List<ListModel>): DropdownSettingListModel =
         items.filterIsInstance<DropdownSettingListModel>()
@@ -307,6 +354,7 @@ class SettingsViewModelTest {
             .single { it.name == SampleStringId.SETTINGS_LABEL_RESET_DEMO_DATA.toString() }
 
     private companion object {
+        val ADA = User(id = "user-ada", username = "ada")
         val THEME_SETTING_ID = SampleStringId.SETTINGS_LABEL_THEME.name
         val FONT_SETTING_ID = SampleStringId.SETTINGS_LABEL_FONT.name
         val DELAY_SETTING_ID = SampleStringId.SETTINGS_LABEL_SIMULATE_DELAY.name

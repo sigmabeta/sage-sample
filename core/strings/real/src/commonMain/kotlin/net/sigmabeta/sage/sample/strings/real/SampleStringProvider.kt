@@ -126,6 +126,9 @@ object SampleStringProvider : StringProvider {
         SampleStringId.SETTINGS_SECTION_ABOUT to "About",
         SampleStringId.SETTINGS_LABEL_APP_VERSION to "App version",
         SampleStringId.SETTINGS_LABEL_BUILD_DATE to "Build date",
+        SampleStringId.SETTINGS_ACCOUNT_SECTION to "Account",
+        SampleStringId.SETTINGS_ACCOUNT_SIGNED_IN_AS to "Signed in as",
+        SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT to "Sign out",
     )
 
     override fun getString(string: SageStringId): String =
