@@ -49,18 +49,31 @@ class SampleSignInGateHolder(
             }
             if (deepLinks != null) {
                 launch {
-                    val shellOpen = mutableGate.map { it.surface is SampleGateSurface.Shell }
-                        .distinctUntilChanged()
+                    // The combined view only says when to look; whether the gate holds the link is
+                    // decided against the current gate in the same update that records it. The
+                    // shell may have opened since `open` was computed, and a link taken then would
+                    // be lost: the gate ignores it and the shell no longer finds it pending.
+                    val shellOpen = mutableGate.map { it.isShellOpen }.distinctUntilChanged()
                     combine(shellOpen, deepLinks.pending) { open, route -> route.takeUnless { open } }
                         .filterNotNull()
-                        .collect { route ->
-                            mutableGate.update { it.onRouteRequested(route) }
-                            deepLinks.consume()
-                        }
+                        .collect { route -> if (holdWhileGated(route)) deepLinks.consume() }
                 }
             }
         }
     }
+
+    /** Records [route] as the route to restore unless the shell is open; true when it was held. */
+    private fun holdWhileGated(route: SampleRoute): Boolean {
+        var held = false
+        mutableGate.update { gate ->
+            held = !gate.isShellOpen
+            if (held) gate.onRouteRequested(route) else gate
+        }
+        return held
+    }
+
+    private val SampleSignInGate.isShellOpen: Boolean
+        get() = surface is SampleGateSurface.Shell
 
     /** The open shell's active route, kept in case the Session is lost mid-use. */
     fun onShellRoute(route: SampleRoute) {

@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import net.sigmabeta.sage.sample.nav.SampleDestination
 import net.sigmabeta.sage.sample.nav.SampleGateSurface
@@ -74,6 +75,28 @@ class SampleSignInGateHolderTest {
             assertNull(deepLinks.pending.value)
             assertEquals(listItems, holder.gate.value.routeToRestore)
         }
+
+    @Test
+    fun `a deep link racing the startup check to Signed in is never dropped`() = runTest {
+        // A warm launch: the startup check answers Signed in in the same tick the intent's link
+        // arrives. The identity step opens the shell before the deep-link step has seen it open,
+        // so a decision made on that stale "gated" view would take a link the gate then refuses to
+        // hold, and the shell would open on Home.
+        val identity = FakeIdentity(IdentityState.Checking)
+        val deepLinks = MutableSampleDeepLinkSource()
+        val holder = SampleSignInGateHolder(identity)
+        backgroundScope.launch { holder.follow(deepLinks) }
+        runCurrent()
+
+        deepLinks.offer(listItems)
+        identity.state.value = IdentityState.SignedIn(ada)
+        runCurrent()
+
+        assertEquals(SampleGateSurface.Shell(ada), holder.gate.value.surface)
+        val heldByGate = holder.gate.value.routeToRestore
+        val leftForShell = deepLinks.pending.value
+        assertEquals("the link reaches the shell", listItems, heldByGate ?: leftForShell)
+    }
 
     @Test
     fun `a deep link while the shell is open is left for the shell`() =
