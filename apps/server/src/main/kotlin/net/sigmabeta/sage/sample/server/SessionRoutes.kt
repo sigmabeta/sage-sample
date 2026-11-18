@@ -117,7 +117,7 @@ internal suspend fun ApplicationCall.currentSession(sessions: SessionStore): Ses
     sessionToken()?.let { sessions.lookup(it) }
 
 /** Responds 415 and returns false unless the request body is declared `application/json`. */
-private suspend fun ApplicationCall.requireJson(): Boolean {
+internal suspend fun ApplicationCall.requireJson(): Boolean {
     if (request.contentType().match(ContentType.Application.Json)) return true
     respond(HttpStatusCode.UnsupportedMediaType, ApiErrorResponse("Expected application/json"))
     return false

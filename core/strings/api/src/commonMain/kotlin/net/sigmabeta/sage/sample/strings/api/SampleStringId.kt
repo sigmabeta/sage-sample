@@ -133,4 +133,9 @@ enum class SampleStringId : SageStringId {
     SETTINGS_ACCOUNT_SECTION,
     SETTINGS_ACCOUNT_SIGNED_IN_AS,
     SETTINGS_ACCOUNT_SIGN_OUT,
+
+    // Favorites (User-scoped data on Content detail).
+    CONTENT_DETAIL_FAVORITE_ADD,
+    CONTENT_DETAIL_FAVORITE_REMOVE,
+    CONTENT_DETAIL_FAVORITE_FAILED,
 }

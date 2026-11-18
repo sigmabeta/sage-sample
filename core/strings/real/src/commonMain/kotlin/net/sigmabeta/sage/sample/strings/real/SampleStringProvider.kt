@@ -129,6 +129,10 @@ object SampleStringProvider : StringProvider {
         SampleStringId.SETTINGS_ACCOUNT_SECTION to "Account",
         SampleStringId.SETTINGS_ACCOUNT_SIGNED_IN_AS to "Signed in as",
         SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT to "Sign out",
+
+        SampleStringId.CONTENT_DETAIL_FAVORITE_ADD to "Add to favorites",
+        SampleStringId.CONTENT_DETAIL_FAVORITE_REMOVE to "Remove from favorites",
+        SampleStringId.CONTENT_DETAIL_FAVORITE_FAILED to "Couldn't save your favorite.",
     )
 
     override fun getString(string: SageStringId): String =

@@ -1,13 +1,17 @@
 package net.sigmabeta.sage.sample.server
 
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.createRouteScopedPlugin
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RouteSelector
 import io.ktor.server.routing.RouteSelectorEvaluation
 import io.ktor.server.routing.RoutingResolveContext
+import io.ktor.util.AttributeKey
+import net.sigmabeta.sage.sample.identity.Session
 import net.sigmabeta.sage.sample.identity.SessionStore
+import net.sigmabeta.sage.sample.identity.User
 import net.sigmabeta.sage.sample.repository.ApiErrorResponse
 
 /**
@@ -37,8 +41,21 @@ internal class RequireSessionConfig {
 private val RequireSession = createRouteScopedPlugin("RequireSession", ::RequireSessionConfig) {
     val sessions = pluginConfig.sessions
     onCall { call ->
-        if (call.currentSession(sessions) == null) {
+        val session = call.currentSession(sessions)
+        if (session == null) {
             call.respond(HttpStatusCode.Unauthorized, ApiErrorResponse("Sign in required"))
+        } else {
+            call.attributes.put(GateSessionKey, session)
         }
     }
 }
+
+private val GateSessionKey = AttributeKey<Session>("sage.sample.gate.session")
+
+/**
+ * The User whose Session [requireSession] admitted this call. It is the only way a route learns who
+ * is asking, so no route takes a user id from the request.
+ */
+internal val ApplicationCall.signedInUser: User
+    get() = attributes.getOrNull(GateSessionKey)?.user
+        ?: error("signedInUser read outside requireSession")

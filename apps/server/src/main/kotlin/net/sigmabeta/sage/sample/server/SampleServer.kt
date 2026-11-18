@@ -43,11 +43,16 @@ import net.sigmabeta.sage.sample.repository.demo.DemoContent
  * Android/desktop demo sources also use.
  *
  * [identity] backs `/api/session` and the Session gate in front of every other `/api` route but
- * health; [secureCookie] marks the Session cookie `Secure`. The same function is mounted by `main()`
+ * health; [secureCookie] marks the Session cookie `Secure`; [favorites] backs `/api/me/favorites`
+ * (`main()` passes the Room store, so the default in-memory one only serves tests). The same function is mounted by `main()`
  * (over Room) and by the route tests (over fakes or an in-memory database), so tests exercise the
  * shipped stack.
  */
-fun Application.configureSampleServer(identity: ServerIdentity, secureCookie: Boolean = false) {
+fun Application.configureSampleServer(
+    identity: ServerIdentity,
+    secureCookie: Boolean = false,
+    favorites: FavoritesStore = InMemoryFavoritesStore(),
+) {
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = true })
     }
@@ -74,6 +79,8 @@ fun Application.configureSampleServer(identity: ServerIdentity, secureCookie: Bo
         // Everything else under /api, unknown paths included, needs a Session: a Signed out
         // client learns nothing about the API surface beyond health and the Session resource.
         requireSession(identity.sessions) {
+            favoritesRoutes(favorites)
+
             get(SampleApiRoutes.HOME_COUNT) {
                 val seed = call.parameters[SampleApiParams.SEED] ?: return@get call.badRequest("seed")
                 call.respond(HomeCountResponse(DemoContent.homeItemCount(seed)))
