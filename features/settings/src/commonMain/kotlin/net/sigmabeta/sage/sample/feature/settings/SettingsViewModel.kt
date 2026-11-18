@@ -18,6 +18,9 @@ import net.sigmabeta.sage.appcomm.SageEvent
 import net.sigmabeta.sage.appinfo.AppInfo
 import net.sigmabeta.sage.coroutines.SageDispatchers
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.repository.IdentityRepository
+import net.sigmabeta.sage.sample.repository.IdentityState
+import net.sigmabeta.sage.sample.repository.SignOutRequested
 import net.sigmabeta.sage.sample.settings.AnimationScale
 import net.sigmabeta.sage.sample.settings.DemoDataResetter
 import net.sigmabeta.sage.sample.settings.SampleDelayManager
@@ -34,6 +37,7 @@ import kotlinx.datetime.toLocalDateTime
  * The selected values live in [SampleSettingsManager] (app-scoped, persisted through SAGE's
  * `Storage` seam); this view model mirrors them into `ListState` and writes selections back. The
  * app version and build date come from SAGE's [AppInfo] seam and are display-only.
+ * The Account section follows [IdentityRepository.state]; Sign out is only a request (see [SignOutRequested]).
  */
 @ContributesIntoMap(AppScope::class, binding = binding<ViewModel>())
 @ViewModelKey
@@ -46,6 +50,7 @@ class SettingsViewModel(
     private val settingsManager: SampleSettingsManager,
     private val demoDataResetter: DemoDataResetter,
     private val appInfo: AppInfo,
+    private val identityRepository: IdentityRepository,
 ) : SampleListViewModel<SettingsState>() {
     override val screenIdentifier = AnalyticsScreen.SETTINGS
 
@@ -57,6 +62,11 @@ class SettingsViewModel(
     init {
         sendAction(SageAction.InitNoArgs)
 
+        viewModelScope.launch {
+            identityRepository.state.collect { identity ->
+                updateState { it.copy(signedInUser = (identity as? IdentityState.SignedIn)?.user) }
+            }
+        }
         viewModelScope.launch {
             settingsManager.themeMode.collect { mode ->
                 updateState { it.copy(themeMode = mode) }
@@ -128,6 +138,10 @@ class SettingsViewModel(
             )
 
             SettingsAction.ResetDemoDataClicked -> resetDemoData()
+
+            // Not identityRepository.signOut(): the app's Sign-in gate must see a deliberate
+            // sign-out (so the next Sign in opens Home), and it ends the Session itself.
+            SettingsAction.SignOutClicked -> emitEvent(SignOutRequested(source = "SettingsViewModel"))
 
             else -> Unit
         }

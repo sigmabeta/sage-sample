@@ -72,8 +72,14 @@ class SampleSignInGateHolder(
         mutableGate.update { it.onRouteRestored() }
     }
 
-    /** A deliberate Sign out: ends the Session, and the next Sign in opens Home. */
-    suspend fun signOut() {
+    /**
+     * A deliberate Sign out: ends the Session, and the next Sign in opens Home.
+     *
+     * With a [browser] bridge the URL is the route the next Sign in opens, so it is first replaced
+     * with Home's, while the shell is still open and the bridge still attached.
+     */
+    suspend fun signOut(browser: SampleBrowserNavigation? = null) {
+        browser?.onRouteChanged(SampleRoute.HOME, push = false)
         mutableGate.update { it.onSignOutRequested() }
         identity.signOut()
     }
