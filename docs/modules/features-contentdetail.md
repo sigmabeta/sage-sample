@@ -45,7 +45,7 @@ Each section maps the same `LCE` through its own loading shape:
 | Section | Loading type / content |
 |---|---|
 | Hero | `BIG_IMAGE`; `HeroImageListModel` |
-| CTAs | no placeholder; `CtaListModel` per generated action |
+| CTAs | no placeholder; a leading favorite toggle (`ToggleFavorite`), then a `CtaListModel` per generated action |
 | Details | no placeholder; header + `LabelValueListModel` rows (blank fields omitted) |
 | Related | `WIDE_ITEM`, horizontally scrollable; header + `HorizontalScrollerListModel` of `WideItemListModel` |
 | Items | `TEXT_CAPTION_IMAGE`; header + `ImageNameCaptionListModel` rows |
@@ -97,3 +97,12 @@ at a larger size. Detail-owned rows use parent-qualified seeds
 known namespaces). `ContentDetailStateTest`
 (each section and loading/error/not-found shape), `ContentDetailViewModelTest` (init/cancel,
 navigation chain, snackbars), `DemoContentDetailRepositoryTest` (determinism, unknown IDs; `jvmTest` dependency on `:core:repository:demo`).
+
+## Favorites
+
+The first CTA row is the signed-in User's favorite toggle (`Icon.FavoriteEmpty` "Add to favorites" /
+`Icon.FavoriteFilled` "Remove from favorites"). It exists only for loaded content. The view model
+collects `FavoritesRepository.favorites` for the addressed id into `ContentDetailState.isFavorite`
+and calls `setFavorite(!current)` on `ToggleFavorite`; a `false` result (signed out or not saved)
+shows the `CONTENT_DETAIL_FAVORITE_FAILED` snackbar. Whose favorites those are is the repository's
+business (`CachedFavoritesRepository` keys by User and drops on sign-out), never this feature's.
