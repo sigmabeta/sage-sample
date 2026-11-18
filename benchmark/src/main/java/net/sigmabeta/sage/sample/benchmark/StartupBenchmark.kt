@@ -9,6 +9,8 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.macrobenchmarkWithStartupMode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import net.sigmabeta.sage.sample.perfbench.PerfConfig
 import net.sigmabeta.sage.sample.perfbench.StartupAxis
 import net.sigmabeta.sage.sample.perfbench.StartupAxisConfig
@@ -47,6 +49,11 @@ class StartupBenchmark {
         try {
             // Probe the device facts (including thermal status "at start") before the measured loop.
             val environment = DeviceBenchmark.environment()
+            // Sign in once, outside the measurement: the Session is stored, so no measured launch
+            // pays for the PBKDF2 hashing a first sign-in runs.
+            DeviceBenchmark.signInOnce(
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()),
+            )
             val results = StartupScenario.all.map { scenario ->
                 DeviceBenchmark.section(scenario.id) { startup(scenario) }
             }
@@ -91,7 +98,9 @@ class StartupBenchmark {
                 pressHome()
             },
         ) {
-            startActivityAndWait()
+            // The launcher intent plus the sign-in extra: the Session is already stored, so the hook
+            // only reuses it, but the launch is the same one an unmeasured run would make.
+            startActivityAndWait { DeviceBenchmark.putSignIn(it) }
         }
 
         return startupResult(startupMeasurement(scenario.id, testResult))

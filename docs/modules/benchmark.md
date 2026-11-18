@@ -36,6 +36,15 @@ activity launch completion" even though the app is up. `-W` still waits for the 
 and the scenario's own landing wait (title/content plus the screen's scrollable) is the completion
 signal.
 
+## Signed in
+
+The app's Sign-in gate would show Login to a fresh install, so every launch passes the
+benchmark-build-only extra `sagesample.benchmark.signIn=demo` (an `am start --es` for deep links,
+an intent extra for the startup launch). The startup axis also signs in once with
+`DeviceBenchmark.signInOnce` before its measured loop: the first sign-in on an install runs PBKDF2,
+which must not land inside a measured launch. Measured launches then find the stored Session at the
+gate's startup check.
+
 ## What this builds / how to run it
 
 - **Target:** a Macrobenchmark instrumentation test against `net.sigmabeta.sage.sample`, built into
