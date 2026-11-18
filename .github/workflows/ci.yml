@@ -35,7 +35,7 @@ jobs:
         run: >-
           ./gradlew ktlintCheck detekt --continue
           --build-cache --no-daemon --max-workers=2
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: static-analysis-reports
@@ -72,7 +72,7 @@ jobs:
           :testing:perfbench-core:jvmTest :testing:perfbench:test
           :apps:server:test --continue
           --build-cache --no-daemon --max-workers=2
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: unit-test-results
@@ -102,7 +102,7 @@ jobs:
         run: >-
           ./gradlew verifyPaparazziDebug --continue
           --build-cache --no-daemon --max-workers=2
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: paparazzi-diffs
@@ -124,7 +124,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Compose Desktop app jar
         run: ./gradlew :apps:jvm:assemble --build-cache --no-daemon --max-workers=2
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: jvm-app
@@ -159,7 +159,7 @@ jobs:
           :apps:js:ktlintCheck :apps:js:detekt
           :apps:js:jsBrowserDistribution :apps:server:installDist
           --build-cache --no-daemon --max-workers=2
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: server-distribution
@@ -192,13 +192,13 @@ jobs:
           ./gradlew :apps:android:lintRelease :benchmark:compileBenchmarkKotlin
           :apps:android:assembleDebug :apps:android:assembleRelease
           --build-cache --no-daemon --max-workers=4
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: android-lint-report
           path: 'apps/android/build/reports/**'
           if-no-files-found: ignore
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: apks
           path: 'apps/android/build/outputs/apk/**/*.apk'
