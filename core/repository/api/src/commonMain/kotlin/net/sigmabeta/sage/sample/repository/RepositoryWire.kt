@@ -41,6 +41,20 @@ object SampleApiRoutes {
      * to Sign out. Public, like [HEALTH]; every other route needs a Session.
      */
     const val SESSION = "/api/session"
+
+    /**
+     * The signed-in User's favorites, resolved from the Session and never from a request value:
+     * `GET` a [FavoritesResponse]; `PUT` or `DELETE` `ME_FAVORITES/{contentId}` (see [meFavorite])
+     * to favorite or un-favorite one Content id, answered 204. `PUT` and `DELETE` must be sent as
+     * `application/json`, like Sign in and Sign out.
+     */
+    const val ME_FAVORITES = "/api/me/favorites"
+
+    /** The path segment name the server's `ME_FAVORITES/{contentId}` route binds. */
+    const val ME_FAVORITE_PARAM = "contentId"
+
+    /** The path to one favorite; a [contentId] holds only characters that need no escaping. */
+    fun meFavorite(contentId: String): String = "$ME_FAVORITES/$contentId"
 }
 
 /** Query parameter names shared by the server routes and the browser client. */
@@ -164,6 +178,10 @@ data class UserDto(
 /** The signed-in User, from a successful Sign in or a `GET` of [SampleApiRoutes.SESSION]. */
 @Serializable
 data class SessionResponse(val user: UserDto)
+
+/** The Content ids the signed-in User has favorited, oldest favorite first. */
+@Serializable
+data class FavoritesResponse(val contentIds: List<String>)
 
 fun HomeItem.toDto(): HomeItemDto = HomeItemDto(id = id, title = title)
 

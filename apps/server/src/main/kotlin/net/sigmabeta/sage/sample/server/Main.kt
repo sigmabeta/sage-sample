@@ -23,13 +23,14 @@ fun main() {
             config.bindHost,
         )
     }
-    val identity = runBlocking { ServerIdentity.overRoom(SampleDatabases.file(config.dbPath)) }
+    val database = SampleDatabases.file(config.dbPath)
+    val identity = runBlocking { ServerIdentity.overRoom(database) }
     log.info("Users and Sessions in {}", config.dbPath)
     embeddedServer(
         Netty,
         port = config.port,
         host = config.bindHost,
     ) {
-        configureSampleServer(identity, secureCookie = config.secureCookie)
+        configureSampleServer(identity, secureCookie = config.secureCookie, favorites = RoomFavoritesStore(database))
     }.start(wait = true)
 }
