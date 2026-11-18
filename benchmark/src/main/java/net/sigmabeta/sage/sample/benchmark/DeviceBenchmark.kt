@@ -184,9 +184,14 @@ internal object DeviceBenchmark {
      * beyond the cost of one launch.
      */
     fun signInOnce(device: UiDevice) {
+        // The same state macrobenchmark's own setup reaches: screen on, launcher in front.
+        device.wakeUp()
+        device.pressHome()
         launchDeepLink(device, "home")
-        check(device.wait(Until.hasObject(By.textStartsWith("Big image")), SIGN_IN_TIMEOUT_MS)) {
-            "Home did not show after the benchmark sign-in (focused package ${device.currentPackageName})"
+        if (!device.wait(Until.hasObject(By.textStartsWith("Big image")), SIGN_IN_TIMEOUT_MS)) {
+            runCatching { device.dumpWindowHierarchy(artifactFile("failure-sign-in.xml")) }
+            runCatching { device.takeScreenshot(artifactFile("failure-sign-in.png")) }
+            error("Home did not show after the benchmark sign-in (focused package ${device.currentPackageName})")
         }
         device.waitForIdle()
     }
