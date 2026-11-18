@@ -23,6 +23,13 @@ A third build type, `benchmark`, extends `release`, is non-debuggable + profilea
 `LocalFirstContentReporter` to `Activity.reportFullyDrawn()`, so the startup macrobenchmark can
 measure first content without production paying for the callback.
 
+The same variant is the only one that can start Signed in. `src/benchmark` holds `BenchmarkSignIn`,
+which turns the launch extra `sagesample.benchmark.signIn=<demo username>` into a real Sign in
+through `IdentityRepository` (a Session, not a gate bypass). While that Sign in runs, the gate sees
+`Checking` rather than `SignedOut`, so a measured launch never draws Login. Debug and release get a
+no-op `BenchmarkLaunchHook` from `src/nonBenchmark`; their unit tests (`NoBenchmarkHookTest`) assert
+the hook's class is absent, and the benchmark test pins its name.
+
 ## Entry points
 
 | File | Role |

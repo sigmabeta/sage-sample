@@ -9,6 +9,10 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.macrobenchmarkWithStartupMode
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import net.sigmabeta.sage.sample.perfbench.PerfConfig
 import net.sigmabeta.sage.sample.perfbench.StartupAxis
 import net.sigmabeta.sage.sample.perfbench.StartupAxisConfig
@@ -47,6 +51,11 @@ class StartupBenchmark {
         try {
             // Probe the device facts (including thermal status "at start") before the measured loop.
             val environment = DeviceBenchmark.environment()
+            // Sign in once, outside the measurement: the Session is stored, so no measured launch
+            // pays for the PBKDF2 hashing a first sign-in runs.
+            DeviceBenchmark.signInOnce(
+                UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()),
+            )
             val results = StartupScenario.all.map { scenario ->
                 DeviceBenchmark.section(scenario.id) { startup(scenario) }
             }
@@ -91,7 +100,13 @@ class StartupBenchmark {
                 pressHome()
             },
         ) {
-            startActivityAndWait()
+            // The launcher intent plus the sign-in extra: the Session is already stored, so the hook
+            // only reuses it, but the launch is the same one an unmeasured run would make.
+            startActivityAndWait { DeviceBenchmark.putSignIn(it) }
+            // The Sign-in gate's startup check draws a blank first frame, so Home's first image can
+            // compose after the launch is reported complete. Keep the trace open until it has, or
+            // the app's reportFullyDrawn() lands outside the measured window.
+            device.wait(Until.hasObject(By.textStartsWith(HOME_CONTENT_PREFIX)), HOME_CONTENT_TIMEOUT_MS)
         }
 
         return startupResult(startupMeasurement(scenario.id, testResult))
@@ -113,5 +128,9 @@ class StartupBenchmark {
 
     private companion object {
         const val FULL_DISPLAY_METRIC = "timeToFullDisplayMs"
+
+        /** Home's first content row (`Big image 1`), the same text the UI axis lands on. */
+        const val HOME_CONTENT_PREFIX = "Big image"
+        const val HOME_CONTENT_TIMEOUT_MS = 10_000L
     }
 }
