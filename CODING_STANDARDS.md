@@ -43,6 +43,14 @@ a golden stable and makes a diff mean "the UI changed", not "the seed changed". 
 state: a `@DevicePreviews` composable and a matching `@Test` in the module's `screenshot` test
 class.
 
+## Check-then-act happens in one update
+
+When a collector decides from shared state and then mutates it, the read and the write happen
+inside one `MutableStateFlow.update {}`, using that block's own `it`. A side effect that hands an item
+off (consuming a pending deep link, acking an event) runs only when the update actually recorded the
+item. A value captured earlier (a `combine` snapshot, or a `.value` read before `update`) can be stale by the
+time another collector has moved the state. The reference is `SampleSignInGateHolder.holdWhileGated`.
+
 ## Comments describe the code
 
 Comments explain the code or the domain. Merge mechanics ("kept in its own section so branches
