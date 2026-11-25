@@ -149,7 +149,7 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
 scripts/dev/paparazzi-diff.sh             # rank changed goldens + write review montages
 ./gradlew :benchmark:compileBenchmarkKotlin          # compile the device benchmark APK
 ./gradlew :benchmark:connectedBenchmarkAndroidTest   # run both axes (physical device)
-scripts/benchmark/device-ui.sh [--record]            # gate UI scroll against a local baseline
+scripts/benchmark/device-ui.sh [--record]            # gate UI scroll against a local baseline (--record: median of 3)
 scripts/benchmark/device-startup.sh [--record]       # gate startup against a local baseline
 scripts/ci/verify.sh                      # full CI-mirroring suite (web is opt-in)
 scripts/ci/verify.sh --web                # ...plus the browser bundle + server distribution

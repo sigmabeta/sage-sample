@@ -120,7 +120,7 @@ in the run's additional test output directory; `:testing:perfbench-core` owns th
 ```bash
 ./gradlew :benchmark:connectedBenchmarkAndroidTest       # both axes on every attached device
 scripts/benchmark/device-ui.sh                           # gate UI scroll against a local baseline
-scripts/benchmark/device-ui.sh --record                  # (re)record that device's baseline
+scripts/benchmark/device-ui.sh --record                  # (re)record that device's baseline (median of 3 passes)
 scripts/benchmark/device-startup.sh --threshold 0.97     # gate startup with a custom threshold
 scripts/ci/verify.sh --device-ui                         # the same run inside verify.sh
 ```

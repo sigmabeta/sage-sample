@@ -60,6 +60,22 @@ and the content demo outcome. If you have changed the demo outcome, Home plan, o
 reset them before measuring (Settings → Reset demo data), or the scenario may have no content or a
 different frame budget.
 
+Home's big-image hero is picked by the day. The benchmark build binds a fixed `HomeDay` (see
+`SampleBindings`), so every night's Home shows the same hero as the run its baseline came from;
+every other build follows the clock.
+
+The scenarios drive portrait layouts, so a run needs **auto-rotate off**. `device-<axis>.sh` (and
+the device farm) turn it off and pin the natural rotation before the instrumentation starts, and
+nothing turns it back on. Each benchmark's `setupBlock` sets the same lock again, which holds it
+during a bare Gradle run, but that lock can't outlast the test: UiAutomation restores the rotation
+state it saw at connect when it disconnects. Before a bare Gradle run on a phone that may have
+auto-rotate on, lock it first:
+
+```sh
+adb shell settings put system accelerometer_rotation 0
+adb shell settings put system user_rotation 0
+```
+
 The benchmark build shares the app's package name and data. Installing it for a run replaces a
 debug/release install, and its persisted settings survive; that is intentional, but do not run it on
 a phone whose settings you need to keep.
@@ -93,6 +109,12 @@ baseline is never committed; the first run (or `--record`) writes it under
 identity so a new device records a fresh baseline rather than gating one device's numbers against
 another's.
 
+`--record` measures `--record-runs` passes (default 3) and records, per scenario, the pass whose gate
+metric is the median (`perfbench baseline`), keeping the passes under `<baseline>/records/`. One
+recording is a single draw from a noisy distribution, and a baseline that happens to be a fast draw
+makes every later run look regressed. A first run with no baseline records its single pass and
+flags it.
+
 Outputs land under `build/perfbench-device/<axis>/current/<model>-<abi>/`: the run's
 `results-<axis>.json`, and — only when that device was actually compared against its baseline — the
 `perfbench diff --json` report as `diff-<axis>.json` beside it. A recording run, a failed diff, or a
@@ -104,7 +126,8 @@ scripts group the online serials by `ro.serialno` and **skip** rather than produ
 
 ```sh
 scripts/benchmark/device-ui.sh                    # gate
-scripts/benchmark/device-ui.sh --record           # (re)record the baseline
+scripts/benchmark/device-ui.sh --record           # (re)record the baseline: median of 3 passes
+scripts/benchmark/device-ui.sh --record --record-runs 5
 scripts/benchmark/device-startup.sh --threshold 0.97
 scripts/ci/verify.sh --device-ui                  # the same run inside verify.sh
 ```
@@ -168,24 +191,35 @@ deep link, landing signal, gesture, and trace-section set:
 
 | Scenario | Deep link | Trace sections | Gesture |
 |---|---|---|---|
-| `ui.home_scroll` | `home` | `GridImage`, `CrossfadeImage` | Vertical drag to reveal the nested image row, horizontal drags across it and back, then return to the top. |
-| `ui.list_items_scroll` | `browse/list-items` | none (text-only rows) | Bounded drags down and back. |
-| `ui.grid_of_images_scroll` | `browse/grid-of-images` | `GridImage`, `CrossfadeImage` | Bounded drags down and back. |
-| `ui.content_detail_scroll` | `home/content-detail/grid-of-images:7` | `CrossfadeImage` | Bounded drags down and back so the hero and item images leave and re-enter composition. |
+| `ui.home_scroll` | `home` | `GridImage`, `CrossfadeImage` | A vertical stroke reveals the nested image row, 3 strokes across it and back, then back to the top. |
+| `ui.list_items_scroll` | `browse/list-items` | none (text-only rows) | 3 bounded strokes down and back. |
+| `ui.grid_of_images_scroll` | `browse/grid-of-images` | `GridImage`, `CrossfadeImage` | 3 bounded strokes down and back. |
+| `ui.content_detail_scroll` | `home/content-detail/grid-of-images:7` | `CrossfadeImage` | 3 bounded strokes down and back so the hero and item images leave and re-enter composition. |
 
 `browse/list-items-with-images` is deliberately not a scenario: its first page is 10 rows, which
 fits a phone viewport, so the screen has nothing to scroll and every measurement would be idle.
 Home's horizontal row and Content detail cover the image-list surface.
 
-Every vertical scenario uses bounded, symmetric drags rather than flings. A fling waits for
-accessibility scroll events, so at the end of a screen it times out (10 s per attempt) without
-moving the list; on these short screens that dominated the run and left most cells uncomposed. The
-drags always scroll, leave the top region, and return, which is what makes the trace sections
-non-zero. Home additionally needs its horizontal row exercised: its two-row stable plan is already
-fully composed after landing, so a vertical-only gesture records no image sections.
+Every scenario is a **fixed workload**: the same strokes from the same offset on every pass. A
+stroke is a `UiObject2.scroll` of a set share of the scroller at 1200 dp/s, which holds still before
+lifting, so the release has no velocity and nothing flings. The stroke back is longer than the
+stroke out (60% then 80% vertically, 70% then 90% across Home's row), so it stops against the
+list's start edge, the same place every cycle; equal strokes are not quite symmetric. Each cycle
+must end where it started (the scroller shows the same texts at the same offsets), or the run fails
+rather than record a different workload. Strokes keep a margin from the screen edges, where the
+system gesture zones are. One unmeasured cycle in the
+`setupBlock` loads the screen's images first, so every measured iteration starts from the same
+cache state.
+
+The scenarios used to stroke with `device.drag`, which moves in a few steps and lifts at full
+speed: the list flung, the next drag caught it at a random offset, and one commit's frame counts
+varied by up to 45% between nightlies. Flings are no better on these short screens: a fling waits
+for accessibility scroll events, so at the end of a screen it times out (10 s per attempt) without
+moving the list. Home additionally needs its horizontal row exercised: its two-row stable plan is
+already fully composed after landing, so a vertical-only gesture records no image sections.
 
 `ui.content_detail_scroll` uses a known generated Content ID rather than whichever item was opened
-last, so the route is stable. The symmetric drag matters on a long page: a gesture that only heads
+last, so the route is stable. The symmetric stroke matters on a long page: a gesture that only heads
 toward the end never returns to the top, so the hero stays disposed and its trace reads zero.
 
 ## Device-driver gotchas
@@ -203,9 +237,13 @@ driver the scenarios use:
   scenario's own landing wait instead.
 - **`fling` waits for accessibility scroll events.** At the end of a screen (or when the list cannot
   move) it times out rather than no-op'ing, so a fling-based gesture can spend seconds idle and
-  compose nothing. The scenarios use `device.drag` instead.
-- **`Direction.UP` advances a list toward its end**, `DOWN` toward its start — the gesture starts at
-  the edge it swipes *from*, so a backwards gesture is a silent no-op at the top.
+  compose nothing.
+- **`device.drag` flings.** It moves in a few steps and lifts at full speed, so the list keeps moving
+  after the gesture and the next one starts from a random offset. The scenarios use
+  `UiObject2.scroll` with a speed, which holds still before lifting.
+- **`Direction` means different things per call.** `UiObject2.scroll` and `fling` name where the
+  *content* goes: `DOWN` moves toward the end. `swipe` names where the *finger* goes: `UP` moves
+  toward the end. Getting it backwards is a silent no-op at the top.
 - A trace section is recorded only when its composable **enters composition**. To measure a page's
   images, scroll a bounded distance toward the end and back so they leave and re-enter.
 - Tune **one scenario at a time** with `-P…scenario=<id>`: the full suite resets compilation per
