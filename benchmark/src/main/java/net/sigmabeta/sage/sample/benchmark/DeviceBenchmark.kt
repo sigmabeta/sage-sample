@@ -60,6 +60,22 @@ internal object DeviceBenchmark {
     }
 
     /**
+     * Turns auto-rotate off and pins the display to its natural (portrait) rotation. The scenarios
+     * drive portrait layouts; a phone left with auto-rotate on and lying on its side would measure
+     * the landscape layout instead.
+     *
+     * This holds the lock for the length of the test, even when a run is started straight from
+     * Gradle. It can't make the lock outlast the test: when UiAutomation disconnects it restores the
+     * rotation state it saw at connect. `scripts/benchmark/device-common.sh` and the device farm
+     * therefore lock the phone from the host before the instrumentation starts, and nothing turns
+     * auto-rotate back on. Call this in each benchmark's `setupBlock`, before the launch.
+     */
+    fun lockPortrait(device: UiDevice) {
+        device.executeShellCommand("settings put system accelerometer_rotation 0")
+        device.executeShellCommand("settings put system user_rotation 0")
+    }
+
+    /**
      * Runs [deepLinkCommand] and logs its output. The command is the only place a launch can fail
      * without the app's own landing wait being able to name the cause, so its stdout/stderr is
      * worth keeping in logcat.

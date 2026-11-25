@@ -10,7 +10,7 @@
 # Runs on every attached device.
 #
 # Usage:
-#   scripts/benchmark/device-ui.sh [--record] [--threshold <ratio>]
+#   scripts/benchmark/device-ui.sh [--record [--record-runs <n>]] [--threshold <ratio>]
 #
 # Environment:
 #   SAGE_SAMPLE_PERF_BASELINE   baseline root (default build/perfbench-baseline/device)

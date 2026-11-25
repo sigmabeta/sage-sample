@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.feature.home.modules
 
 import dev.zacsweers.metro.Inject
+import net.sigmabeta.sage.sample.feature.home.HomeDay
 import net.sigmabeta.sage.sample.feature.home.HomeModule
 import net.sigmabeta.sage.sample.feature.home.HomeModuleDefinition
 import net.sigmabeta.sage.sample.repository.HomeRepository
@@ -16,6 +17,8 @@ import net.sigmabeta.sage.ui.StringProvider
 class BigImageModuleDefinition(
     private val repository: HomeRepository,
     private val stringProvider: StringProvider,
+    // Optional dependency: graphs that bind no HomeDay get the system clock.
+    private val homeDay: HomeDay = HomeDay.System,
 ) : HomeModuleDefinition {
     override val typeId = "big_image"
 
@@ -28,5 +31,6 @@ class BigImageModuleDefinition(
         dataIdBase = dataIdBase,
         repository = repository,
         stringProvider = stringProvider,
+        homeDay = homeDay,
     )
 }

@@ -114,7 +114,7 @@ fun compareRuns(baseline: PerfResult, current: PerfResult): DiffOutcome {
 }
 
 /** The first reason the two runs are not comparable, or `null` when every guard passes. */
-private fun comparabilityRefusal(baseline: PerfResult, current: PerfResult): DiffRefusal? {
+internal fun comparabilityRefusal(baseline: PerfResult, current: PerfResult): DiffRefusal? {
     val baselineScenarios = baseline.scenarioKeys()
     val currentScenarios = current.scenarioKeys()
     return when {
@@ -142,7 +142,7 @@ private fun Axis.resultKeys(): List<String> = when (this) {
 }
 
 /** One axis's primary cost metric: what its ratios are computed from, and how to label it. */
-private data class PrimaryMetric(val label: String, val values: Map<String, Double>)
+internal data class PrimaryMetric(val label: String, val values: Map<String, Double>)
 
 /**
  * The single per-axis metric lookup: the headline cost of each axis's scenarios, lower-is-better.
@@ -150,7 +150,7 @@ private data class PrimaryMetric(val label: String, val values: Map<String, Doub
  * [Axis] is sealed, so a new axis cannot be added without this `when` failing to compile — there is
  * one place, not a cascade, that decides what each axis is measured by.
  */
-private fun Axis.primaryMetric(): PrimaryMetric = when (this) {
+internal fun Axis.primaryMetric(): PrimaryMetric = when (this) {
     is UiAxis -> PrimaryMetric(
         label = "frame p50 (ms)",
         values = results.associate { it.scenario to it.frameP50Ms },
