@@ -119,11 +119,14 @@ device_note() {
 
 # `timeout` is GNU coreutils; macOS ships none by default. It only bounds the cheap hardware-id
 # probe, so fall back to a plain call rather than making the whole axis unavailable.
+#
+# stdin is /dev/null: every caller probes inside a `while read … done <<<"$online"` loop, and
+# `adb shell` would otherwise read the rest of the device list, so only the first device was probed.
 bounded_probe() {
   if command -v timeout >/dev/null 2>&1; then
-    timeout 20 "$@"
+    timeout 20 "$@" </dev/null
   else
-    "$@"
+    "$@" </dev/null
   fi
 }
 
@@ -295,11 +298,13 @@ EOF
   # only inside the test is undone at the end. Nothing turns auto-rotate back on afterwards.
   while IFS= read -r s; do
     [ -n "$s" ] || continue
-    adb -s "$s" shell svc power stayon true >/dev/null 2>&1
-    adb -s "$s" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
-    adb -s "$s" shell wm dismiss-keyguard >/dev/null 2>&1
-    adb -s "$s" shell settings put system accelerometer_rotation 0 >/dev/null 2>&1
-    adb -s "$s" shell settings put system user_rotation 0 >/dev/null 2>&1
+    # </dev/null: `adb shell` would otherwise read the rest of the device list from this loop's
+    # stdin, so only the first device was woken.
+    adb -s "$s" shell svc power stayon true </dev/null >/dev/null 2>&1
+    adb -s "$s" shell input keyevent KEYCODE_WAKEUP </dev/null >/dev/null 2>&1
+    adb -s "$s" shell wm dismiss-keyguard </dev/null >/dev/null 2>&1
+    adb -s "$s" shell settings put system accelerometer_rotation 0 </dev/null >/dev/null 2>&1
+    adb -s "$s" shell settings put system user_rotation 0 </dev/null >/dev/null 2>&1
   done <<<"$online"
 
   # ---- run this axis on every device ---------------------------------------
