@@ -40,8 +40,27 @@ always returns content and only the local clients simulate terminal states.
 when a load is requested (not at construction). `DemoContentDetailRepository` has no outcome branch;
 a missing ID is its explicit not-found result.
 
+## Identity
+
+`DemoIdentityRepository` is the Android and desktop `IdentityRepository`: `:core:identity`'s
+`SignInService` and `SessionStore` run in-process with the fixed limiter client key `"local"`. The
+Session token is kept in SAGE `Storage` (`identity.session_token`; empty means none), so it survives a
+restart. At startup it seeds the Demo accounts and looks the stored token up: a live Session is
+`SignedIn`, and an unknown, revoked or expired one is cleared and `SignedOut`. Seeding and Sign in
+(PBKDF2) run on `SageDispatchers.computation`. Sign in and Sign out wait for the startup check.
+
+`DemoIdentityBindings` builds `RoomUserDirectory`, `RoomSessionStore` and `SignInService` over a
+`SampleDatabase` that the app provides. This module never builds the database: the Android app ships
+this JVM library against `:core:database`'s Android variant, which has no `SampleDatabases` (the JVM
+builders), so the app chooses `AndroidSampleDatabases.file(context)` or `SampleDatabases.file(path)`.
+
 ## Tests
 
-The demo repository tests live beside the features that consume them (`:features:home`,
+`DemoIdentityRepositoryTest` (this module's `src/test`) runs the identity source over
+`:core:identity:fake`: startup with a missing, valid, expired or unknown token, seeding, every Sign
+in outcome, and Sign out.
+
+
+The content repository tests live beside the features that consume them (`:features:home`,
 `:features:contentdetail`, `:features:listitems`, `:features:search`), with a `jvmTest` dependency
 on this module. They pin determinism, paging, empty/error outcomes, and outcome re-reads.

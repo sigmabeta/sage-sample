@@ -18,18 +18,20 @@ coordinates resolve to the included projects automatically.
 | [`:apps:android`](apps-android.md) | Android application | Activity, Metro app graph, Android platform seams, navigation shell |
 | [`:apps:jvm`](apps-jvm.md) | Compose Desktop application | Window entry point, desktop graph, JVM platform seams, same navigation shell |
 | [`:apps:js`](apps-js.md) | Kotlin/JS application | Browser entry point, web graph, localStorage/HTTP seams, same navigation shell |
-| [`:apps:server`](apps-server.md) | JVM application | Ktor JSON API over `DemoContent`; serves the browser bundle with an SPA fallback |
+| [`:apps:server`](apps-server.md) | JVM application | Ktor JSON API over `DemoContent` behind a Session gate; serves the browser bundle with an SPA fallback |
 | [`:benchmark`](benchmark.md) | Android test module | Device macrobenchmarks for UI scroll and startup, each started through the app's deep links |
 | [`:core:bitmaps`](core-bitmaps.md) | KMP Compose library | Deterministic placeholder art: generator, `@Preview` composable, `generated://` Coil fetcher |
 | [`:core:models:api`](core-models-api.md) | KMP library | Shared domain models + the Content detail route codec |
 | [`:core:nav`](core-nav.md) | KMP library | Shared destinations, route/Back policy, layout and top-bar derivation, URL codec, screen keys |
 | [`:core:repository:api`](core-repository-api.md) | KMP library | Repository seams, JSON wire DTOs + mappings, API route/parameter constants |
+| [`:core:repository:cache`](core-repository-cache.md) | KMP library | User-keyed favorites cache over a `FavoritesSource`; used by the demo and remote favorites |
 | [`:core:repository:demo`](core-repository-demo.md) | JVM library | Deterministic in-process sources and generators; bound by Android/desktop and used by the server |
 | [`:core:repository:remote`](core-repository-remote.md) | KMP library | Ktor-client implementations of the seams; bound by the browser |
 | [`:core:settings`](core-settings.md) | KMP library | Persisted preferences, demo outcome, simulated delay, recent-search history |
 | [`:core:strings:api`](core-strings-api.md) | KMP library | One `SampleStringId` vocabulary for every user-visible string |
 | [`:core:strings:real`](core-strings-real.md) | KMP library | The single id → English table (`SampleStringProvider`) |
 | [`:core:ui:components:api`](core-ui-components-api.md) | KMP Compose library | Shared renderer suite: SAGE `ListModel` → composables, search chrome |
+| [`:core:ui:components:models`](core-ui-components-models.md) | KMP library | Compose-free form models (text field, button, message) that features build |
 | [`:core:ui:previews`](core-ui-previews.md) | Android test-support library | VM-free `ListState` rendering, device matrix and `FakeModelGenerator` |
 | [`:core:ui:shell`](core-ui-shell.md) | KMP Compose library | Shared composition root and Voyager navigation host |
 | [`:core:ui:theme:api`](core-ui-theme-api.md) | KMP Compose library | `SampleTheme` + the shared type scale |
@@ -42,6 +44,8 @@ coordinates resolve to the included projects automatically.
 | [`:features:home:screenshot`](features-home-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Home |
 | [`:features:listitems`](features-listitems.md) | KMP feature | Three list/grid screens, two of them paginated |
 | [`:features:listitems:screenshot`](features-listitems-screenshot.md) | Android screenshot leaf | Paparazzi goldens for List Items, List Items with Images and Grid of Images |
+| [`:features:login`](features-login.md) | KMP feature | Sign-in form over `IdentityRepository`; emits `LoginEvent.SignedIn` |
+| [`:features:login:screenshot`](features-login-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Login |
 | [`:features:search`](features-search.md) | KMP feature | Debounced search, two result sets, persisted recent searches |
 | [`:features:search:screenshot`](features-search-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Search |
 | [`:features:settings`](features-settings.md) | KMP feature | Preferences, demo controls, reset action, About rows |
@@ -64,6 +68,7 @@ apps/server ──┘ (DemoContent)
         └─ core/ui/shell ─┬─ features/* ── core/repository:api ── core/models
                           │        │
                           │        ├─ core/strings:api
+                          │        ├─ core/ui/components:models (form rows)
                           │        └─ core/ui/components:api (renderers)
                           ├─ core/nav         (shared shell policy + URL codec)
                           ├─ core/strings:real (text)
@@ -72,7 +77,7 @@ apps/server ──┘ (DemoContent)
 
 core/repository:demo  ── core/repository:api + core/settings + SAGE ui.strings (StringGenerator)
 core/repository:remote ── core/repository:api + core/settings + Ktor client
-apps/server ── core/repository:demo + core/repository:api
+apps/server ── core/repository:demo + core/repository:api + core/identity (Room Users/Sessions)
 
 features/*/screenshot ── features/* + core/ui/previews ── core/ui/components:api
                                                         └─ core/models + core/strings:real + core/ui/theme:api
@@ -111,7 +116,7 @@ Rules that hold across the graph:
 |---|---|---|
 | `sage.jvm` | `:core:repository:demo`, `:apps:jvm`, `:apps:server` | Kotlin/JVM 17, detekt, ktlint |
 | `sage.di` | `:apps:jvm` | Metro compiler plugin (KMP modules apply `metro` directly) |
-| `sage.kmp` + `sage.kmp.js` | features, `:core:models:api`, `:core:nav`, `:core:settings`, `:core:viewmodel`, `:core:repository:api`, `:core:repository:remote`, `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Kotlin Multiplatform (Android + JVM, plus JS under `-Psage.js`) |
+| `sage.kmp` + `sage.kmp.js` | features, `:core:models:api`, `:core:nav`, `:core:settings`, `:core:viewmodel`, `:core:repository:api`, `:core:repository:remote`, `:core:bitmaps`, `:core:strings:api`, `:core:strings:real`, `:core:ui:components:models`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Kotlin Multiplatform (Android + JVM, plus JS under `-Psage.js`) |
 | `sage.compose.kmp` | `:core:bitmaps`, `:core:ui:components:api`, `:core:ui:shell`, `:core:ui:theme:api` | Compose Multiplatform for the KMP targets |
 | `sagesample.screenshot` | `:features:*:screenshot` | `sage.android` + `sage.compose.android` + Paparazzi; derives the namespace from the module path; adds `:core:ui:previews`, `:core:strings:real`, SAGE `appcomm`/`list`; disables JUnit HTML/XML reports (Paparazzi alpha's reporter is not Gradle-9 compatible) |
 

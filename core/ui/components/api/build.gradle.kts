@@ -19,6 +19,8 @@ kotlin {
                 implementation(projects.core.models.api)
 
                 api(libs.sage.common.ui.components)
+                // The sample-owned rows (form fields, buttons, messages) these renderers draw.
+                api(projects.core.ui.components.models)
                 api(libs.sage.common.ui.strings)
                 api(projects.core.strings.api)
 

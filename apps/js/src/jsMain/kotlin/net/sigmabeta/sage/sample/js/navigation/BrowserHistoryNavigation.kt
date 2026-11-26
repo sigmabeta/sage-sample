@@ -24,13 +24,6 @@ class BrowserHistoryNavigation : SampleBrowserNavigation {
     /** False until the initial URL has been decoded and applied; reports before that are noise. */
     private var ready: Boolean = false
 
-    private val apiOverride: String? = window.location.search
-        .removePrefix("?")
-        .split('&')
-        .firstOrNull { it.startsWith("api=") }
-        ?.substringAfter('=')
-        ?.takeIf { it.isNotBlank() }
-
     init {
         window.addEventListener("popstate", { _: Event -> onPopState() })
     }
@@ -52,7 +45,7 @@ class BrowserHistoryNavigation : SampleBrowserNavigation {
         if (push) {
             if (window.location.pathname == url) return
             depth += 1
-            window.history.pushState(depth, "", withApiOverride(url))
+            window.history.pushState(depth, "", url)
         } else {
             replaceCurrent(route)
         }
@@ -98,15 +91,8 @@ class BrowserHistoryNavigation : SampleBrowserNavigation {
         SampleRouteUrl.decode(window.location.pathname)
 
     private fun replaceCurrent(route: SampleRoute) {
-        window.history.replaceState(
-            depth,
-            "",
-            withApiOverride(SampleRouteUrl.encode(route)),
-        )
+        window.history.replaceState(depth, "", SampleRouteUrl.encode(route))
     }
-
-    /** Preserves the dev `?api=` override across every URL this bridge writes. */
-    private fun withApiOverride(url: String): String = apiOverride?.let { "$url?api=$it" } ?: url
 
     private fun readDepth(): Int = when (val state = window.history.state) {
         is Int -> state

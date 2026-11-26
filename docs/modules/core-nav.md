@@ -25,6 +25,7 @@ decisions live here now; the Compose/Voyager host stays app-side.
 | `SampleScreenKeys.kt` | `contentDetailScreenKey(contentId)`. |
 | `SampleRoute.kt` | `SampleRoute` (tab + screen + optional content id) and `SampleRouteUrl` encode/decode. |
 | `SampleDeepLink.kt` | `SampleDeepLink.routeFor(value)`: `sagesample://` links (authority = first route segment) and bare paths, decoded by `SampleRouteUrl`. |
+| `SampleSignInGate.kt` | The Sign-in gate: `SampleGateSurface` (`Blank` / `Login` / `Shell(user)`) and the immutable `SampleSignInGate` (`onIdentity`, `onRouteRequested`, `onShellRoute`, `onSignOutRequested`, `onRouteRestored`, `routeToRestore`), plus `gateBackActionFor`. |
 | `SampleLifecycle.kt` | `foregroundActionFor(Lifecycle.Event)`. |
 
 ## What stays out of `:core:nav`
@@ -49,13 +50,16 @@ The nine duplicated policy test classes moved here once: `SampleDestinationTest`
 `SampleRouteUrlTest`, which pins `/home`, `/browse/list-items`, `/home/content-detail/{id}`,
 tab-less short links, canonical round trips, and malformed paths, and `SampleDeepLinkTest`, which
 pins the native `sagesample://` form, bare launch-argument paths, rejected schemes/routes and a
-canonical round trip. The shared `SampleChromeTest`/`SampleTabsTest` live in `:core:ui:shell`; the
+canonical round trip. `SampleSignInGateTest` pins one surface per identity state, the route kept
+while gated (latest wins), the route a lost Session restores, Home after a deliberate sign-out or
+a different User, and Back falling through while gated. The shared `SampleChromeTest`/`SampleTabsTest` live in `:core:ui:shell`; the
 apps keep only their platform tests.
 
 ## Module facts
 
 - **Plugin:** `sage.kmp` + `sage.kmp.js` (pure Kotlin, no Compose)
 - **Source sets:** `src/commonMain/kotlin`, tests in `src/jvmTest/kotlin`
-- **Dependencies:** `:core:models:api`, `:core:strings:api`, SAGE `nav`, `appcomm`, `list`,
+- **Dependencies:** `:core:models:api`, `:core:strings:api`, `:core:repository:api` (`IdentityState`,
+  `User`), SAGE `nav`, `appcomm`, `list`,
   `ui.components`, `ui.iconsApi`, and `androidx.lifecycle:lifecycle-common` (all `api`).
 - **Consumers:** `:apps:android`, `:apps:jvm`, `:apps:js` (the server does not navigate).

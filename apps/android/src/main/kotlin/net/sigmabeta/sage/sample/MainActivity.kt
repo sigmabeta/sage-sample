@@ -8,6 +8,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.lifecycle.lifecycleScope
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import net.sigmabeta.sage.sample.nav.SampleDeepLink
@@ -26,6 +27,9 @@ class MainActivity : ComponentActivity() {
      * outgoing shell consume the new launch's route, leaving the new shell on Home.
      */
     private val deepLinks = MutableSampleDeepLinkSource()
+
+    /** Set in [onCreate]; a `FLAG_ACTIVITY_CLEAR_TASK` relaunch builds a fresh Activity and hook. */
+    private var launchHook: BenchmarkLaunchHook? = null
 
     // In benchmark builds, report the app fully drawn the first time a content-bearing image
     // composes — the "first content" the device startup macrobenchmark measures
@@ -47,10 +51,15 @@ class MainActivity : ComponentActivity() {
         // application. Here that is only the ViewModel factory — screens resolve their own
         // view models from it with metroViewModel().
         val graph = (application as SampleApplication).appGraph
+        // Benchmark builds sign a Demo account in from a launch extra before the gate settles; every
+        // other build type passes the identity repository straight through.
+        val launchHook = BenchmarkLaunchHook(graph.identityRepository, lifecycleScope)
+        this.launchHook = launchHook
 
         // Only a fresh launch applies the intent's link. A recreated activity (rotation, process
         // restore) keeps the shell state it saved instead of replaying the link on top of it.
         if (savedInstanceState == null) {
+            launchHook.onIntent(intent)
             offerDeepLink(intent)
         }
 
@@ -63,6 +72,7 @@ class MainActivity : ComponentActivity() {
                 // Back at a tab root leaves the tabbed shell: finish the activity, which is the
                 // platform's default Back behaviour.
                 SampleApp(
+                    identityRepository = launchHook.gatedIdentity,
                     settingsManager = graph.settingsManager,
                     interFontFamily = InterFontFamily,
                     platformBack = AndroidPlatformBack,
@@ -80,6 +90,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        launchHook?.onIntent(intent)
         offerDeepLink(intent)
     }
 

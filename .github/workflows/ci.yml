@@ -63,12 +63,16 @@ jobs:
           -x :features:home:screenshot:test
           -x :features:listitems:screenshot:test
           -x :features:search:screenshot:test
+          -x :features:login:screenshot:test
           -x :features:settings:screenshot:test
           :core:models:api:jvmTest :core:nav:jvmTest :core:settings:jvmTest
-          :core:viewmodel:jvmTest :core:repository:api:jvmTest :core:repository:remote:jvmTest
-          :core:bitmaps:jvmTest :core:strings:real:jvmTest :core:ui:shell:jvmTest
+          :core:viewmodel:jvmTest :core:repository:api:jvmTest :core:repository:cache:jvmTest
+          :core:repository:remote:jvmTest
+          :core:bitmaps:jvmTest :core:database:jvmTest :core:identity:jvmTest :core:strings:real:jvmTest
+          :core:ui:shell:jvmTest
           :features:browse:jvmTest :features:contentdetail:jvmTest :features:home:jvmTest
-          :features:listitems:jvmTest :features:search:jvmTest :features:settings:jvmTest
+          :features:listitems:jvmTest :features:login:jvmTest :features:search:jvmTest
+          :features:settings:jvmTest
           :testing:perfbench-core:jvmTest :testing:perfbench:test
           :apps:server:test --continue
           --build-cache --no-daemon --max-workers=2

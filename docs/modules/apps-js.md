@@ -33,8 +33,8 @@ download so it cannot add project repositories under `FAIL_ON_PROJECT_REPOS`).
 | File | Role |
 |---|---|
 | `JsMain.kt` | Builds `WebSampleAppGraph`, wires Escape→Back and arrow-key focus, removes the splash, mounts `SampleApp` in `ComposeViewport`. It provides `LocalForceFakeImages = true`, so generated art renders directly instead of through Coil. |
-| `di/WebSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager`, `stringProvider` and `browserNavigation`. |
-| `di/WebSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: shared strings, `BasicHatchet`, `NoopAnalytics`, `AppInfo` from generated `WebBuildInfo`, `LocalStorageStorage`, JS dispatchers, app scope, Ktor `HttpClient` + `SampleApiClient`, `BrowserHistoryNavigation`. |
+| `di/WebSampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`; exposes `settingsManager`, `stringProvider`, `browserNavigation` and `identityRepository` (the Sign-in gate's seam). |
+| `di/WebSampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)`: shared strings, `BasicHatchet`, `NoopAnalytics`, `AppInfo` from generated `WebBuildInfo`, `LocalStorageStorage`, JS dispatchers, app scope, Ktor `HttpClient` + `SampleApiClient` (same-origin only: `window.location.origin`), `BrowserHistoryNavigation`. |
 | `storage/LocalStorageStorage.kt` | `Storage` over `window.localStorage` with per-key `StateFlow`s and cross-tab `storage`-event sync. |
 | `navigation/BrowserHistoryNavigation.kt` | `SampleBrowserNavigation`: `pushState`/`replaceState`, `popstate` → `SampleShellNavigation.navigateTo`, Back delegation when an app entry exists behind the current URL. |
 | `ui/WebPlatformBack.kt` | Escape (outside text fields) → the shared Back policy. |

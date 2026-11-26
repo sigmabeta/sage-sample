@@ -72,6 +72,15 @@ object SampleStringProvider : StringProvider {
         SampleStringId.GRID_OF_IMAGES_EMPTY to "No images to show.",
         SampleStringId.GRID_OF_IMAGES_ERROR to "Couldn't load images.",
 
+        SampleStringId.LOGIN_TITLE to "Sign in",
+        SampleStringId.LOGIN_USERNAME_LABEL to "Username",
+        SampleStringId.LOGIN_PASSWORD_LABEL to "Password",
+        SampleStringId.LOGIN_SUBMIT to "Sign in",
+        SampleStringId.LOGIN_SUBMITTING to "Signing in\u2026",
+        SampleStringId.LOGIN_REJECTED to "Incorrect username or password.",
+        SampleStringId.LOGIN_THROTTLED to "Too many attempts, try again shortly.",
+        SampleStringId.LOGIN_UNREACHABLE to "Couldn\u2019t reach the server. Try again.",
+        SampleStringId.LOGIN_DEMO_ACCOUNT_HINT to "Demo account: demo / sage, demo2 / sage",
         SampleStringId.SEARCH_TITLE to "Search",
         SampleStringId.SEARCH_HINT to "Search",
         SampleStringId.SEARCH_CLEAR_DESCRIPTION to "Clear search",
@@ -117,6 +126,13 @@ object SampleStringProvider : StringProvider {
         SampleStringId.SETTINGS_SECTION_ABOUT to "About",
         SampleStringId.SETTINGS_LABEL_APP_VERSION to "App version",
         SampleStringId.SETTINGS_LABEL_BUILD_DATE to "Build date",
+        SampleStringId.SETTINGS_ACCOUNT_SECTION to "Account",
+        SampleStringId.SETTINGS_ACCOUNT_SIGNED_IN_AS to "Signed in as",
+        SampleStringId.SETTINGS_ACCOUNT_SIGN_OUT to "Sign out",
+
+        SampleStringId.CONTENT_DETAIL_FAVORITE_ADD to "Add to favorites",
+        SampleStringId.CONTENT_DETAIL_FAVORITE_REMOVE to "Remove from favorites",
+        SampleStringId.CONTENT_DETAIL_FAVORITE_FAILED to "Couldn't save your favorite.",
     )
 
     override fun getString(string: SageStringId): String =

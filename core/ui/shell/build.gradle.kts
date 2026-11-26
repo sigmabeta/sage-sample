@@ -32,6 +32,7 @@ kotlin {
                 api(projects.features.contentdetail)
                 api(projects.features.home)
                 api(projects.features.listitems)
+                api(projects.features.login)
                 api(projects.features.search)
                 api(projects.features.settings)
 
@@ -66,6 +67,7 @@ kotlin {
         named("jvmTest") {
             dependencies {
                 implementation(libs.junit4)
+                implementation(libs.kotlinx.coroutines.test)
             }
         }
     }

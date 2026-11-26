@@ -20,8 +20,10 @@ dependency. `jvmTest` holds the shared shell tests.
 
 | File | Role |
 |---|---|
-| `SampleApp.kt` | Composition root: selects `SampleTheme(darkTheme, fontFamily)` from the persisted settings, installs the platform seams as composition locals, renders the nav host. |
-| `SampleNavHost.kt` | `TabNavigator` shell: tab switching (leaves the outgoing stack alone, marks it to reopen at root), pushed screens, width class, chrome reset, Back application. |
+| `SampleApp.kt` | Composition root: selects `SampleTheme(darkTheme, fontFamily)` from the persisted settings, installs the platform seams as composition locals, renders the Sign-in gate. |
+| `SampleSignInGateHost.kt` | Blank while Checking, Login (own root `Navigator`, centred title, no tabs or hamburger) while Signed out, and the `key(user.id)` `SampleNavHost` while Signed in. |
+| `SampleSignInGateHolder.kt` | Holds the `:core:nav` gate: `observeIdentityAndGatedDeepLinks` follows `IdentityRepository.state` and takes deep links off the source while gated (deciding against the current gate in the same update that records the link), records the shell's route, saves the route to restore as a `SampleRouteUrl` string, and `signOut(browser)` (a deliberate sign-out restores Home; with a browser bridge the URL is first replaced with Home's). A feature's `SignOutRequested` reaches it through `handleEffect`. |
+| `SampleNavHost.kt` | `TabNavigator` shell (only while Signed in; reports its route to the gate and opens on the gate's restore route): tab switching (leaves the outgoing stack alone, marks it to reopen at root), pushed screens, width class, chrome reset, Back application. |
 | `SampleScreens.kt` | One Voyager `Screen` per destination, resolving its own view model with `metroViewModel<...>()`; the shared `SampleListScreen` renders title, layout and lifecycle. `ContentDetailScreen` stores its ID/artwork as wire strings because Voyager writes Screens into the Activity saved state as `java.io.Serializable`. |
 | `SampleTabs.kt` | Home/Browse/Search tabs with retained inner `Navigator`s, the slide/fade between them (`SampleCurrentTab`), the per-tab navigator saver that reopens a left tab at its root, active-tab registration, the shared Back local, and `screenFor`. |
 | `SampleNavEffects.kt` | `LocalSampleNavEffects`: forwards a feature `SageEvent` into the app. |
@@ -41,6 +43,7 @@ dependency. `jvmTest` holds the shared shell tests.
 
 | Parameter | Android | Desktop / Web |
 |---|---|---|
+| `identityRepository` (required) | graph's `IdentityRepository` (demo) | graph's `IdentityRepository` (demo on desktop, `RemoteIdentityRepository` on web) |
 | `interFontFamily` | `res/font` OTF family | classpath `fonts/` OTF family (desktop); default family (web) |
 | `platformBack` | `AndroidPlatformBack` (`BackHandler`) | `DesktopPlatformBack` (Escape/Backspace + mouse back) / `WebPlatformBack` (Escape) |
 | `screenContainer` | passthrough (Voyager supplies stores) | `PerScreenSampleScreenContainer` (store off a `ScreenModel`; desktop + web) |
@@ -55,6 +58,7 @@ dependency. `jvmTest` holds the shared shell tests.
 Re-exported (`api`), because the apps consume these through the shell: `:core:nav`,
 `:core:models:api`, `:core:strings:api`, `:core:viewmodel`, `:core:settings`,
 `:core:ui:components:api`, `:core:ui:theme:api`, `:core:bitmaps`, and every `:features:*` module
+(`:features:login` included)
 (so every app graph sees the contributed view models). Internal: SAGE `list`, `appcomm`,
 `ui.components`, `ui.iconsReal`, `ui.listScreens`, Metro's Compose resolver, Voyager
 navigator/screenmodel/tab-navigator/transitions, lifecycle-runtime-compose and coroutines. The
@@ -66,6 +70,9 @@ preview harness; the Android target uses the AndroidX BOM + preview artifact.
 `jvmTest` holds the shared `SampleChromeTest` (chrome defaults/reset), `SampleTabsTest` (stable
 tab roots, one tab per top-level destination, every destination mapped to a screen, and the pending
 root reset a tab switch leaves behind), `SampleDeepLinkSourceTest` (a pending native route is
-consumed once and a plain launch leaves it alone), and `ContentDetailScreenSerializationTest` (the
+consumed once and a plain launch leaves it alone), `SampleSignInGateHolderTest` (the surface
+follows identity, gated deep links are held and consumed — including one racing the startup check
+to Signed in, which is left for the shell rather than dropped — a 401 restores the shell's route,
+`signOut` restores Home, the saver round trip), and `ContentDetailScreenSerializationTest` (the
 Content detail Screen survives Voyager's `java.io.Serializable` saved-state round trip). The pure
 policy tests stay in `:core:nav`; desktop-only Back-key tests stay in `:apps:jvm`.

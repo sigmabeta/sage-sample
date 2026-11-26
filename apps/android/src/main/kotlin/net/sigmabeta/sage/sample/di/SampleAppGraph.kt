@@ -7,6 +7,7 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 import net.sigmabeta.sage.di.AppScope
+import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -37,6 +38,12 @@ interface SampleAppGraph : ViewModelGraph {
      * component renderers can resolve accessibility labels without reaching into DI.
      */
     val stringProvider: StringProvider
+
+    /**
+     * The Sign-in gate reads the identity state at the composition root before any screen exists,
+     * so the app-scoped repository is a graph accessor rather than a per-screen view model.
+     */
+    val identityRepository: IdentityRepository
 
     /**
      * Contributed modules that take a `Context` (strings, analytics) get the application

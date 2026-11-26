@@ -1,7 +1,9 @@
 # `:apps:server`
 
-A stateless Ktor/Netty server that serves the `:apps:js` bundle and the sample's JSON API. Every
-response comes from `:core:repository:demo`'s deterministic generators.
+A Ktor/Netty server that serves the `:apps:js` bundle and the sample's JSON API. Content comes from
+`:core:repository:demo`'s deterministic generators; the server's own state is its Users and
+Sessions, held in a Room database file through `:core:identity` (see
+`docs/adr/0001-server-held-users-and-sessions.md`). Every content route needs a Session.
 
 ```sh
 SAGE_SAMPLE_PORT=8080 ./gradlew :apps:server:run -Psage.js=true
@@ -17,18 +19,72 @@ API, and static requests return a 503 explaining how to build the bundle.
 |---|---|
 | `SAGE_SAMPLE_PORT` | `8080` |
 | `SAGE_SAMPLE_BIND_HOST` | `0.0.0.0` |
+| `SAGE_SAMPLE_DB_PATH` | `sage-sample.db` in the working directory |
+| `SAGE_SAMPLE_SECURE_COOKIE` | off; `true`/`1`/`yes`/`on` turn it on |
+
+Startup opens the database, seeds the Demo accounts (`demo`/`sage`, `demo2`/`sage`; idempotent),
+and logs a warning when it binds a non-loopback address with the secure-cookie flag off. Turn the
+flag on whenever the server sits behind TLS.
 
 ## Routes
 
-- `GET /api/health` → `{"ok":true}`
+- `GET /api/health` → `{"ok":true}` (public)
+- `/api/session` (public) — see below
+- `/api/me/favorites` — the signed-in User's favorites; see below
 - `GET /api/home/{count,item,grid}` — the Home demo catalog
 - `GET /api/content?id=` — Content detail (`null` for unknown/malformed ids)
 - `GET /api/list-items` / `GET /api/grid-of-images` — paged demo rows
 - `GET /api/search?q=&kind=list|grid` — deterministic results
-- Unknown `/api…` → JSON 404; app paths → `index.html`; missing assets → real 404
+- Unknown `/api…` → 401 when Signed out, else JSON 404; app paths → `index.html`; missing assets →
+  real 404. The SPA shell and assets never need a Session.
 
-`configureSampleServer()` in `SampleServer.kt` is mounted by both `main()` and the tests.
+Every `/api` route except health and the Session resource answers a Signed out request with
+`401 {"error":"Sign in required"}`.
+
+### Session resource
+
+The Session token travels in the `sage_session` cookie: `HttpOnly`, `SameSite=Lax`, `Path=/`,
+`Max-Age` = 30 days (the Session's absolute expiry), and `Secure` iff `SAGE_SAMPLE_SECURE_COOKIE`.
+
+| Request | Response |
+|---|---|
+| `POST /api/session` `{"username","password"}` | 200 `{"user":{"id","username"}}` + `Set-Cookie` |
+| — wrong username or password | 401 `{"error":"Wrong username or password"}` (same for both) |
+| — too many recent failures | 429 `{"error":…}` + `Retry-After` (whole seconds, rounded up) |
+| — unreadable body | 400 `{"error":"Malformed request body"}` |
+| `GET /api/session` | 200 `{"user":…}`, or 401 `{"error":"Signed out"}` |
+| `DELETE /api/session` | 204; revokes the Session and clears the cookie (`Max-Age=0`), even when Signed out |
+| `POST`/`DELETE` without `Content-Type: application/json` | 415 `{"error":"Expected application/json"}` |
+
+A `charset` parameter on the content type is fine. Requiring JSON on `DELETE` too means a cross-site
+page cannot Sign a User out with a plain form post.
+
+`configureSampleServer(identity, secureCookie)` in `SampleServer.kt` is mounted by both `main()`
+(over `ServerIdentity.overRoom(SampleDatabases.file(dbPath))`) and the tests (over the
+`:core:identity:fake` fakes, or an in-memory Room database).
+
+### Favorites (User-scoped data)
+
+The User always comes from the Session cookie (the gate stores the admitted Session on the call, and
+routes read `call.signedInUser`); no route accepts a user id, and a user id in the query is ignored.
+
+| Request | Response |
+|---|---|
+| `GET /api/me/favorites` | 200 `{"contentIds":[...]}`, oldest favorite first |
+| `PUT /api/me/favorites/{contentId}` | 204; favoriting twice is fine |
+| `DELETE /api/me/favorites/{contentId}` | 204; un-favoriting an absent id is fine |
+| `PUT`/`DELETE` without `Content-Type: application/json` | 415 `{"error":"Expected application/json"}` |
+| an id outside `A-Za-z0-9_.:-` | 400 `{"error":"Missing or invalid 'contentId'"}` |
+| any of them without a Session | 401 `{"error":"Sign in required"}` |
+
+`configureSampleServer(identity, secureCookie, favorites)` takes a `FavoritesStore`: `main()` passes
+`RoomFavoritesStore(database)` (the `favorites` table beside Users and Sessions); tests use
+`InMemoryFavoritesStore`, the default.
 
 ## Tests
 
-`./gradlew :apps:server:test` runs the route tests through Ktor's `testApplication`.
+`./gradlew :apps:server:test` runs the route tests through Ktor's `testApplication`:
+`SessionRoutesTest` (each Session status and the cookie flags), `ApiGateTest` (the 401 gate),
+`FavoritesRoutesTest` (two Users' favorites stay separate, 401 without a Session),
+`RoomFavoritesServerTest` (favorites survive a restart), `SampleServerTest` (content, signed in), `RoomIdentityServerTest` (Room end to end) and
+`ServerConfigTest`.

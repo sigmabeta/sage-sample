@@ -198,22 +198,30 @@ apps/server/                Ktor server; serves the JS bundle and the JSON API
   ServerConfig.kt           SAGE_SAMPLE_PORT / SAGE_SAMPLE_BIND_HOST
   build.gradle.kts          copies the dev bundle for `run`, the production bundle for installDist
 core/repository/api/        KMP repository interfaces, wire DTOs + API route constants
+core/repository/cache/      KMP User-keyed favorites cache shared by the demo and remote sources
 core/repository/demo/       JVM deterministic sources bound by Android/desktop (and used by the server)
 core/repository/remote/     Ktor-client repository implementations used by the browser app
 core/bitmaps/               KMP Compose module shared by every app
   BitmapGenerator.kt        deterministic gradient ImageBitmap seeded by a source object
   GeneratedBitmap.kt        @Preview-facing composable that renders a generated bitmap
   GeneratedImageFetcher.kt  Coil fetcher for generated:// URLs, seeded by the request URL
+core/database/              Room KMP Users + Sessions over bundled SQLite (Android + JVM, no JS)
+  schemas/                  committed Room schema JSON, one file per version
+core/identity/              UserDirectory, SessionStore, Demo accounts, sign-in limiter over
+                            :core:database (Android + JVM, no JS)
+  fake/                     in-memory UserDirectory/SessionStore + FakeClock for JVM tests
 core/models/api/            KMP domain models + Content detail route codec
 core/nav/                   KMP destinations, route/Back/layout/chrome policy, URL + deep-link codec,
                             screen keys
 core/strings/api/           SampleStringId: the one id vocabulary for all user-visible text
 core/strings/real/          SampleStringProvider: the single id -> English table
+core/ui/components/models/  Compose-free form models (text field, button, message) features build
 core/ui/components/api/     KMP Compose renderer suite shared by every app
   ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
   *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
   SearchContent.kt          app-owned search: adaptive grid with the field and status scrim
+  FormListItems.kt          text field, button and inline message rows for forms
   subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
   utils/                    focus, image-size and math helpers
   previews/                 shared sizing constants + Android @Preview harnesses
@@ -265,6 +273,8 @@ features/listitems/         List Items (NameCaption), List Items with Images
                             (ImageNameCaption over generated:// Coil art), and Grid of Images
                             (50 GridImage cells over generated:// Coil art)
 features/listitems/screenshot/  Paparazzi goldens for all three List Items screens
+features/login/             sign-in form over IdentityRepository; emits LoginEvent.SignedIn
+features/login/screenshot/  Paparazzi goldens for Login (empty/filled/submitting/refused states)
 features/search/            query + two deterministic generated result sets (list rows, grid)
 features/search/screenshot/ Paparazzi goldens for Search
 features/settings/          theme, font, simulate-delay and same-content rows, app version and build date
@@ -438,7 +448,10 @@ and hero artwork reuse that row's own name and artwork seed, so tapping a list r
 tile or search result opens the item the user actually saw. Related rows and content parts embed
 their parent ID (for example `content-detail:related:list-items:7:1`), so drilling into one also
 keeps its name and thumbnail. The only fixed text on the screen is section chrome and the click
-snackbar; titles, labels, CTA text, names and captions are generated.
+snackbar; titles, labels, CTA text, names and captions are generated. The first CTA is the
+signed-in User's favorite toggle, backed by `FavoritesRepository`: Room rows on Android/desktop
+(`DemoFavoritesRepository`), `/api/me/favorites` in the browser (`RemoteFavoritesRepository`), both
+over the User-keyed `CachedFavoritesRepository` in `:core:repository:cache`.
 
 Search keeps the same feature-state / app-rendering split, with a search shell: the
 shared `SearchContent` overlays a `SearchField` on an adaptive results grid, with a status-bar scrim
@@ -462,11 +475,15 @@ loading and error rows. If both calls come back empty, the screen shows its no-r
 `window.localStorage`, and binds `:core:repository:remote` instead of the demo sources. Artwork is
 drawn directly by `:core:bitmaps` (`LocalForceFakeImages`), so the browser needs no Coil fetcher.
 
-`:apps:server` is a stateless Ktor/Netty server. It serves the webpack bundle from
+`:apps:server` is a Ktor/Netty server that holds Users and Sessions in a Room database file
+(`SAGE_SAMPLE_DB_PATH`) through `:core:identity`. It serves the webpack bundle from
 `src/main/resources/static` with an SPA fallback (`/browse/list-items` and `/settings` both return
 `index.html`; a missing asset is a real 404) and a JSON API under `/api` backed by the same
-`DemoContent` generators the demo repositories use. Unknown `/api` paths return a JSON 404, never
-the shell. `SAGE_SAMPLE_PORT` / `SAGE_SAMPLE_BIND_HOST` control the listen address.
+`DemoContent` generators the demo repositories use. `/api/session` signs in (an HttpOnly,
+`SameSite=Lax` `sage_session` cookie), reads and ends a Session; every other `/api` route except
+`/api/health` is a 401 without one. Unknown `/api` paths are gated too, then a JSON 404, never the
+shell. `SAGE_SAMPLE_PORT` / `SAGE_SAMPLE_BIND_HOST` control the listen address and
+`SAGE_SAMPLE_SECURE_COOKIE` the cookie's `Secure` flag.
 
 `SampleRoute`/`SampleRouteUrl` (`:core:nav`) is the pure URL model:
 `/home`, `/browse/list-items`, `/home/content-detail/list-items:7`; short links such as `/settings`
@@ -493,6 +510,27 @@ from the shared strings module; both composition roots install the graph's `Stri
 Navigation uses Voyager's `TabNavigator` (from SAGE's catalog). The shared `:core:ui:shell` owns
 the tabbed shell; each app supplies only its platform seams:
 
+- **The Sign-in gate sits above the tabs.** `SampleApp` takes the graph's `IdentityRepository`, and
+  `SampleSignInGateHost` follows its `state` through `SampleSignInGateHolder` (pure policy:
+  `:core:nav`'s `SampleSignInGate`). While the startup check runs (`Checking`) it shows a blank
+  surface; while Signed out it shows only Login: a centred title bar, no tabs, no hamburger, no
+  back arrow. Login is a plain Voyager `Screen` in its own root `Navigator`, not a
+  `SampleDestination`, so no route, URL or deep link names it, and its `LoginEvent`s are not
+  navigation. Platform Back on either surface falls through to the host (`gateBackActionFor`).
+- **Signed in, the shell is keyed on the User.** It is composed only while Signed in, inside
+  `key(user.id)`. A Sign out or a Session lost to a 401 removes it from composition, and Voyager
+  then disposes every tab's inner navigator with its screens and view models; the next Sign in
+  opens fresh tab stacks.
+- **The gate keeps the route to restore.** A deep link that arrives while gated is taken off the
+  `SampleDeepLinkSource`, held (the latest one wins) and consumed; the shell opens on it after
+  Sign in, Home otherwise. While open, the shell reports its active route to the gate, so a 401
+  restores the screen the user was on. A deliberate sign-out (`SampleSignInGateHolder.signOut`)
+  restores Home instead. The held route survives rotation as its `SampleRouteUrl` string, and the
+  holder is built from the current state, so a Signed-in rotation never flashes the blank surface.
+- **On the web the URL is the request.** While gated, `BrowserHistoryNavigation` is detached
+  (`onShellDisposed`) and the URL is never rewritten, so `/browse/list-items` opened Signed out is
+  still in the address bar at Login and is applied by `onShellReady` after Sign in. The shell
+  skips the gate's restore route when a browser bridge is present.
 - **Destinations** are in `SampleDestination`, which implements SAGE's `RouteDescriptor`.
 - **Home, Browse and Search are tabs** (`SampleTabs.kt`), each owning a retained inner
   `Navigator` and a stable root screen. The `NavigationBar` on compact windows and the
@@ -529,7 +567,8 @@ the tabbed shell; each app supplies only its platform seams:
   its first parseable argument; each feeds a `MutableSampleDeepLinkSource` in `:core:ui:shell`.
   `SampleNavHost` applies the pending route through `SampleShellNavigation.navigateTo` — the same
   path a browser URL takes — and then consumes it, so rotation or a reopened window cannot replay
-  the link.
+  the link. While Signed out the gate takes the link instead and the shell opens on it after Sign
+  in.
 - **The top bar comes from the active route.** The screen reports its SAGE
   `ListStateActual.title` through `LocalSampleTitleBarSink`; `topBarState` uses the reported
   `title` and `shouldShowBack` (falling back to the destination label and `isTopLevel` until

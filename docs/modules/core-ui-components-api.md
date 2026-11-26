@@ -31,13 +31,29 @@ It dispatches each SAGE model the sample uses to a renderer:
 - wrappers — `HorizontalScroller`, `DraggableListModel`, `DismissibleListModel` (swipe to remove)
 - settings — `DropdownSettingListModel`, `CheckableListModel`, `LabelValueListModel`, …
 - search — `SearchHistoryListModel`, `SearchResultListModel`
+- forms — `TextFieldListModel`, `ButtonListModel`, `FormMessageListModel` (`FormListItems.kt`)
 - unknown models fall through to a `Spacer`, so a feature can add a model without breaking the app
 
 Each item is tagged with its model type for UI tests and wrapped in SAGE's perf measurement
 (`WithMeasurementComponent`).
 
-`sage.common.ui.components` and `sage.common.ui.strings` are re-exported with `api`, so consumers get
-SAGE's `ListModel` vocabulary and this module's renderers from one dependency.
+`sage.common.ui.components`, `sage.common.ui.strings` and `:core:ui:components:models` are
+re-exported with `api`, so consumers get SAGE's `ListModel` vocabulary, the sample's form models and
+this module's renderers from one dependency.
+
+### Form rows
+
+The form models live in the Compose-free `:core:ui:components:models`, because the features that
+build them must not depend on Compose. SAGE's `EditTextListModel` has its own submit/cancel pair and
+no masking, so it does not fit a sign-in form.
+
+- `TextFieldListItem` draws an M3 `OutlinedTextField`. A `masked` field uses
+  `PasswordVisualTransformation` and the password keyboard. With `submitOnDone`, the IME Done
+  action sends `TextFieldDone`. Typed text is held locally and each edit sends `TextFieldChanged`.
+  The local text resets when `id` or `resetKey` changes, so a feature clears a field by bumping
+  `resetKey`.
+- `ButtonListItem` draws a full-width M3 button that sends `clickAction` when enabled.
+- `FormMessageListItem` draws inline text in the `INFO` or `ERROR` tone.
 
 ## Other public surface
 
@@ -106,6 +122,7 @@ LazyColumn {
 |---|---|
 | `sage.common.ui.components` (`api`) | SAGE `ListModel` types and reused building blocks |
 | `sage.common.ui.strings` (`api`) | `SageStringId`, `StringProvider` |
+| `:core:ui:components:models` (`api`) | The sample's Compose-free form models |
 | `:core:strings:api` (`api`) | The shared `SampleStringId` vocabulary |
 | `:core:strings:real` (`androidMain`) | The shared provider for `ComponentsPreview` |
 | `sage.common.appcomm` | `ActionSink` |
@@ -121,5 +138,6 @@ LazyColumn {
 
 - Renderers never read `R.string`. Accessibility text goes through `SampleStringId` and
   `LocalSampleStringProvider`; the strings module owns the values.
-- Keep renderers model-generic. App-specific models do not belong here; the sample has none.
+- Keep renderers model-generic. Screen-specific models do not belong here; the form rows are
+  generic enough for any form.
 - This module has no tests: it is exercised through the app modules' render tests and previews.

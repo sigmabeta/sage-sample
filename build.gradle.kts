@@ -13,6 +13,9 @@ plugins {
     // Declaring them here `apply false` puts their runtime on the shared build classpath.
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.ktlint) apply false
+    // :core:database runs Room's compiler through KSP; declared here so every module shares one
+    // KSP plugin classpath.
+    alias(libs.plugins.ksp) apply false
 }
 
 // One version for both apps: Android's versionName and the desktop build info both read it.

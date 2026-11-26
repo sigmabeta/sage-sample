@@ -128,6 +128,7 @@ class ContentDetailStateTest {
             .sections()[1]
             .sectionItems
             .filterIsInstance<CtaListModel>()
+            .drop(1) // the favorite toggle leads the section
 
         assertEquals(listOf("First action", "Second action"), cta.map { it.name })
         assertEquals(listOf(Icon.Calendar, Icon.Tag), cta.map { it.icon })
@@ -138,6 +139,43 @@ class ContentDetailStateTest {
             ),
             cta.map { it.clickAction },
         )
+    }
+
+    @Test
+    fun `an unfavorited detail leads with an add-favorite toggle`() {
+        val toggle = ContentDetailState(LCE.Content(CONTENT_DETAIL_FIXTURE), isFavorite = false)
+            .toListItems(strings)
+            .sections()[1]
+            .sectionItems
+            .filterIsInstance<CtaListModel>()
+            .first()
+
+        assertEquals(Icon.FavoriteEmpty, toggle.icon)
+        assertEquals("str-CONTENT_DETAIL_FAVORITE_ADD", toggle.name)
+        assertEquals(ContentDetailAction.ToggleFavorite, toggle.clickAction)
+    }
+
+    @Test
+    fun `a favorited detail leads with a remove-favorite toggle`() {
+        val toggle = ContentDetailState(LCE.Content(CONTENT_DETAIL_FIXTURE), isFavorite = true)
+            .toListItems(strings)
+            .sections()[1]
+            .sectionItems
+            .filterIsInstance<CtaListModel>()
+            .first()
+
+        assertEquals(Icon.FavoriteFilled, toggle.icon)
+        assertEquals("str-CONTENT_DETAIL_FAVORITE_REMOVE", toggle.name)
+        assertEquals(ContentDetailAction.ToggleFavorite, toggle.clickAction)
+    }
+
+    @Test
+    fun `the toggle does not exist while loading or for an unknown id`() {
+        val loading = ContentDetailState().toListItems(strings).sections()[1].sectionItems
+        val notFound = ContentDetailState(LCE.Content(null)).toListItems(strings)
+
+        assertTrue(loading.none { it is CtaListModel })
+        assertTrue(notFound.none { it is CtaListModel })
     }
 
     @Test

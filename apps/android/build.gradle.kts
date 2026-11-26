@@ -48,6 +48,18 @@ android {
         }
     }
 
+    // The benchmark launch hook (sign a Demo account in from an intent extra) lives in
+    // `src/benchmark` only. Debug and release share the no-op stand-in from `src/nonBenchmark`, and
+    // their unit tests (`src/testNonBenchmark`) assert the hook's class is not in them.
+    sourceSets {
+        listOf("debug", "release").forEach { buildType ->
+            getByName(buildType).kotlin.srcDir("src/nonBenchmark/kotlin")
+            getByName("test${buildType.replaceFirstChar(Char::uppercase)}").kotlin
+                .srcDir("src/testNonBenchmark/kotlin")
+        }
+        getByName("test").kotlin.srcDir("src/testShared/kotlin")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -57,6 +69,14 @@ android {
         compose = true
         // BuildConfig.VERSION_NAME / VERSION_CODE / BUILD_TIME_MS feed the Settings About rows.
         buildConfig = true
+    }
+}
+
+// AGP only creates unit tests for the tested build type (debug). The benchmark hook's test and the
+// "not in release" check need their own variants' unit tests.
+androidComponents {
+    beforeVariants { variantBuilder ->
+        (variantBuilder as? com.android.build.api.variant.HasUnitTestBuilder)?.enableUnitTest = true
     }
 }
 
@@ -83,6 +103,8 @@ dependencies {
     // Binds the in-process demo repositories for this app's graph; the browser binds the
     // HTTP-backed implementations instead.
     implementation(projects.core.repository.demo)
+    // The app provides the demo identity source's SampleDatabase (only it knows where the file lives).
+    implementation(projects.core.database)
 
     // Android platform seams used directly by this module.
     implementation(projects.core.bitmaps)
@@ -116,4 +138,7 @@ dependencies {
 
     // `SingletonImageLoader` registers :core:bitmaps' `generated://` fetcher at startup.
     implementation(libs.coil.kt.meta)
+
+    testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

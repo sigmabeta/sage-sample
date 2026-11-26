@@ -23,14 +23,22 @@ A third build type, `benchmark`, extends `release`, is non-debuggable + profilea
 `LocalFirstContentReporter` to `Activity.reportFullyDrawn()`, so the startup macrobenchmark can
 measure first content without production paying for the callback.
 
+The same variant is the only one that can start Signed in. `src/benchmark` holds `BenchmarkSignIn`,
+which turns the launch extra `sagesample.benchmark.signIn=<demo username>` into a real Sign in
+through `IdentityRepository` (a Session, not a gate bypass). While that Sign in runs, the gate sees
+`Checking` rather than `SignedOut` (the hook's `gatedIdentity`, which `MainActivity` passes to
+`SampleApp`), so a measured launch never draws Login. Debug and release get a
+no-op `BenchmarkLaunchHook` from `src/nonBenchmark`; their unit tests (`NoBenchmarkHookTest`) assert
+the hook's class is absent, and the benchmark test pins its name.
+
 ## Entry points
 
 | File | Role |
 |---|---|
 | `SampleApplication.kt` | Creates the app-scoped `SampleAppGraph` lazily; registers `generatedImageLoader` as Coil's singleton; enables SAGE perf measurement in debug. |
 | `MainActivity.kt` | Installs `LocalMetroViewModelFactory`, `LocalSampleStringProvider` and (benchmark builds) `LocalFirstContentReporter` above `SampleApp`, supplies `finish()` as the outer Back action, and offers `sagesample://` intent links from `onCreate`/`onNewIntent` to the shell. |
-| `di/SampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`. Exposes `settingsManager` and `stringProvider`; provides the application `Context`. |
-| `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), `AppInfo`. The app owns no text table. |
+| `di/SampleAppGraph.kt` | `@DependencyGraph(AppScope::class) : ViewModelGraph`. Exposes `settingsManager`, `stringProvider` and `identityRepository` (passed to `SampleApp` for the Sign-in gate); provides the application `Context`. |
+| `di/SampleBindings.kt` | `@BindingContainer @ContributesTo(AppScope)` — binds the shared `SampleStringProvider`, plus `Hatchet`, `Analytics`, `Storage` (DataStore), the identity `SampleDatabase` (`AndroidSampleDatabases.file(context)`), `AppInfo`. The app owns no text table. |
 | `storage/PreferencesStorage.kt` | Android `Storage` over Preferences DataStore (`sage_sample_settings`); disk-dispatched writes, flow reads. |
 
 The shared `MetroViewModelFactory` binding lives in `:core:viewmodel`, so both graphs resolve it

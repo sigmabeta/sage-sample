@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
 import net.sigmabeta.sage.sample.ui.components.api.LocalAnimationScale
@@ -17,6 +18,9 @@ import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
 /**
  * Composition root shared by both apps. The theme wraps the navigation host; everything below it is
  * a destination.
+ *
+ * [identityRepository] is the client's Session. The Sign-in gate above the tabs follows its state:
+ * nothing while the startup check runs, Login while Signed out, the tabbed shell while Signed in.
  *
  * [settingsManager] is app-scoped and persisted, so a theme or font chosen on the Settings screen
  * recomposes this root and applies immediately. [interFontFamily] is the platform's bundled Inter
@@ -30,17 +34,19 @@ import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
  * - [screenLifecycleOwner] is the foreground signal (activity lifecycle, or window focus on
  *   desktop); `null` falls back to the composition's `LocalLifecycleOwner`.
  *
- * [onOuterBack] is what the shell does when Back reaches past the tab roots; Android supplies
+ * [onOuterBack] is what the shell does when Back reaches past the tab roots or Login; Android supplies
  * `finish()` and desktop leaves it empty.
  *
  * [browserNavigation] is the browser's history bridge (null on Android/desktop). The shell reports
  * its active route to it and lets it handle Back when an app entry exists behind the current URL.
  *
  * [deepLinkSource] carries a native one-shot route (an Android intent, a desktop launch argument),
- * or null when the host has none. The shell applies it once and consumes it.
+ * or null when the host has none. The shell applies it once and consumes it; while gated, the
+ * Sign-in gate takes it instead and the shell opens on it after Sign in.
  */
 @Composable
 fun SampleApp(
+    identityRepository: IdentityRepository,
     settingsManager: SampleSettingsManager,
     interFontFamily: FontFamily = FontFamily.Default,
     platformBack: SamplePlatformBack = NoopSamplePlatformBack,
@@ -70,7 +76,7 @@ fun SampleApp(
             darkTheme = themeMode.isDark(isSystemInDarkTheme()),
             fontFamily = fontFamily,
         ) {
-            SampleNavHost(onOuterBack = onOuterBack)
+            SampleSignInGateHost(identityRepository = identityRepository, onOuterBack = onOuterBack)
         }
     }
 }

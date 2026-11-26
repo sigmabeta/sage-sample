@@ -1,11 +1,14 @@
 package net.sigmabeta.sage.sample.benchmark
 
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.Until
 import java.io.File
 import java.time.OffsetDateTime
 import kotlinx.serialization.encodeToString
@@ -33,6 +36,14 @@ internal object DeviceBenchmark {
 
     /** Measured iterations per scenario, shared so every device axis reports a comparable repeat. */
     const val ITERATIONS = 5
+
+    /**
+     * The app's benchmark-build-only launch extra (`BenchmarkSignIn.EXTRA_SIGN_IN` in `:apps:android`'s
+     * `src/benchmark`; the app's own test pins the name) and the Demo account it signs in.
+     */
+    private const val SIGN_IN_EXTRA = "sagesample.benchmark.signIn"
+    private const val SIGN_IN_ACCOUNT = "demo"
+    private const val SIGN_IN_TIMEOUT_MS = 30_000L
 
     private const val TAG = "SageBench"
     private const val UNKNOWN = "unknown"
@@ -177,7 +188,34 @@ internal object DeviceBenchmark {
         // No shell quotes around the URI: executeShellCommand does not strip them, so the quotes
         // become part of the data and the intent stops resolving. A route has no shell metacharacters.
         "am start -W -f 0x10008000 -a android.intent.action.VIEW " +
+            "--es $SIGN_IN_EXTRA $SIGN_IN_ACCOUNT " +
             "-d ${SampleDeepLink.SCHEME}://$route -p $TARGET_PACKAGE"
+
+    /**
+     * Signs the Demo account in by launching Home once, and waits until Home's first content shows.
+     *
+     * The first sign-in on an install runs PBKDF2 (600k rounds), which would land inside the first
+     * measured startup. Doing it here stores the Session, so every measured launch afterwards finds
+     * it at the startup check and the startup axis excludes the hashing. A no-op once signed in
+     * beyond the cost of one launch.
+     */
+    fun signInOnce(device: UiDevice) {
+        // The same state macrobenchmark's own setup reaches: screen on, launcher in front.
+        device.wakeUp()
+        device.pressHome()
+        launchDeepLink(device, "home")
+        if (!device.wait(Until.hasObject(By.textStartsWith("Big image")), SIGN_IN_TIMEOUT_MS)) {
+            runCatching { device.dumpWindowHierarchy(artifactFile("failure-sign-in.xml")) }
+            runCatching { device.takeScreenshot(artifactFile("failure-sign-in.png")) }
+            error("Home did not show after the benchmark sign-in (focused package ${device.currentPackageName})")
+        }
+        device.waitForIdle()
+    }
+
+    /** Adds the benchmark sign-in extra to a launch [intent], for launches that don't use `am start`. */
+    fun putSignIn(intent: Intent) {
+        intent.putExtra(SIGN_IN_EXTRA, SIGN_IN_ACCOUNT)
+    }
 
     private fun sectionLine(
         phase: String,
