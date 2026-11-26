@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.components.GridImageListModel
 import net.sigmabeta.sage.sample.feature.home.HomeAction
+import net.sigmabeta.sage.sample.feature.home.HomeDay
 import net.sigmabeta.sage.sample.feature.home.HomeModule
 import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.repository.HomeRepository
@@ -18,14 +19,12 @@ import net.sigmabeta.sage.sample.feature.home.homeContentId
 import net.sigmabeta.sage.sample.feature.home.homeImageSource
 import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringProvider
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 /**
  * Surfaces a single date-seeded hero item.
  *
- * The seed is the current epoch-day (UTC), so the pick is stable across in-day re-mounts and
- * rolls over once per day. The section emits exactly one item, which makes [HomeState] render it
+ * The seed is the [HomeDay] (by default the current UTC epoch day), so the pick is stable across
+ * in-day re-mounts and rolls over once per day. The section emits exactly one item, which makes [HomeState] render it
  * full-width rather than wrapping it in a horizontal scroller; [GridImageListModel.maxWidthDp]
  * keeps that one tile from stretching across a tablet or desktop window.
  *
@@ -42,6 +41,7 @@ class BigImageModule(
     private val dataIdBase: Long,
     private val repository: HomeRepository,
     private val stringProvider: StringProvider,
+    private val homeDay: HomeDay = HomeDay.System,
 ) : HomeModule {
 
     private val loadOperation = "home.$id.load"
@@ -55,10 +55,9 @@ class BigImageModule(
      * Picks one item deterministically for the day with a count + indexed fetch — no need to
      * load the catalog. Hidden (Uninitialized) when the catalog is empty.
      */
-    @OptIn(ExperimentalTime::class)
     private suspend fun pickOfTheDay(): LCE<HomeModuleSection> {
         val index = dailyIndex(
-            epochDay = Clock.System.now().toEpochMilliseconds() / MILLIS_PER_DAY,
+            epochDay = homeDay.epochDay(),
             itemCount = repository.itemCount(seed = id),
         ) ?: return LCE.Uninitialized
         val pick = repository.itemAt(seed = id, index = index) ?: return LCE.Uninitialized
@@ -110,8 +109,6 @@ class BigImageModule(
 
         /** The card's corner radius, so the detail's clip starts from the card's shape. */
         const val CELL_CORNER_RADIUS_DP = 16
-
-        const val MILLIS_PER_DAY = 86_400_000L
     }
 }
 

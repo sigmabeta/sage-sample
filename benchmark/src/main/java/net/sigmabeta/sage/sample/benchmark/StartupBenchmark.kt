@@ -97,6 +97,7 @@ class StartupBenchmark {
             experimentalConfig = null,
             startupMode = mode,
             setupBlock = {
+                DeviceBenchmark.lockPortrait(device)
                 pressHome()
             },
         ) {

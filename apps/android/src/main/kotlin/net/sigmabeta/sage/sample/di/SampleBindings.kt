@@ -16,6 +16,7 @@ import net.sigmabeta.sage.logging.Hatchet
 import net.sigmabeta.sage.sample.BuildConfig
 import net.sigmabeta.sage.sample.database.AndroidSampleDatabases
 import net.sigmabeta.sage.sample.database.SampleDatabase
+import net.sigmabeta.sage.sample.feature.home.HomeDay
 import net.sigmabeta.sage.sample.storage.PreferencesStorage
 import net.sigmabeta.sage.sample.storage.settingsDataStore
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
@@ -82,4 +83,14 @@ object SampleBindings {
         buildTimeMs = BuildConfig.BUILD_TIME_MS,
         buildBranch = "local",
     )
+
+    /**
+     * The day Home's hero is picked for. The benchmark build pins it, so every night's Home is the
+     * same workload as the baseline; every other build follows the clock.
+     */
+    @Provides
+    fun provideHomeDay(): HomeDay = if (BuildConfig.BENCHMARK) HomeDay.fixed(BENCHMARK_EPOCH_DAY) else HomeDay.System
+
+    /** 2026-11-24 as a UTC epoch day: any fixed day works, it only has to stay the same. */
+    private const val BENCHMARK_EPOCH_DAY = 20_781L
 }

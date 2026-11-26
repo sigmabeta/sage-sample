@@ -16,6 +16,7 @@ import net.sigmabeta.sage.sample.feature.home.FakeHomeRepository
 import net.sigmabeta.sage.sample.feature.home.FakeHomeSettingsManager
 import net.sigmabeta.sage.sample.feature.home.FakeStringProvider
 import net.sigmabeta.sage.sample.feature.home.HomeAction
+import net.sigmabeta.sage.sample.feature.home.HomeDay
 import net.sigmabeta.sage.sample.feature.home.HomeModuleFactory
 import net.sigmabeta.sage.sample.feature.home.HomeModuleSection
 import net.sigmabeta.sage.sample.repository.HomeRepository
@@ -200,6 +201,22 @@ class HomeModulesTest {
     }
 
     @Test
+    fun `a fixed home day picks the same hero on every load`() = runTest {
+        val items = (1L..5L).map { HomeItem(id = it, title = "Item $it") }
+        val repository = FakeHomeRepository(items = items)
+
+        suspend fun heroName(day: Long): String {
+            val module = bigImage(repository, homeDay = HomeDay.fixed(day))
+            val section = module.state().toList().last() as LCE.Content<HomeModuleSection>
+            return (section.data.items.single() as GridImageListModel).name
+        }
+
+        // Day 12 of a 5-item catalog is index 2, the third item, on every load.
+        assertEquals(listOf("Item 3", "Item 3", "Item 3"), List(3) { heroName(12) })
+        assertEquals("Item 4", heroName(13))
+    }
+
+    @Test
     fun `row content ids carry the module namespace and stay unique for equal item ids`() = runTest {
         val item = HomeItem(id = 7L, title = "Same item")
         val repository = FakeHomeRepository(items = listOf(item))
@@ -278,6 +295,7 @@ class HomeModulesTest {
         repository: HomeRepository,
         instanceNumber: Int = 1,
         dataIdBase: Long = 0L,
+        homeDay: HomeDay = HomeDay.System,
     ) = BigImageModule(
         id = "big_image_$instanceNumber",
         priority = instanceNumber - 1,
@@ -285,6 +303,7 @@ class HomeModulesTest {
         dataIdBase = dataIdBase,
         repository = repository,
         stringProvider = strings,
+        homeDay = homeDay,
     )
 
     private fun gridImages(

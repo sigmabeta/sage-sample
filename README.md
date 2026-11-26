@@ -18,8 +18,8 @@ SAGE itself is a Git submodule consumed through a Gradle composite build.
 | Tool | Version |
 |------|---------|
 | JDK | 17+ (CI uses Temurin 21) |
-| Android SDK | platform 36 |
-| Gradle | 9.5 (wrapper) |
+| Android SDK | platform 37 |
+| Gradle | 9.6 (wrapper) |
 | Git LFS | 3.x (the screenshot goldens are LFS objects) |
 | Node | 22 (only for the `-Psage.js` browser build) |
 | Yarn | 1.22.x (only for the `-Psage.js` browser build) |
@@ -120,7 +120,7 @@ in the run's additional test output directory; `:testing:perfbench-core` owns th
 ```bash
 ./gradlew :benchmark:connectedBenchmarkAndroidTest       # both axes on every attached device
 scripts/benchmark/device-ui.sh                           # gate UI scroll against a local baseline
-scripts/benchmark/device-ui.sh --record                  # (re)record that device's baseline
+scripts/benchmark/device-ui.sh --record                  # (re)record that device's baseline (median of 3 passes)
 scripts/benchmark/device-startup.sh --threshold 0.97     # gate startup with a custom threshold
 scripts/ci/verify.sh --device-ui                         # the same run inside verify.sh
 ```

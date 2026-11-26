@@ -29,10 +29,13 @@
 #
 # The baseline is *local* and never committed; the first run (or `--record`) writes it. It is keyed
 # by each device's hardware identity (model + ABI), so a new device records a fresh baseline rather
-# than gating one device's numbers against another's.
+# than gating one device's numbers against another's. `--record` measures several passes (default
+# 3) and records, per scenario, the pass with the median gate metric (`perfbench baseline`); the
+# passes are kept under <baseline>/records/. A first run with no baseline records its single pass,
+# flagged as such.
 #
 # Usage (as printed by `-h`, per wrapper):
-#   scripts/benchmark/device-<axis>.sh [--record] [--threshold <ratio>]
+#   scripts/benchmark/device-<axis>.sh [--record [--record-runs <n>]] [--threshold <ratio>]
 #
 # Environment:
 #   SAGE_SAMPLE_PERF_BASELINE   baseline root (default build/perfbench-baseline/device)
@@ -52,8 +55,10 @@ ADDITIONAL_OUT="$ROOT/benchmark/build/outputs/connected_android_test_additional_
 
 THRESHOLD="0.95"
 RECORD=0
+RECORD_RUNS=3
 OUT="$ROOT/build/perfbench-device/$AXIS"
 CURRENT="$OUT/current"
+RECORDINGS="$OUT/recordings"
 RESULT_FILE="results-$AXIS.json"
 DIFF_FILE="diff-$AXIS.json"
 
@@ -114,11 +119,86 @@ device_note() {
 
 # `timeout` is GNU coreutils; macOS ships none by default. It only bounds the cheap hardware-id
 # probe, so fall back to a plain call rather than making the whole axis unavailable.
+#
+# stdin is /dev/null: every caller probes inside a `while read … done <<<"$online"` loop, and
+# `adb shell` would otherwise read the rest of the device list, so only the first device was probed.
 bounded_probe() {
   if command -v timeout >/dev/null 2>&1; then
-    timeout 20 "$@"
+    timeout 20 "$@" </dev/null
   else
-    "$@"
+    "$@" </dev/null
+  fi
+}
+
+# Runs the axis once on every attached device. Each device's document is copied to
+# $RECORDINGS/<pass>/<label>/ and to $CURRENT/<label>/, where the newest pass wins.
+measure_axis() {
+  local pass="$1" passes="$2" bench_rc=0 f label slot
+  slot="$(printf '%02d' "$pass")"
+  # No serial is passed: AGP fans `connectedBenchmarkAndroidTest` out to every attached device, which
+  # keeps the reused Gradle daemon in play (see the header on why pinning a serial doesn't).
+  echo "==> Running the $AXIS benchmark (${TEST_CLASS##*.}) on all devices — pass $pass of $passes"
+  rm -rf "$ADDITIONAL_OUT"
+  # tee needs $OUT to exist; on a fresh checkout nothing has created it yet, and under pipefail a
+  # failed tee would read as a failed benchmark.
+  mkdir -p "$OUT"
+  ./gradlew --console=plain \
+    -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
+    :benchmark:connectedBenchmarkAndroidTest 2>&1 |
+    tee "$OUT/last-run.log" || bench_rc=$?
+  [ "$passes" -gt 1 ] && cp "$OUT/last-run.log" "$OUT/run-$slot.log"
+  if [ "$bench_rc" -ne 0 ]; then
+    # One phone refusing to start fails the whole Gradle task: macrobenchmark's LOW-BATTERY and other
+    # device-state checks abort that device's test, and AGP treats the task as failed. The phones
+    # that did measure have already written their documents, so keep them — the refusal belongs to
+    # one cell, not to everyone else's measurement.
+    echo "${Y}warning:${Z} the benchmark task exited $bench_rc — keeping the results it produced"
+  fi
+
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    label="$(basename "$(baseline_dir_for "$f")")"
+    mkdir -p "$RECORDINGS/$slot/$label" "$CURRENT/$label"
+    cp "$f" "$RECORDINGS/$slot/$label/$RESULT_FILE"
+    cp "$f" "$CURRENT/$label/$RESULT_FILE"
+  done <<<"$(find "$ADDITIONAL_OUT" -name "$RESULT_FILE" -type f 2>/dev/null | sort)"
+}
+
+# Records one device's baseline as the per-scenario median of its recordings in this run
+# (`perfbench baseline`), and keeps those recordings under <baseline>/records/ for provenance.
+# The merge writes to a temp file first, so a refused merge leaves the previous baseline in place.
+# Returns non-zero (after a flag) when the merge is refused.
+record_baseline() {
+  local label="$1" baseline="$2" passes="$3" joined="" count=0 f summary i=0
+  for f in "$RECORDINGS"/*/"$label/$RESULT_FILE"; do
+    [ -f "$f" ] || continue
+    joined="${joined:+$joined,}$f"
+    count=$((count + 1))
+  done
+  mkdir -p "$baseline"
+  # </dev/null: never let the merge's Gradle run read the caller's stdin.
+  if ! summary="$(./gradlew -q --console=plain :testing:perfbench:run \
+    --args="baseline --runs $joined --out $baseline/$RESULT_FILE.new" </dev/null 2>/dev/null)"; then
+    rm -f "$baseline/$RESULT_FILE.new"
+    flag "$label: could not record the $AXIS baseline — $(printf '%s' "$summary" | grep -m1 '^Refusing' || echo 'perfbench baseline failed')"
+    return 1
+  fi
+  mv "$baseline/$RESULT_FILE.new" "$baseline/$RESULT_FILE"
+  rm -rf "$baseline/records"
+  mkdir -p "$baseline/records"
+  for f in "$RECORDINGS"/*/"$label/$RESULT_FILE"; do
+    [ -f "$f" ] || continue
+    i=$((i + 1))
+    cp "$f" "$baseline/records/$(printf '%02d' "$i")-$RESULT_FILE"
+  done
+
+  printf '    %-24s %srecorded%s (median of %d) → %s\n' "$label" "$B" "$Z" "$count" "$baseline/$RESULT_FILE"
+  # Only the report: a cold `:testing:perfbench:run` can print build output first.
+  printf '%s\n' "$summary" | sed -n '/^Baseline: /,$p' | tail -n +2 | sed 's/^/      /'
+  if [ "$RECORD" -eq 0 ]; then
+    flag "$label: no $AXIS baseline existed, so this run's single recording became it — re-record with --record for a median of $RECORD_RUNS"
+  elif [ "$count" -lt "$passes" ]; then
+    flag "$label: only $count of $passes recording passes produced a result — the baseline is the median of $count"
   fi
 }
 
@@ -139,7 +219,9 @@ Usage:
   scripts/benchmark/device-$AXIS.sh [options]
 
 Options:
-  --record             (re)record each device's baseline from this run instead of gating against it
+  --record             (re)record each device's baseline instead of gating against it: measure
+                       --record-runs passes and keep each scenario's median recording
+  --record-runs <n>    passes a --record measures                                   (default: 3)
   --threshold <ratio>  regress when a device's geometric-mean ratio drops below <ratio>  (default: 0.95)
 
 Environment:
@@ -151,6 +233,8 @@ EOF
         return 0
         ;;
       --record) RECORD=1 ;;
+      --record-runs) [ $# -ge 2 ] || usage "--record-runs needs a value"; RECORD_RUNS="$2"; shift ;;
+      --record-runs=*) RECORD_RUNS="${1#--record-runs=}" ;;
       --threshold) [ $# -ge 2 ] || usage "--threshold needs a value"; THRESHOLD="$2"; shift ;;
       --threshold=*) THRESHOLD="${1#--threshold=}" ;;
       -*) usage "unknown option: $1" ;;
@@ -161,6 +245,9 @@ EOF
 
   awk -v t="$THRESHOLD" 'BEGIN { exit !(t + 0 > 0 && t + 0 <= 1) }' ||
     usage "--threshold must be a ratio in (0, 1] (was '$THRESHOLD')"
+  case "$RECORD_RUNS" in
+    '' | *[!0-9]* | 0) usage "--record-runs must be a positive integer (was '$RECORD_RUNS')" ;;
+  esac
 
   command -v adb >/dev/null || die "adb not found on PATH"
   command -v jq >/dev/null || die "jq not found on PATH (needed to read the diff report)"
@@ -201,66 +288,58 @@ EOF
   # no frames, so the measurement fails for a reason that has nothing to do with the code. A farm
   # phone is plugged in, so `stayon` keeps it awake for the whole axis instead of letting the screen
   # time out between iterations — nothing new here touches the screen, so a plain wake is not enough.
-  # All three commands are idempotent. Best effort: a device that stays asleep shows up in the
+  # Every command below is idempotent. Best effort: a device that stays asleep shows up in the
   # per-device pass below rather than failing here.
+  #
+  # The UI scenarios drive portrait layouts, so auto-rotate goes off and the natural rotation is
+  # pinned too: a phone lying on its side otherwise turns the app to landscape, a different layout
+  # from the one the baseline measured. This must happen here, before the instrumentation connects.
+  # When UiAutomation disconnects it restores the rotation state it saw at connect, so a lock set
+  # only inside the test is undone at the end. Nothing turns auto-rotate back on afterwards.
   while IFS= read -r s; do
     [ -n "$s" ] || continue
-    adb -s "$s" shell svc power stayon true >/dev/null 2>&1
-    adb -s "$s" shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1
-    adb -s "$s" shell wm dismiss-keyguard >/dev/null 2>&1
+    # </dev/null: `adb shell` would otherwise read the rest of the device list from this loop's
+    # stdin, so only the first device was woken.
+    adb -s "$s" shell svc power stayon true </dev/null >/dev/null 2>&1
+    adb -s "$s" shell input keyevent KEYCODE_WAKEUP </dev/null >/dev/null 2>&1
+    adb -s "$s" shell wm dismiss-keyguard </dev/null >/dev/null 2>&1
+    adb -s "$s" shell settings put system accelerometer_rotation 0 </dev/null >/dev/null 2>&1
+    adb -s "$s" shell settings put system user_rotation 0 </dev/null >/dev/null 2>&1
   done <<<"$online"
 
   # ---- run this axis on every device ---------------------------------------
-  # No serial is passed: AGP fans `connectedBenchmarkAndroidTest` out to every attached device, which
-  # keeps the reused Gradle daemon in play (see the header on why pinning a serial doesn't).
-  echo "==> Running the $AXIS benchmark (${TEST_CLASS##*.}) on all devices"
-  rm -rf "$ADDITIONAL_OUT"
-  local bench_rc=0
-  # tee needs $OUT to exist; on a fresh checkout nothing has created it yet, and under pipefail a
-  # failed tee would read as a failed benchmark.
-  mkdir -p "$OUT"
-  ./gradlew --console=plain \
-    -Pandroid.testInstrumentationRunnerArguments.class="$TEST_CLASS" \
-    :benchmark:connectedBenchmarkAndroidTest 2>&1 |
-    tee "$OUT/last-run.log" || bench_rc=$?
-  if [ "$bench_rc" -ne 0 ]; then
-    # One phone refusing to start fails the whole Gradle task: macrobenchmark's LOW-BATTERY and other
-    # device-state checks abort that device's test, and AGP treats the task as failed. The phones
-    # that did measure have already written their documents, so keep them — the refusal belongs to
-    # one cell, not to everyone else's measurement.
-    echo "${Y}warning:${Z} the benchmark task exited $bench_rc — keeping the results it produced"
-  fi
-
-  # ---- collect -------------------------------------------------------------
-  rm -rf "$CURRENT"
+  # A gate measures once. `--record` measures $RECORD_RUNS passes and records each device's
+  # per-scenario median (see record_baseline): one recording is a single draw from a noisy
+  # distribution, and a baseline that happens to be a fast draw makes later runs look regressed.
+  local passes=1 pass
+  [ "$RECORD" -eq 1 ] && passes="$RECORD_RUNS"
+  rm -rf "$CURRENT" "$RECORDINGS"
   mkdir -p "$CURRENT"
-  # Collected into an array up front, never read from inside the gate loop: the per-device diff runs
-  # Gradle, which would otherwise inherit the loop's stdin and swallow the remaining filenames.
-  local results=()
-  local found
-  while IFS= read -r found; do
-    [ -n "$found" ] && results+=("$found")
-  done <<<"$(find "$ADDITIONAL_OUT" -name "$RESULT_FILE" -type f 2>/dev/null | sort)"
+  for ((pass = 1; pass <= passes; pass++)); do
+    measure_axis "$pass" "$passes"
+  done
 
   # ---- record or gate, per device ------------------------------------------
   local regressed=0
   local flagged=0
   local compared=0
   local recorded=0
-  local f baseline label report mean
-  for f in ${results[@]+"${results[@]}"}; do
-    baseline="$(baseline_dir_for "$f")"
+  local dir baseline label report mean
+  # A glob, not a read loop: the per-device diff runs Gradle, which would otherwise inherit the
+  # loop's stdin and swallow the remaining entries.
+  for dir in "$CURRENT"/*/; do
+    [ -f "$dir$RESULT_FILE" ] || continue
+    baseline="$(baseline_dir_for "$dir$RESULT_FILE")"
     label="$(basename "$baseline")"
-    mkdir -p "$CURRENT/$label"
     # A refused or failed compare must leave no diff document behind for a consumer to pick up.
     rm -f "$CURRENT/$label/$DIFF_FILE"
-    cp "$f" "$CURRENT/$label/$RESULT_FILE"
 
     if [ "$RECORD" -eq 1 ] || [ ! -f "$baseline/$RESULT_FILE" ]; then
-      mkdir -p "$baseline"
-      cp "$f" "$baseline/$RESULT_FILE"
-      printf '    %-24s %srecorded%s → %s\n' "$label" "$B" "$Z" "$baseline/$RESULT_FILE"
-      recorded=$((recorded + 1))
+      if record_baseline "$label" "$baseline" "$passes"; then
+        recorded=$((recorded + 1))
+      else
+        flagged=1
+      fi
       continue
     fi
 

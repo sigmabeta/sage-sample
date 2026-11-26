@@ -12,7 +12,7 @@ plugins {
 
 android {
     namespace = "net.sigmabeta.sage.sample"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "net.sigmabeta.sage.sample"
