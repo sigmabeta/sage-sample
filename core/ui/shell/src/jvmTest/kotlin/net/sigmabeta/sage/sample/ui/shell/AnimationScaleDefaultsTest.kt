@@ -1,7 +1,7 @@
 package net.sigmabeta.sage.sample.ui.shell
 
 import net.sigmabeta.sage.sample.settings.AnimationScale
-import net.sigmabeta.sage.sample.ui.components.api.DEFAULT_ANIMATION_SCALE
+import net.sigmabeta.sage.ui.composables.DEFAULT_ANIMATION_SCALE
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

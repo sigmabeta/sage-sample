@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.ListModel
+import net.sigmabeta.sage.ui.composables.Content
 
 /**
  * Search's app-owned rendering: the screen draws its own field and adaptive grid.

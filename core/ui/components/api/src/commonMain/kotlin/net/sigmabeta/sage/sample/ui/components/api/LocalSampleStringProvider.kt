@@ -1,10 +1,12 @@
 package net.sigmabeta.sage.sample.ui.components.api
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.ui.StringProvider
+import net.sigmabeta.sage.ui.composables.ProvideSageRenderers
 
 /**
  * Composable access to the app's shared [StringProvider].
@@ -19,6 +21,29 @@ val LocalSampleStringProvider = staticCompositionLocalOf<StringProvider> {
         "LocalSampleStringProvider not provided. Wrap the Compose tree in " +
             "CompositionLocalProvider(LocalSampleStringProvider provides stringProvider) { ... }",
     )
+}
+
+/**
+ * Installs both string locals the sample renders with, in one place: the sample's own
+ * [LocalSampleStringProvider] (read by [SampleStringId.text] and friends) and SAGE's renderer
+ * locals ([net.sigmabeta.sage.ui.composables.LocalSageStringProvider] plus
+ * [net.sigmabeta.sage.ui.composables.LocalSageRenderers]) through [ProvideSageRenderers].
+ *
+ * Every composition root — Android, desktop, web and the screenshot previews — calls this instead
+ * of installing the pair itself, so the two locals cannot drift apart.
+ */
+@Composable
+fun ProvideSampleText(
+    stringProvider: StringProvider,
+    content: @Composable () -> Unit,
+) {
+    CompositionLocalProvider(LocalSampleStringProvider provides stringProvider) {
+        ProvideSageRenderers(
+            stringProvider = stringProvider,
+            renderers = SampleRenderers,
+            content = content,
+        )
+    }
 }
 
 @Composable

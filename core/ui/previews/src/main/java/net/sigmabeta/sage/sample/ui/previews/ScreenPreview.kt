@@ -25,10 +25,10 @@ import net.sigmabeta.sage.list.ListState
 import net.sigmabeta.sage.list.ListStateActual
 import net.sigmabeta.sage.list.WidthClass
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
-import net.sigmabeta.sage.sample.ui.components.api.Content
-import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.ProvideSampleText
 import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
 import net.sigmabeta.sage.ui.StringProvider
+import net.sigmabeta.sage.ui.composables.Content
 import net.sigmabeta.sage.ui.list.GridScreen
 import net.sigmabeta.sage.ui.list.ListScreen
 
@@ -97,9 +97,11 @@ private fun PreviewTheme(
             // Coil can't fetch under Paparazzi; inspection mode routes image surfaces to the shared
             // generated-bitmap stand-in instead of a loading/error placeholder.
             LocalInspectionMode provides true,
-            LocalSampleStringProvider provides SampleStringProvider,
-            content = content,
-        )
+        ) {
+            ProvideSampleText(stringProvider = SampleStringProvider) {
+                content()
+            }
+        }
     }
 }
 

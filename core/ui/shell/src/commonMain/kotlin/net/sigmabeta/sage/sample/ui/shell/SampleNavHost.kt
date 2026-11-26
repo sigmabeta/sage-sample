@@ -13,7 +13,7 @@ import net.sigmabeta.sage.sample.nav.navActionFor
 import net.sigmabeta.sage.sample.nav.routeKeyFor
 import net.sigmabeta.sage.sample.nav.topBarState
 import net.sigmabeta.sage.sample.nav.widthClassFromDp
-import net.sigmabeta.sage.sample.ui.components.api.LocalSharedTransitionScope
+import net.sigmabeta.sage.ui.composables.LocalSharedTransitionScope
 import net.sigmabeta.sage.sample.ui.components.api.text
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi

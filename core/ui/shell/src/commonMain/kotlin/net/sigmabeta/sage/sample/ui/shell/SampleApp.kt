@@ -12,7 +12,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import net.sigmabeta.sage.sample.repository.IdentityRepository
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SampleSettingsManager
-import net.sigmabeta.sage.sample.ui.components.api.LocalAnimationScale
+import net.sigmabeta.sage.ui.composables.LocalAnimationScale
 import net.sigmabeta.sage.sample.ui.theme.api.SampleTheme
 
 /**

@@ -13,10 +13,10 @@ import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import net.sigmabeta.sage.sample.nav.SampleDeepLink
 import net.sigmabeta.sage.sample.ui.AndroidPlatformBack
-import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
-import net.sigmabeta.sage.sample.ui.components.api.subs.LocalFirstContentReporter
+import net.sigmabeta.sage.sample.ui.components.api.ProvideSampleText
 import net.sigmabeta.sage.sample.ui.shell.MutableSampleDeepLinkSource
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
+import net.sigmabeta.sage.ui.composables.subs.LocalFirstContentReporter
 
 class MainActivity : ComponentActivity() {
     /**
@@ -66,19 +66,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
-                LocalSampleStringProvider provides graph.stringProvider,
                 LocalFirstContentReporter provides firstContentReporter,
             ) {
                 // Back at a tab root leaves the tabbed shell: finish the activity, which is the
                 // platform's default Back behaviour.
-                SampleApp(
-                    identityRepository = launchHook.gatedIdentity,
-                    settingsManager = graph.settingsManager,
-                    interFontFamily = InterFontFamily,
-                    platformBack = AndroidPlatformBack,
-                    deepLinkSource = deepLinks,
-                    onOuterBack = { finish() },
-                )
+                ProvideSampleText(stringProvider = graph.stringProvider) {
+                    SampleApp(
+                        identityRepository = launchHook.gatedIdentity,
+                        settingsManager = graph.settingsManager,
+                        interFontFamily = InterFontFamily,
+                        platformBack = AndroidPlatformBack,
+                        deepLinkSource = deepLinks,
+                        onOuterBack = { finish() },
+                    )
+                }
             }
         }
     }

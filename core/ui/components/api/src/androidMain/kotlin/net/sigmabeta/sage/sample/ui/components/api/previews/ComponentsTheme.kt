@@ -5,17 +5,16 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
-import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.ProvideSampleText
 
 /**
  * Preview wrapper for the component renderers.
  *
  * Mirrors the app composition roots closely enough for a meaningful render: a Material 3 theme in
- * light or dark, plus the [LocalSampleStringProvider] the renderers read accessibility labels
- * from. It installs the same shared [SampleStringProvider] the apps do, so a preview and a golden
- * resolve identical text.
+ * light or dark, plus the shared [ProvideSampleText] (the sample's `LocalSampleStringProvider` and
+ * SAGE's renderer locals, all from the same [SampleStringProvider]). A preview and a golden resolve
+ * identical text.
  */
 @Composable
 fun ComponentsPreview(
@@ -26,7 +25,7 @@ fun ComponentsPreview(
         colorScheme = if (forceDark) darkColorScheme() else lightColorScheme(),
         typography = Typography(),
     ) {
-        CompositionLocalProvider(LocalSampleStringProvider provides SampleStringProvider) {
+        ProvideSampleText(stringProvider = SampleStringProvider) {
             content()
         }
     }
