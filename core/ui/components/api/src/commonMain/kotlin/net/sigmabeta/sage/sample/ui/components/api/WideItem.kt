@@ -26,7 +26,7 @@ import net.sigmabeta.sage.sample.ui.components.api.subs.CrossfadeImage
 import net.sigmabeta.sage.sample.ui.components.api.subs.TintedText
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.WideItemListModel
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 
 @Composable
 fun WideItem(

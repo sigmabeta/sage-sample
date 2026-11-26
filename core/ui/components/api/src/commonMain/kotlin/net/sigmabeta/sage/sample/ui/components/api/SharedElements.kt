@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.images.SourceInfo
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 /**
  * Shared-element plumbing for the sample's image renderers.
  *

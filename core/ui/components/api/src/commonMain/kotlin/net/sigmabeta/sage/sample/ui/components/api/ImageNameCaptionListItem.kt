@@ -32,7 +32,7 @@ import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.components.ImageNameCaptionListModel
 import net.sigmabeta.sage.components.SearchResultListModel
 import net.sigmabeta.sage.images.SourceInfo
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 import net.sigmabeta.sage.ui.Icon
 
 @Composable

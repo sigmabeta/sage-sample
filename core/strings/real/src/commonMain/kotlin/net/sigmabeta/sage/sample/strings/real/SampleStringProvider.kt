@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.strings.real
 
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.ui.SageComponentStringId
 import net.sigmabeta.sage.ui.SageStringId
 import net.sigmabeta.sage.ui.StringProvider
 
@@ -30,14 +31,14 @@ object SampleStringProvider : StringProvider {
         SampleStringId.NAV_OPEN_SETTINGS_DESCRIPTION to "Open settings",
         SampleStringId.NAV_BACK_DESCRIPTION to "Back",
 
-        SampleStringId.ACCY_OCL_CHECKBOX to "Toggle checkbox",
-        SampleStringId.ACCY_OCL_DROPDOWN to "Expand dropdown",
-        SampleStringId.ACCY_OCL_RATING to "Rate",
-        SampleStringId.ACCY_OCL_SINGLE_LINE to "Open %1\$s",
-        SampleStringId.ACCY_OCL_VALUE to "Open",
-        SampleStringId.ACCY_ST_DESC_CHECKED to "Checked",
-        SampleStringId.ACCY_ST_DESC_LOADING to "Loading",
-        SampleStringId.ACCY_ST_DESC_UNCHECKED to "Unchecked",
+        SageComponentStringId.ACCY_OCL_CHECKBOX to "Toggle checkbox",
+        SageComponentStringId.ACCY_OCL_DROPDOWN to "Expand dropdown",
+        SageComponentStringId.ACCY_OCL_RATING to "Rate",
+        SageComponentStringId.ACCY_OCL_SINGLE_LINE to "Open %1\$s",
+        SageComponentStringId.ACCY_OCL_VALUE to "Open",
+        SageComponentStringId.ACCY_ST_DESC_CHECKED to "Checked",
+        SageComponentStringId.ACCY_ST_DESC_LOADING to "Loading",
+        SageComponentStringId.ACCY_ST_DESC_UNCHECKED to "Unchecked",
 
         SampleStringId.HOME_TITLE to "SAGE Sample",
         SampleStringId.HOME_SECTION_BIG_IMAGE to "Big image %1\$d",

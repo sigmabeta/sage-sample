@@ -30,7 +30,7 @@ import net.sigmabeta.sage.sample.ui.components.api.subs.TraceSection
 import net.sigmabeta.sage.sample.ui.components.api.subs.gridCellOffscreenLayerEnabled
 import net.sigmabeta.sage.appcomm.ActionSink
 import net.sigmabeta.sage.components.GridImageListModel
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 
 @Composable
 fun GridImage(

@@ -17,6 +17,8 @@ kotlin {
             dependencies {
                 // `ContentAction` carries a SAGE `Icon`; the models describe renderer input.
                 api(libs.sage.common.ui.iconsApi)
+                // `ContentArtworkSize.corner` is a public `ArtworkCorner`, so it is re-exported.
+                api(libs.sage.common.images)
             }
         }
 

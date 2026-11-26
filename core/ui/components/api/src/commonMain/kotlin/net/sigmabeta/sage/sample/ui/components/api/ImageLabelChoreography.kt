@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.sigmabeta.sage.images.SourceInfo
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 
 /**
  * Base time a row's label takes to leave, and to return, before [LocalAnimationScale] stretches it.

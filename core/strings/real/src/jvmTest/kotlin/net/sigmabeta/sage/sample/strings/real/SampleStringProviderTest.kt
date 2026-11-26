@@ -1,6 +1,7 @@
 package net.sigmabeta.sage.sample.strings.real
 
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
+import net.sigmabeta.sage.ui.SageComponentStringId
 import net.sigmabeta.sage.ui.SageStringId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -14,6 +15,9 @@ class SampleStringProviderTest {
     @Test
     fun `every id has text`() {
         SampleStringId.entries.forEach { id ->
+            assertTrue("no text for $id", SampleStringProvider.getString(id).isNotEmpty())
+        }
+        SageComponentStringId.entries.forEach { id ->
             assertTrue("no text for $id", SampleStringProvider.getString(id).isNotEmpty())
         }
     }
@@ -38,7 +42,7 @@ class SampleStringProviderTest {
     fun `formats a plain specifier`() {
         assertEquals(
             "Open item",
-            SampleStringProvider.getStringOneArg(SampleStringId.ACCY_OCL_SINGLE_LINE, "item"),
+            SampleStringProvider.getStringOneArg(SageComponentStringId.ACCY_OCL_SINGLE_LINE, "item"),
         )
     }
 
