@@ -216,15 +216,14 @@ core/nav/                   KMP destinations, route/Back/layout/chrome policy, U
 core/strings/api/           SampleStringId: the one id vocabulary for all user-visible text
 core/strings/real/          SampleStringProvider: the single id -> English table
 core/ui/components/models/  Compose-free form models (text field, button, message) features build
-core/ui/components/api/     KMP Compose renderer suite shared by every app
-  ComposableMapping.kt      ListModel.Content: ListModel subtype -> composable dispatcher
-  *.kt                      one renderer per SAGE ListModel (rows, headers, images, loading)
+core/ui/components/api/     sample-owned rows + the renderer config for SAGE's shared suite
+  SampleRenderers.kt        contentFor (form rows) + previewImage (:core:bitmaps art)
+  FormListItems.kt          text field, button and inline message rows for forms
   SearchField.kt            the search box chrome (back/clear actions, constant 48 dp height)
   SearchContent.kt          app-owned search: adaptive grid with the field and status scrim
-  FormListItems.kt          text field, button and inline message rows for forms
-  subs/                     drawing/effect building blocks (CrossfadeImage, Flasher, TintedText)
-  utils/                    focus, image-size and math helpers
-  previews/                 shared sizing constants + Android @Preview harnesses
+  LocalSampleStringProvider.kt  ProvideSampleText: installs both string locals at once
+  (the renderer suite itself — ListModel.Content, rows, subs/, utils/, previews — is SAGE's
+   :common:ui:composables)
 core/ui/theme/api/          SampleTheme + the shared Material 3 type scale
 core/ui/shell/              KMP Compose app shell shared by every app
   SampleApp.kt              composition root: theme/font + platform seams + navigation host
@@ -390,9 +389,10 @@ SAGE splits a screen in two:
 2. The shared shell owns rendering. `:core:ui:shell`'s `SampleScreens` resolves the view model
    with `metroViewModel<HomeViewModel>()`, observes `uiStateActual`, reports its title through
    `LocalSampleTitleBarSink`, and passes the state to SAGE's `ListScreen` — or to `GridScreen`
-   when `screenLayoutFor` sees more than one column. It supplies the shared `ListModel.Content`
-   renderer (`:core:ui:components:api`) to draw each model. Unknown model types fall through to a
-   spacer, so features can add their own models without breaking either app.
+   when `screenLayoutFor` sees more than one column. It supplies SAGE's shared `ListModel.Content`
+   renderer (`:common:ui:composables`) to draw each model; the sample's own form rows plug in
+   through `:core:ui:components:api`'s `SampleRenderers.contentFor`. Unknown model types fall
+   through to a spacer, so features can add their own models without breaking either app.
 3. The shared screen owns the foreground pair: `Resume` when it enters composition,
    `Pause` when it leaves. `SampleListViewModel.sendAction` coalesces those transitions,
    so SAGE's extra title-change `Resume` does not run feature side effects twice.
@@ -499,11 +499,13 @@ in its manifest and offers the intent URI from `onCreate`/`onNewIntent`; desktop
 parseable argument. Both use the shared `MutableSampleDeepLinkSource` from `:core:ui:shell`, and
 `SampleNavHost` applies the pending route through the same `navigateTo` a browser URL uses.
 
-The renderer suite keeps one module that re-exports SAGE's `ListModel` types and owns a renderer
-for every SAGE model the sample uses, plus `subs/` building blocks and `@Preview` harnesses.
-Accessibility labels are `SampleStringId`s
-from the shared strings module; both composition roots install the graph's `StringProvider` into
-`LocalSampleStringProvider`, so the renderers never touch `R.string`.
+The renderer suite is SAGE's `:common:ui:composables`, which owns a renderer for every SAGE model
+the sample uses plus the shared-element and animation-scale plumbing. The sample contributes only
+its own form rows and the `previewImage` art through `:core:ui:components:api`'s `SampleRenderers`.
+Accessibility labels are `SampleStringId`s (plus SAGE's eight `SageComponentStringId`s) from the
+shared strings modules; each composition root installs the graph's `StringProvider` through
+`ProvideSampleText`, which wires both the sample's `LocalSampleStringProvider` and SAGE's renderer
+locals, so the renderers never touch `R.string`.
 
 ### Navigation
 

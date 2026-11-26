@@ -37,5 +37,5 @@ dependencies {
 - **Targets:** Android only. **Source sets:** `src/main/java` (fixtures) + `src/test/java` (tests).
 - **Dependencies:** `:features:search`; the convention adds `:core:ui:previews`,
   `:core:strings:real`, SAGE `appcomm`/`list`. `SearchContent` arrives through
-  `:core:ui:previews`' `api` dependency on the renderer suite.
+  `:core:ui:previews`' `api` dependency on `:core:ui:components:api`.
 - **Text/theme:** both come from the shared modules — `SampleStringProvider` and `SampleTheme`.

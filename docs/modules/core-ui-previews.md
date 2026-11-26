@@ -70,7 +70,8 @@ domain rows so a fixture does not hardcode names and captions.
   uses Paparazzi's `DeviceConfig` but is not itself a test module).
 - **Targets:** Android only.
 - **Source set:** `src/main/java`.
-- **Dependencies:** `:core:ui:components:api` (`api`, for the renderers and `ListModel.Content`),
+- **Dependencies:** `:core:ui:components:api` (`api`, for `ProvideSampleText` and the re-exported
+  SAGE renderer suite, including `ListModel.Content`),
   `:core:models:api` (generator types), `:core:strings:real` (shared text), `:core:ui:theme:api`
   (theme), SAGE `list`, `appcomm`, `ui.listScreens`, `ui.components`, `ui.strings`, Compose via the
   convention, and `paparazzi.runtime` for `DeviceConfig`/`NightMode`.
