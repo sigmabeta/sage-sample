@@ -22,23 +22,23 @@ plugins {
 
 `sampleFormRows` adds one of each sample-owned form row from `:core:ui:components:models`
 (`TextFieldListModel`, `ButtonListModel`, and `FormMessageListModel` in both tones), with text from
-existing Login ids and `dataId`s from 2,000,001, clear of the catalog's. They render through
+existing Login ids and explicit `dataId`s from `componentLibraryExtraId(n)`, which cannot collide with the catalog's. They render through
 `SampleRenderers.contentFor`, which `ComponentLibraryHost` preserves.
 
 ## View model
 
 `ComponentLibraryViewModel : SampleListViewModel<ComponentLibraryState>` forwards every
-`ComponentLibraryAction` to `ComponentLibraryConfig.reduce` and ignores everything else. `style`
-exposes the live `ComponentLibraryStyle` as a `StateFlow` for the screen's host, because
-`uiStateActual` does not carry the typed config.
+`ComponentLibraryAction` to `ComponentLibraryConfig.reduce` and ignores everything else. It exposes
+no style flow: the live style rides in the list as SAGE's invisible `ComponentLibraryStyleListModel`
+carrier row, which the screen's host reads back from `uiStateActual.listItems`.
 
 ## In the shell
 
-`ComponentLibraryScreen` (in `:core:ui:shell`) resolves the view model, collects `style`, and wraps
-`SampleListScreen` in `ComponentLibraryHost(style)`. `SampleDestination.COMPONENT_LIBRARY` is
+`ComponentLibraryScreen` (in `:core:ui:shell`) resolves the view model, collects `uiStateActual`, and wraps
+`SampleListScreen` in `ComponentLibraryHost(state.listItems)`. `SampleDestination.COMPONENT_LIBRARY` is
 non-top-level, so `navActionFor` pushes it onto the active tab.
 
 ## Tests
 
 `ComponentLibraryStateTest` (column type per layout, title, form rows, unique `dataId`s with the
-extras) and `ComponentLibraryViewModelTest` (actions reach the config, the style and the rows).
+extras) and `ComponentLibraryViewModelTest` (actions reach the config, the carried style and the rows).

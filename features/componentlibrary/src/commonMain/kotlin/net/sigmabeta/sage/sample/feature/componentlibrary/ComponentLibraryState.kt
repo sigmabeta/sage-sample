@@ -11,6 +11,7 @@ import net.sigmabeta.sage.sample.ui.components.models.TextFieldListModel
 import net.sigmabeta.sage.ui.StringProvider
 import net.sigmabeta.sage.ui.componentlibrary.ComponentLibraryConfig
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.ui.componentlibrary.componentLibraryExtraId
 import net.sigmabeta.sage.ui.componentlibrary.componentLibraryItems
 
 /**
@@ -33,8 +34,8 @@ data class ComponentLibraryState(
 
 /**
  * One of each sample-owned row from `:core:ui:components:models`, rendered through
- * `SampleRenderers.contentFor`. Their ids sit clear of the catalog's (which uses 1,000,000+ and
- * string hashes).
+ * `SampleRenderers.contentFor`. Their explicit ids come from `componentLibraryExtraId`, which can't
+ * collide with the catalog's.
  */
 internal fun sampleFormRows(stringProvider: StringProvider): List<ListModel> = listOf(
     TextFieldListModel(
@@ -59,7 +60,7 @@ internal fun sampleFormRows(stringProvider: StringProvider): List<ListModel> = l
     ),
 )
 
-internal const val TEXT_FIELD_ID = 2_000_001L
-internal const val BUTTON_ID = 2_000_002L
-internal const val ERROR_MESSAGE_ID = 2_000_003L
-internal const val INFO_MESSAGE_ID = 2_000_004L
+internal val TEXT_FIELD_ID = componentLibraryExtraId(0)
+internal val BUTTON_ID = componentLibraryExtraId(1)
+internal val ERROR_MESSAGE_ID = componentLibraryExtraId(2)
+internal val INFO_MESSAGE_ID = componentLibraryExtraId(3)

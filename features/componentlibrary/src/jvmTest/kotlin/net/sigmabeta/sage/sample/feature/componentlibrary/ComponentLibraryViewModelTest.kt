@@ -13,6 +13,7 @@ import net.sigmabeta.sage.sample.settings.SampleDelayManager
 import net.sigmabeta.sage.ui.componentlibrary.ComponentLibraryAction
 import net.sigmabeta.sage.ui.componentlibrary.ComponentLibraryLayout
 import net.sigmabeta.sage.ui.componentlibrary.StyleToken
+import net.sigmabeta.sage.ui.componentlibrary.componentLibraryStyleOf
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -44,13 +45,13 @@ class ComponentLibraryViewModelTest {
     }
 
     @Test
-    fun `a style action reaches the exposed style`() = runTest(dispatcher) {
+    fun `a style action reaches the style carried in the rendered rows`() = runTest(dispatcher) {
         val viewModel = createViewModel()
 
         viewModel.sendAction(ComponentLibraryAction.SetStyle(StyleToken.HERO_CORNER, 24))
         advanceUntilIdle()
 
-        assertEquals(24, viewModel.style.value.heroCornerRadiusDp)
+        assertEquals(24, componentLibraryStyleOf(viewModel.uiStateActual.value.listItems).heroCornerRadiusDp)
     }
 
     @Test

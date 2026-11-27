@@ -239,8 +239,8 @@ data object ComponentLibraryScreen : SampleScreen {
     @Composable
     override fun Content() {
         val viewModel = metroViewModel<ComponentLibraryViewModel>()
-        val style by viewModel.style.collectAsStateWithLifecycle()
-        ComponentLibraryHost(style) { SampleListScreen(viewModel) }
+        val state by viewModel.uiStateActual.collectAsStateWithLifecycle()
+        ComponentLibraryHost(state.listItems) { SampleListScreen(viewModel) }
     }
 }
 
