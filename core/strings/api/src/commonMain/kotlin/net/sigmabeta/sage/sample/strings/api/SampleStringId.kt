@@ -28,16 +28,6 @@ enum class SampleStringId : SageStringId {
     NAV_OPEN_SETTINGS_DESCRIPTION,
     NAV_BACK_DESCRIPTION,
 
-    // Accessibility text owned by the shared renderer suite.
-    ACCY_OCL_CHECKBOX,
-    ACCY_OCL_DROPDOWN,
-    ACCY_OCL_RATING,
-    ACCY_OCL_SINGLE_LINE,
-    ACCY_OCL_VALUE,
-    ACCY_ST_DESC_CHECKED,
-    ACCY_ST_DESC_LOADING,
-    ACCY_ST_DESC_UNCHECKED,
-
     // Home.
     HOME_TITLE,
     HOME_SECTION_BIG_IMAGE,

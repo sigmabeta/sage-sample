@@ -1,5 +1,5 @@
 package net.sigmabeta.sage.sample.feature.contentdetail
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.ContentDetailField
 import net.sigmabeta.sage.sample.models.ContentId

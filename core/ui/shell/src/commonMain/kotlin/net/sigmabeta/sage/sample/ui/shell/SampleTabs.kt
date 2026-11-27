@@ -5,11 +5,11 @@ import net.sigmabeta.sage.sample.models.ContentId
 import net.sigmabeta.sage.sample.nav.SampleDestination
 import net.sigmabeta.sage.sample.nav.activeScreenFor
 import net.sigmabeta.sage.sample.nav.backActionFor
-import net.sigmabeta.sage.sample.ui.components.api.BASE_FADE_IN_MILLIS
-import net.sigmabeta.sage.sample.ui.components.api.BASE_FADE_OUT_MILLIS
-import net.sigmabeta.sage.sample.ui.components.api.LocalAnimationScale
-import net.sigmabeta.sage.sample.ui.components.api.LocalScreenTransitionScope
-import net.sigmabeta.sage.sample.ui.components.api.scaledMillis
+import net.sigmabeta.sage.ui.composables.BASE_FADE_IN_MILLIS
+import net.sigmabeta.sage.ui.composables.BASE_FADE_OUT_MILLIS
+import net.sigmabeta.sage.ui.composables.LocalAnimationScale
+import net.sigmabeta.sage.ui.composables.LocalScreenTransitionScope
+import net.sigmabeta.sage.ui.composables.scaledMillis
 import net.sigmabeta.sage.sample.ui.components.api.text
 
 import androidx.compose.runtime.Composable

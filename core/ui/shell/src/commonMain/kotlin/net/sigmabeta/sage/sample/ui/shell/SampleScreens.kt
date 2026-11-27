@@ -41,9 +41,9 @@ import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
 import net.sigmabeta.sage.sample.bitmaps.GeneratedImageFetcher
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
-import net.sigmabeta.sage.sample.ui.components.api.ArtworkHandoff
-import net.sigmabeta.sage.sample.ui.components.api.Content
-import net.sigmabeta.sage.sample.ui.components.api.LocalArtworkHandoff
+import net.sigmabeta.sage.ui.composables.ArtworkHandoff
+import net.sigmabeta.sage.ui.composables.Content
+import net.sigmabeta.sage.ui.composables.LocalArtworkHandoff
 import net.sigmabeta.sage.sample.ui.components.api.SearchContent
 import net.sigmabeta.sage.sample.ui.components.api.text
 import net.sigmabeta.sage.sample.viewmodel.SampleListViewModel
@@ -241,7 +241,7 @@ data object LoginScreen : Screen {
 
 /**
  * Renders a [SampleListViewModel] with the shared
- * [net.sigmabeta.sage.sample.ui.components.api.Content] renderer.
+ * [net.sigmabeta.sage.ui.composables.Content] renderer.
  *
  * Every destination goes through this, so the only per-screen decisions are which view model it
  * resolves, what state it produces, and whether it replaces the shared list presentation

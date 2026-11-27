@@ -1,143 +1,98 @@
 # `:core:ui:components:api`
 
-The shared Compose renderer suite. Every app supplies one `ListModel.Content` implementation to SAGE's `ListScreen`/`GridScreen`, so every SAGE
-`ListModel` subtype renders the same way on Android and desktop.
+The sample-owned rows plus the renderer configuration for SAGE's shared renderer suite
+(`:common:ui:composables`). The suite itself — `ListModel.Content`, the per-model renderers, the
+`subs/` and `utils/` building blocks, and the `@Preview` harnesses — lives in SAGE and is re-exported
+here so every app gets it from one dependency.
 
 ```kotlin
 plugins {
     alias(libs.plugins.sage.kmp)
+    alias(libs.plugins.sage.kmp.js)
     alias(libs.plugins.sage.compose.kmp)
 }
 ```
 
-It is multiplatform (`commonMain`, `androidMain`, `jvmMain`, `jsMain`) because its Compose code is shared by Android, desktop and the browser.
-`sage.kmp` also creates a `jvmSharedMain` intermediate source set from `src/main/java` for code the
-Android and JVM targets share; `PlatformImageModel.jvmShared.kt` lives there.
+It is multiplatform (`commonMain`, `androidMain`) because its Compose code is shared by Android,
+desktop and the browser.
 
-## The main seam
+## The seam
 
-`ComposableMapping.kt` defines:
+SAGE's `ListModel.Content` consults `LocalSageRenderers.current.contentFor` before its built-in
+renderers, and falls through to the built-ins when it returns `null`. `SampleRenderers.kt` supplies
+that hook:
 
 ```kotlin
-@Composable
-fun ListModel.Content(sink: ActionSink, debug: Boolean, mod: Modifier, pad: PaddingValues)
+val SampleRenderers = SageRenderers(
+    contentFor = { model ->
+        when (model) {
+            is TextFieldListModel -> { _, sink, _, modifier, padding ->
+                TextFieldListItem(model = model, actionSink = sink, modifier = modifier, padding = padding)
+            }
+            is ButtonListModel -> { _, sink, _, modifier, padding ->
+                ButtonListItem(model = model, actionSink = sink, modifier = modifier, padding = padding)
+            }
+            is FormMessageListModel -> { _, _, _, modifier, padding ->
+                FormMessageListItem(model = model, modifier = modifier, padding = padding)
+            }
+            else -> null
+        }
+    },
+    previewImage = { sourceInfo, modifier ->
+        GeneratedBitmap(sourceInfo = sourceInfo.info.toString(), modifier = modifier)
+    },
+)
 ```
 
-It dispatches each SAGE model the sample uses to a renderer:
+`contentFor` maps the sample's three form models to their rows — the branches the old
+`ComposableMapping.kt` owned — and returns `null` for everything else, so SAGE's built-ins draw the
+rest. `previewImage` plugs `:core:bitmaps`' generated art back into SAGE's inspection-mode stand-in
+(`FakeImage`), keeping the Paparazzi goldens byte-identical.
 
-- rows — `NameCaption`, `ImageNameCaption`, `IconNameCaption`, `WideItem`, `GridImage`, …
-- chrome — `SectionHeader`, `SubsectionHeader`, `Section`, `Subsection`, `SmallText`
-- states — `EmptyStateListModel` / `ErrorStateListModel` (via `EmptyListIndicator`), loading items
-- wrappers — `HorizontalScroller`, `DraggableListModel`, `DismissibleListModel` (swipe to remove)
-- settings — `DropdownSettingListModel`, `CheckableListModel`, `LabelValueListModel`, …
-- search — `SearchHistoryListModel`, `SearchResultListModel`
-- forms — `TextFieldListModel`, `ButtonListModel`, `FormMessageListModel` (`FormListItems.kt`)
-- unknown models fall through to a `Spacer`, so a feature can add a model without breaking the app
+The apps install this config with `ProvideSampleText` (in `LocalSampleStringProvider.kt`), which
+wraps both the sample's `LocalSampleStringProvider` and SAGE's `ProvideSageRenderers` around the same
+content, so the two locals cannot drift apart.
 
-Each item is tagged with its model type for UI tests and wrapped in SAGE's perf measurement
-(`WithMeasurementComponent`).
-
-`sage.common.ui.components`, `sage.common.ui.strings` and `:core:ui:components:models` are
-re-exported with `api`, so consumers get SAGE's `ListModel` vocabulary, the sample's form models and
-this module's renderers from one dependency.
-
-### Form rows
-
-The form models live in the Compose-free `:core:ui:components:models`, because the features that
-build them must not depend on Compose. SAGE's `EditTextListModel` has its own submit/cancel pair and
-no masking, so it does not fit a sign-in form.
-
-- `TextFieldListItem` draws an M3 `OutlinedTextField`. A `masked` field uses
-  `PasswordVisualTransformation` and the password keyboard. With `submitOnDone`, the IME Done
-  action sends `TextFieldDone`. Typed text is held locally and each edit sends `TextFieldChanged`.
-  The local text resets when `id` or `resetKey` changes, so a feature clears a field by bumping
-  `resetKey`.
-- `ButtonListItem` draws a full-width M3 button that sends `clickAction` when enabled.
-- `FormMessageListItem` draws inline text in the `INFO` or `ERROR` tone.
-
-## Other public surface
+## Sample-owned surface
 
 | Area | Contents |
 |---|---|
+| `SampleRenderers.kt` | `SampleRenderers`: `contentFor` (form rows) + `previewImage` (`:core:bitmaps` art) |
+| `FormListItems.kt` | `TextFieldListItem`, `ButtonListItem`, `FormMessageListItem` for the Compose-free form models in `:core:ui:components:models` |
 | `SearchContent.kt` | App-owned search: one adaptive `LazyVerticalGrid` with the field overlaid and a status-bar scrim. Full-width rows/headers span the grid; grid cells keep one lane. |
 | `SearchField.kt` | The search box chrome: back action, clear action, focus request, constant 48 dp control height. Not a `ListModel`; the caller owns the text and passes semantics strings. |
-| `LocalSampleStringProvider.kt` | Composition-local shared `StringProvider` plus `SampleStringId.text(...)` helpers. Every app installs its graph's provider. |
-| `subs/` | Drawing/effect building blocks: `CrossfadeImage` (Coil + crossfade + generated-art fallback), `FakeImage`, `Flasher`, `TintedText`, `TintedIcon`, `Rating`, `Elevated*`, `GridCellOffscreenLayerEnabled`, `PlatformImageModel` (`jvmSharedMain`), `TraceSection`. |
-| `utils/` | Focus-area padding, `ImageSize`, small math/lerp helpers. |
-| `previews/` (common) | Shared sizing constants: `BigImage`, `CoverArt`, `Notif`, `Square`, `WideItem`. |
-| `previews/` (android) | `ComponentsPreview` theme/provider harness and one `@Preview` file per renderer. |
-
-### Platform gates in `subs`
-
-- `gridCellOffscreenLayerEnabled` is `true` on JVM (cached rasterized grid cells help Skiko) and
-  `false` on Android (extra GPU surfaces with no win — the hardware renderer already caches cells).
-- `crossfadeImagesEnabled` is `true` for both current targets.
-- `platformImageModel` normalises image references; the shared Android/JVM actual hands Coil an okio
-  `Path` so file paths containing `#`/`?` are not truncated by URI parsing.
-- `LocalForceFakeImages` / `LocalFirstContentReporter` are host-provided hooks; the sample's default
-  is off/null. The Android benchmark build supplies the reporter, so the startup macrobenchmark can
-  measure first content.
-
-## Using it
-
-Build a list of `ListModel`s in the state, then dispatch each one:
-
-```kotlin
-LazyColumn {
-    items(models, key = { it.dataId }) { model ->
-        model.Content(
-            sink = sink,
-            debug = false,
-            mod = Modifier.animateItem(),
-            pad = PaddingValues(horizontal = 16.dp),
-        )
-    }
-}
-```
+| `LocalSampleStringProvider.kt` | `LocalSampleStringProvider` + `SampleStringId.text(...)` helpers, plus `ProvideSampleText`, the one shared installer for both string locals. |
+| `previews/ComponentsTheme.kt` (android) | `ComponentsPreview`: the preview wrapper for the sample's form rows. |
 
 ## Design choices
 
 - Domain-specific models and their domain types are not part of the shared suite; an app adds its
   own alongside this module.
-- `FakeImage` uses the shared `:core:bitmaps` generator on every target instead of Android's
-  `android.graphics` goldens and a separate desktop gradient.
-- `TraceSection` is real on Android (`androidx.tracing.Trace`, so a macrobenchmark can sum it) and a
-  structural no-op on desktop and JS.
-- `StackFrameSummary` is a single common implementation shared by every target.
-- Accessibility text uses `SampleStringId` + `LocalSampleStringProvider` from the shared strings
-  modules. The type scale lives in `:core:ui:theme:api`.
+- Accessibility text uses `SampleStringId` + `LocalSampleStringProvider`, and SAGE's renderers read
+  their eight `SageComponentStringId`s from the same provider through `ProvideSageRenderers`.
+- The module has no tests: it is exercised through the app modules' render tests and previews.
 
 ## Module facts
 
 - **Targets:** Android + JVM; JS (Node) when built with `-Psage.js`
-- **Source sets:** `commonMain` (renderers, models, mapping), `jsMain` (`GridCellOffscreenLayerEnabled` + `platformImageModel` actuals), `androidMain` (`@Preview` harnesses
-  and the Android offscreen-layer actual), `jvmMain` (the JVM offscreen-layer actual),
-  `src/main/java` (`jvmSharedMain`: the okio path rewrite shared by both targets)
-- `androidMain` previews also provide `FullscreenBlack`, `FullScreenOf` and `PreviewActionSink`
-  alongside one `*Previews.kt` harness per component.
+- **Source sets:** `commonMain` (sample rows + `SampleRenderers` + `ProvideSampleText`), `androidMain`
+  (`FormListItemsPreviews`, `ComponentsPreview`)
 
 ## Dependencies
 
 | Dependency | Why |
 |---|---|
-| `sage.common.ui.components` (`api`) | SAGE `ListModel` types and reused building blocks |
-| `sage.common.ui.strings` (`api`) | `SageStringId`, `StringProvider` |
+| `sage.common.ui.composables` (`api`) | SAGE's shared renderer suite — `ListModel.Content`, `SageRenderers`, `ProvideSageRenderers`, and (transitively) the `ListModel` vocabulary, `StringProvider`/`SageStringId`, `ActionSink`, `SourceInfo`/`ArtworkCorner` |
 | `:core:ui:components:models` (`api`) | The sample's Compose-free form models |
 | `:core:strings:api` (`api`) | The shared `SampleStringId` vocabulary |
+| `sage.common.ui.iconsReal` | Real icon vectors (`SearchField`'s back/clear actions) |
+| `:core:bitmaps` | `SampleRenderers.previewImage` draws generated art in previews |
 | `:core:strings:real` (`androidMain`) | The shared provider for `ComponentsPreview` |
-| `sage.common.appcomm` | `ActionSink` |
-| `sage.common.images` | `SourceInfo` |
-| `sage.common.ui.perfCompose` | `WithMeasurementComponent` |
-| `sage.common.ui.iconsReal` | Real icon vectors |
-| `:core:bitmaps` | `FakeImage` renders generated art in previews |
-| `coil-kt-core`, `coil-kt-compose` | `CrossfadeImage`, `AsyncImagePainter` |
-| `okio` | `Path` model for raw filesystem image paths |
-| `androidx.compose.bom` + `ui-tooling-preview` (androidMain) | `@Preview` harnesses; declared through the top-level handler so the BOM uses `platform()` |
+| `androidx.compose.bom` + `ui-tooling-preview` (androidMain) | `@Preview` harness for the form rows |
 
 ## Conventions
 
-- Renderers never read `R.string`. Accessibility text goes through `SampleStringId` and
-  `LocalSampleStringProvider`; the strings module owns the values.
+- Renderers never read `R.string`. Accessibility text goes through `SampleStringId` /
+  `SageComponentStringId` and the shared provider; the strings module owns the values.
 - Keep renderers model-generic. Screen-specific models do not belong here; the form rows are
   generic enough for any form.
-- This module has no tests: it is exercised through the app modules' render tests and previews.

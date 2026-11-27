@@ -71,13 +71,16 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   send `Resume` on title change, coalesced in `SampleListViewModel.sendAction`.
 - **Text lives in `:core:strings:real`.** Every UI-bearing module emits a `SampleStringId`
   (`:core:strings:api`); `SampleStringProvider` is the single id → text table. Demo/repository
-  content included. The apps bind it into their graph and install it as
-  `LocalSampleStringProvider`; they own no text table (Android keeps only `app_name` for the
-  manifest). The renderer suite's accessibility labels are `SampleStringId`s in the same enum.
-- **Renderers are shared, not per-app.** `:core:ui:components:api` is the sample's KMP Compose
-  suite: `ListModel.Content` dispatches every SAGE model it knows to a renderer, and it re-exports
-  `libs.sage.common.ui.components`. Both apps supply
-  `ListModel.Content` to `ListScreen`/`GridScreen`; don't reintroduce app-local `ListItemContent`.
+  content included. The apps bind it into their graph and install it through `ProvideSampleText`;
+  they own no text table (Android keeps only `app_name` for the manifest). The renderer suite's
+  accessibility labels are SAGE's eight `SageComponentStringId`s, mapped in the same table.
+- **Renderers are shared, not per-app.** SAGE's `:common:ui:composables` owns the renderer suite:
+  `ListModel.Content` dispatches every SAGE model to a renderer, customisable through
+  `SageRenderers`. `:core:ui:components:api` keeps only the sample-owned rows (`FormListItems`,
+  `SearchContent`, `SearchField`, `LocalSampleStringProvider`) plus `SampleRenderers`, whose
+  `contentFor` maps the form models to their rows and whose `previewImage` draws `:core:bitmaps`
+  art. Both apps supply `ListModel.Content` to `ListScreen`/`GridScreen`; don't reintroduce
+  app-local `ListItemContent` — add an app-owned row through `SampleRenderers.contentFor`.
 - **The composition root and Compose/Voyager shell live in `:core:ui:shell`.** That module owns
   `SampleApp`, the tabs, screens, nav host/scaffold/top bar, chrome and screen lifecycle. An app
   keeps only its entry point, Metro graph/bindings, storage, and platform seams: a
@@ -220,8 +223,9 @@ Don't `git commit` or `git push` unless explicitly asked.
 
 See [`README.md § Layout`](README.md#layout) for the file-by-file map. Top level: `apps/android/`
 (Android application), `apps/jvm/` (Compose Desktop application), `benchmark/` (Android device
-macrobenchmarks), `core/bitmaps/` (KMP Compose preview art), `core/ui/components/api/` (KMP Compose
-renderer suite), `core/ui/shell/` (KMP Compose composition root + navigation host), `core/settings/`
+macrobenchmarks), `core/bitmaps/` (KMP Compose preview art), `core/ui/components/api/` (sample-owned
+rows + `SampleRenderers`; the renderer suite itself is SAGE's `:common:ui:composables`),
+`core/ui/shell/` (KMP Compose composition root + navigation host), `core/settings/`
 and `core/viewmodel/`, `features/*` (pure JVM), `testing/perfbench-core/` (result contract) and
 `testing/perfbench/` (diff CLI), `scripts/benchmark/` (per-axis device gates), `scripts/ci/verify.sh`
 (CI mirror), `scripts/dev/` (agent tooling), `docs/agents/` (domain docs), `sage/` (submodule).

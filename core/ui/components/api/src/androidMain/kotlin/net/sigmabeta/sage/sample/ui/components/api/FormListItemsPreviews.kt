@@ -10,11 +10,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import net.sigmabeta.sage.appcomm.SageAction
 import net.sigmabeta.sage.sample.ui.components.api.previews.ComponentsPreview
-import net.sigmabeta.sage.sample.ui.components.api.previews.PreviewActionSink
 import net.sigmabeta.sage.sample.ui.components.models.ButtonListModel
 import net.sigmabeta.sage.sample.ui.components.models.FormMessageListModel
 import net.sigmabeta.sage.sample.ui.components.models.FormMessageTone
 import net.sigmabeta.sage.sample.ui.components.models.TextFieldListModel
+import net.sigmabeta.sage.ui.composables.previews.PreviewActionSink
 
 @Preview
 @Composable

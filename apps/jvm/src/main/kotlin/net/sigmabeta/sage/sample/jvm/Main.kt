@@ -26,7 +26,7 @@ import net.sigmabeta.sage.sample.jvm.ui.navigation.isBackKey
 import net.sigmabeta.sage.sample.nav.SampleDeepLink
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.sample.strings.real.SampleStringProvider
-import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.ProvideSampleText
 import net.sigmabeta.sage.sample.ui.shell.MutableSampleDeepLinkSource
 import net.sigmabeta.sage.sample.ui.shell.PerScreenSampleScreenContainer
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
@@ -101,17 +101,18 @@ fun main(args: Array<String>) {
 
             CompositionLocalProvider(
                 LocalMetroViewModelFactory provides graph.metroViewModelFactory,
-                LocalSampleStringProvider provides graph.stringProvider,
             ) {
-                SampleApp(
-                    identityRepository = graph.identityRepository,
-                    settingsManager = graph.settingsManager,
-                    interFontFamily = InterFontFamily,
-                    platformBack = platformBack,
-                    screenContainer = PerScreenSampleScreenContainer,
-                    screenLifecycleOwner = screenLifecycleOwner,
-                    deepLinkSource = deepLinks,
-                )
+                ProvideSampleText(stringProvider = graph.stringProvider) {
+                    SampleApp(
+                        identityRepository = graph.identityRepository,
+                        settingsManager = graph.settingsManager,
+                        interFontFamily = InterFontFamily,
+                        platformBack = platformBack,
+                        screenContainer = PerScreenSampleScreenContainer,
+                        screenLifecycleOwner = screenLifecycleOwner,
+                        deepLinkSource = deepLinks,
+                    )
+                }
             }
         }
     }

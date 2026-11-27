@@ -1,6 +1,6 @@
 package net.sigmabeta.sage.sample.feature.listitems
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
-import net.sigmabeta.sage.sample.models.ArtworkCorner
+import net.sigmabeta.sage.images.ArtworkCorner
 import net.sigmabeta.sage.sample.models.ContentArtworkSize
 import net.sigmabeta.sage.sample.models.SampleItem
 

@@ -30,7 +30,7 @@ coordinates resolve to the included projects automatically.
 | [`:core:settings`](core-settings.md) | KMP library | Persisted preferences, demo outcome, simulated delay, recent-search history |
 | [`:core:strings:api`](core-strings-api.md) | KMP library | One `SampleStringId` vocabulary for every user-visible string |
 | [`:core:strings:real`](core-strings-real.md) | KMP library | The single id → English table (`SampleStringProvider`) |
-| [`:core:ui:components:api`](core-ui-components-api.md) | KMP Compose library | Shared renderer suite: SAGE `ListModel` → composables, search chrome |
+| [`:core:ui:components:api`](core-ui-components-api.md) | KMP Compose library | Sample-owned rows + `SampleRenderers` for SAGE's shared renderer suite |
 | [`:core:ui:components:models`](core-ui-components-models.md) | KMP library | Compose-free form models (text field, button, message) that features build |
 | [`:core:ui:previews`](core-ui-previews.md) | Android test-support library | VM-free `ListState` rendering, device matrix and `FakeModelGenerator` |
 | [`:core:ui:shell`](core-ui-shell.md) | KMP Compose library | Shared composition root and Voyager navigation host |

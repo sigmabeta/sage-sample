@@ -21,10 +21,10 @@ import kotlinx.browser.window
 import kotlinx.coroutines.flow.MutableSharedFlow
 import net.sigmabeta.sage.sample.js.di.WebSampleAppGraph
 import net.sigmabeta.sage.sample.js.ui.WebPlatformBack
-import net.sigmabeta.sage.sample.ui.components.api.subs.LocalForceFakeImages
-import net.sigmabeta.sage.sample.ui.components.api.LocalSampleStringProvider
+import net.sigmabeta.sage.sample.ui.components.api.ProvideSampleText
 import net.sigmabeta.sage.sample.ui.shell.PerScreenSampleScreenContainer
 import net.sigmabeta.sage.sample.ui.shell.SampleApp
+import net.sigmabeta.sage.ui.composables.subs.LocalForceFakeImages
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLTextAreaElement
 import org.w3c.dom.events.KeyboardEvent
@@ -54,36 +54,37 @@ fun main() {
     ComposeViewport(document.body!!) {
         CompositionLocalProvider(
             LocalMetroViewModelFactory provides graph.metroViewModelFactory,
-            LocalSampleStringProvider provides graph.stringProvider,
             // The sample's images are generated gradients. Drawing them directly is the same path
             // previews use, and it avoids needing a Coil fetcher for `generated://` on the web.
             LocalForceFakeImages provides true,
         ) {
-            // Compose for Web only wires Tab/Shift-Tab; arrow keys move focus like a D-pad, as the
-            // desktop and Android builds do.
-            val focusManager = LocalFocusManager.current
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .onKeyEvent { event ->
-                        if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
-                        val direction = when (event.key) {
-                            Key.DirectionUp -> FocusDirection.Up
-                            Key.DirectionDown -> FocusDirection.Down
-                            Key.DirectionLeft -> FocusDirection.Left
-                            Key.DirectionRight -> FocusDirection.Right
-                            else -> return@onKeyEvent false
-                        }
-                        focusManager.moveFocus(direction)
-                    },
-            ) {
-                SampleApp(
-                    identityRepository = graph.identityRepository,
-                    settingsManager = graph.settingsManager,
-                    platformBack = WebPlatformBack(backKeys),
-                    screenContainer = PerScreenSampleScreenContainer,
-                    browserNavigation = graph.browserNavigation,
-                )
+            ProvideSampleText(stringProvider = graph.stringProvider) {
+                // Compose for Web only wires Tab/Shift-Tab; arrow keys move focus like a D-pad, as
+                // the desktop and Android builds do.
+                val focusManager = LocalFocusManager.current
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onKeyEvent { event ->
+                            if (event.type != KeyEventType.KeyDown) return@onKeyEvent false
+                            val direction = when (event.key) {
+                                Key.DirectionUp -> FocusDirection.Up
+                                Key.DirectionDown -> FocusDirection.Down
+                                Key.DirectionLeft -> FocusDirection.Left
+                                Key.DirectionRight -> FocusDirection.Right
+                                else -> return@onKeyEvent false
+                            }
+                            focusManager.moveFocus(direction)
+                        },
+                ) {
+                    SampleApp(
+                        identityRepository = graph.identityRepository,
+                        settingsManager = graph.settingsManager,
+                        platformBack = WebPlatformBack(backKeys),
+                        screenContainer = PerScreenSampleScreenContainer,
+                        browserNavigation = graph.browserNavigation,
+                    )
+                }
             }
         }
     }

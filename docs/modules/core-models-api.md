@@ -35,5 +35,5 @@ accepted namespaces.
 
 - **Plugin:** `sage.kmp` + `sage.kmp.js` (multiplatform; no Compose, no Android). `ContentId` is a data class rather than a value class because `@JvmInline` does not compile for the JS target.
 - **Source sets:** `src/commonMain/kotlin`, tests in `src/jvmTest/kotlin`
-- **Dependencies:** `sage.common.ui.iconsApi` (`api`, for `ContentAction.icon`)
+- **Dependencies:** `sage.common.ui.iconsApi` (`api`, for `ContentAction.icon`), `sage.common.images` (`api`, for `ContentArtworkSize.corner`'s `ArtworkCorner`)
 - **Consumers:** all features, `:core:nav`, `:core:ui:previews`.
