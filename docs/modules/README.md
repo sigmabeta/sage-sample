@@ -38,6 +38,8 @@ coordinates resolve to the included projects automatically.
 | [`:core:viewmodel`](core-viewmodel.md) | KMP library | `SampleListViewModel`: the base every feature screen builds on |
 | [`:features:browse`](features-browse.md) | KMP feature | Static destination list that opens the demo screens |
 | [`:features:browse:screenshot`](features-browse-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Browse |
+| [`:features:componentlibrary`](features-componentlibrary.md) | KMP feature | SAGE's debug component gallery plus the sample's form rows; reached from Settings |
+| [`:features:componentlibrary:screenshot`](features-componentlibrary-screenshot.md) | Android screenshot leaf | Paparazzi goldens for the Component Library (list, grid, columns) |
 | [`:features:contentdetail`](features-contentdetail.md) | KMP feature | Parameterized detail screen over seeded generated content |
 | [`:features:contentdetail:screenshot`](features-contentdetail-screenshot.md) | Android screenshot leaf | Paparazzi goldens for Content detail |
 | [`:features:home`](features-home.md) | KMP feature | Module-driven Home with a pluggable row contract and a stable/random plan |
