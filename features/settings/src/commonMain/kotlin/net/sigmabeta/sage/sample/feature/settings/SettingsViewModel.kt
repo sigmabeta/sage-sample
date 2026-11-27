@@ -143,6 +143,16 @@ class SettingsViewModel(
             // sign-out (so the next Sign in opens Home), and it ends the Session itself.
             SettingsAction.SignOutClicked -> emitEvent(SignOutRequested(source = "SettingsViewModel"))
 
+            SettingsAction.OpenComponentLibraryClicked -> emitEvent(
+                SageEvent.NavigateTo(
+                    // Route contract with the app: this must stay in sync with
+                    // SampleDestination.COMPONENT_LIBRARY.destName. SampleDestinationTest guards
+                    // the mapping, so changing either side alone fails a test.
+                    destination = "component-library",
+                    source = "SettingsViewModel",
+                ),
+            )
+
             else -> Unit
         }
     }

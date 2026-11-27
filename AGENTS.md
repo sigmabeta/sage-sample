@@ -8,7 +8,7 @@ agent-only guardrails and pointers; prefer a pointer over repeating the README.
 
 The canonical reference for building an app on [SAGE](sage/): one Android app (`:apps:android`), one
 Compose Desktop app (`:apps:jvm`), one Kotlin/JS browser app (`:apps:js`) with a Ktor server
-(`:apps:server`) that serves it, six multiplatform feature modules over `:core:viewmodel`, and SAGE
+(`:apps:server`) that serves it, eight multiplatform feature modules over `:core:viewmodel`, and SAGE
 itself as a Git submodule consumed through a Gradle composite build. Patterns added here are
 copied by real SAGE apps, so prefer the conventional SAGE way over a local shortcut.
 
@@ -87,6 +87,9 @@ copied by real SAGE apps, so prefer the conventional SAGE way over a local short
   `SamplePlatformBack`, a `SampleScreenContainer` when its navigator lacks per-screen stores, a
   screen lifecycle owner, and its Inter family. Don't re-add a navigation host or a
   destination-to-screen mapping to an app.
+- **Component Library is the reference integration of `:common:ui:component-library`.** `:features:componentlibrary`
+  holds the gallery config in its state and forwards `ComponentLibraryAction`s to SAGE's reducer; the shell wraps its
+  screen in `ComponentLibraryHost`. Settings' Developer row reaches it by emitting a `NavigateTo`.
 - **Module plugins:** `:features:*`, `:core:models:api`, `:core:nav`, `:core:viewmodel`,
   `:core:settings`, `:core:repository:api`, `:core:repository:cache` and `:core:repository:remote` apply `sage.kmp` +
   `sage.kmp.js` (the ones with Metro bindings also apply `metro` directly — `sage.di`'s

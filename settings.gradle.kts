@@ -69,6 +69,8 @@ include(
     ":core:viewmodel",
     ":features:browse",
     ":features:browse:screenshot",
+    ":features:componentlibrary",
+    ":features:componentlibrary:screenshot",
     ":features:contentdetail",
     ":features:contentdetail:screenshot",
     ":features:home",

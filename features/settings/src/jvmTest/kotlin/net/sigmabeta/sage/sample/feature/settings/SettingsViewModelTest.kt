@@ -296,6 +296,23 @@ class SettingsViewModelTest {
         assertEquals("the gate, not Settings, ends the Session", 0, identity.signOutCalls)
     }
 
+    @Test
+    fun `the Developer row asks the app to open the component library`() = runTest(dispatcher) {
+        val viewModel = createViewModel()
+        val events = mutableListOf<SageEvent>()
+        backgroundScope.launch(dispatcher) {
+            viewModel.uiEvents.collect { events += it }
+        }
+
+        viewModel.sendAction(SettingsAction.OpenComponentLibraryClicked)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf<SageEvent>(SageEvent.NavigateTo("component-library", source = "SettingsViewModel")),
+            events,
+        )
+    }
+
     private fun createViewModel(
         identity: FakeIdentityRepository = FakeIdentityRepository(),
         settings: FakeSettingsManager = FakeSettingsManager(),

@@ -39,6 +39,8 @@ import net.sigmabeta.sage.sample.feature.listitems.ListItemsViewModel
 import net.sigmabeta.sage.sample.feature.listitems.ListItemsWithImagesViewModel
 import net.sigmabeta.sage.sample.feature.search.SearchViewModel
 import net.sigmabeta.sage.sample.feature.settings.SettingsViewModel
+import net.sigmabeta.sage.sample.feature.componentlibrary.ComponentLibraryViewModel
+import net.sigmabeta.sage.ui.componentlibrary.ComponentLibraryHost
 import net.sigmabeta.sage.sample.bitmaps.GeneratedImageFetcher
 import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import net.sigmabeta.sage.ui.composables.ArtworkHandoff
@@ -223,6 +225,22 @@ data object SettingsScreen : SampleScreen {
     @Composable
     override fun Content() {
         SampleListScreen(metroViewModel<SettingsViewModel>())
+    }
+}
+
+/**
+ * SAGE's debug component gallery, reached from Settings' Developer section.
+ *
+ * The host applies the live style tweaks to the shared renderers, so the list is wrapped in it.
+ */
+data object ComponentLibraryScreen : SampleScreen {
+    override val destination = SampleDestination.COMPONENT_LIBRARY
+
+    @Composable
+    override fun Content() {
+        val viewModel = metroViewModel<ComponentLibraryViewModel>()
+        val state by viewModel.uiStateActual.collectAsStateWithLifecycle()
+        ComponentLibraryHost(state.listItems) { SampleListScreen(viewModel) }
     }
 }
 

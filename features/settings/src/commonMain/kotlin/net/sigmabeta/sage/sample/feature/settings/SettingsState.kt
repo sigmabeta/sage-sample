@@ -4,6 +4,7 @@ import net.sigmabeta.sage.sample.strings.api.SampleStringId
 import kotlinx.collections.immutable.toImmutableList
 import net.sigmabeta.sage.appcomm.LCE
 import net.sigmabeta.sage.appcomm.SageAction
+import net.sigmabeta.sage.components.CtaListModel
 import net.sigmabeta.sage.components.DropdownSettingListModel
 import net.sigmabeta.sage.components.LabelValueListModel
 import net.sigmabeta.sage.components.ListModel
@@ -22,6 +23,7 @@ import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
+import net.sigmabeta.sage.ui.Icon
 import net.sigmabeta.sage.ui.StringProvider
 
 /**
@@ -88,6 +90,13 @@ data class SettingsState(
             stringProvider,
             SampleStringId.SETTINGS_LABEL_BUILD_DATE,
             buildDate,
+        ),
+        sectionHeader(stringProvider, SampleStringId.SETTINGS_SECTION_DEVELOPER),
+        CtaListModel(
+            icon = Icon.Description,
+            name = stringProvider.getString(SampleStringId.SETTINGS_OPEN_COMPONENT_LIBRARY),
+            clickAction = SettingsAction.OpenComponentLibraryClicked,
+            dataId = SampleStringId.SETTINGS_OPEN_COMPONENT_LIBRARY.name.hashCode().toLong(),
         ),
     )
 

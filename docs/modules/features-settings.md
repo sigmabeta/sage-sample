@@ -23,6 +23,13 @@ plugins {
    (`AnimationScale`), demo-outcome dropdown (`DemoOutcome`), "Home shows same content" checkbox,
    "Reset demo data" row
 3. **About** — app version, build date (display-only `LabelValueListModel`s)
+4. **Developer** — a "Component library" row that opens `:features:componentlibrary`. The sample
+   has no debug gate, so the row is always visible.
+4. **Developer** — a section header and a "Component library" `CtaListModel`. It dispatches
+   `SettingsAction.OpenComponentLibraryClicked`, which the view model turns into
+   `SageEvent.NavigateTo("component-library")` (the route string is guarded by
+   `SampleDestinationTest`, like Browse's). The sample has no debug gate, so the row is always
+   visible; a real app would hide the section in release builds.
 
 Dropdowns are closed sets: option order mirrors each enum's `entries`, so the selected index maps
 straight back to a value. At most one dropdown is expanded; re-tapping the open one closes it.

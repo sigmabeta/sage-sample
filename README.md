@@ -3,11 +3,11 @@
 The canonical reference for building an app on [SAGE](../sage). It is deliberately small: one
 Android app module (`:apps:android`), one Compose Desktop app module (`:apps:jvm`), one
 Kotlin/JS browser app (`:apps:js`), and one Ktor server (`:apps:server`) that serves the browser
-bundle and the sample's JSON API. Six multiplatform feature modules sit over shared `:core`
+bundle and the sample's JSON API. Eight multiplatform feature modules sit over shared `:core`
 modules (a module-driven Home that shows a stable plan by default and can randomize 2–10 hero and
 generated-image rows, Browse, a Content detail screen over seeded generated content, List Items —
 as text-only, generated-image, and 50-item generated-image grid variants — Search, and a Settings
-screen with persisted preferences). The data seams are split the way a real app would split them:
+screen with persisted preferences, whose Developer section opens SAGE's Component Library gallery). The data seams are split the way a real app would split them:
 interfaces in `:core:repository:api`, deterministic in-process sources in `:core:repository:demo`
 (Android + desktop), and an HTTP client in `:core:repository:remote` (browser, backed by
 `apps:server`). A per-screen Paparazzi screenshot suite covers a phone/tablet device matrix, and
@@ -278,6 +278,8 @@ features/search/            query + two deterministic generated result sets (lis
 features/search/screenshot/ Paparazzi goldens for Search
 features/settings/          theme, font, simulate-delay and same-content rows, app version and build date
 features/settings/screenshot/  Paparazzi goldens for Settings
+features/componentlibrary/  SAGE component gallery (debug tool) plus the sample's form rows as extras
+features/componentlibrary/screenshot/  Paparazzi goldens for the gallery (list/grid/columns)
 benchmark/                  Android test APK: device UI-scroll and startup macrobenchmarks
   DeviceBenchmark.kt        fingerprint, deep-link launcher, per-axis result sink, progress logging
   UiScrollBenchmark.kt      one WARM scroll per core surface, started through its deep link
@@ -548,6 +550,8 @@ the tabbed shell; each app supplies only its platform seams:
   `SageEvent.NavigateBack` all run it. Each app supplies a `SamplePlatformBack`: Android maps it
   to `BackHandler`, desktop to window Escape/Backspace plus the mouse back button.
 - **Settings** is pushed from the hamburger onto the active tab.
+- **Component Library** is pushed from Settings' Developer section onto the active tab
+  (`component-library`, non-top-level). It is a debug gallery with no debug gate in the sample.
 - **List Items, List Items with Images, Grid of Images, and Content Detail** are pushed from
   Browse onto the active tab. All four are non-top-level routes, so the back arrow returns to the
   screen they came from rather than resetting the stack. Grid of Images declares
@@ -559,7 +563,7 @@ the tabbed shell; each app supplies only its platform seams:
   `SageEvent`s (`NavigateTo`, `NavigateSingleTopLevel`, `NavigateBack`) through
   `SampleNavEffects`; `SampleNavAction`/`navActionFor` map a known top-level route to
   `ShowTopLevel` (select that tab) and any other route to
-  `Push` onto the active tab (Settings included), so a feature can reach Settings the same way
+  `Push` onto the active tab (Settings and Component Library included), so a feature can reach Settings the same way
   the hamburger does. `NavigateBack` runs the shared Back policy, and unknown routes or event
   types are ignored.
 - **Deep links share the browser's route model.** `:core:nav`'s `SampleDeepLink` decodes

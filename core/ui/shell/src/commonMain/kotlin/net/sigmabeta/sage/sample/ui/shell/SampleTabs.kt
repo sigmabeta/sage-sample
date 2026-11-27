@@ -374,6 +374,7 @@ internal fun screenFor(
     SampleDestination.CONTENT_DETAIL -> ContentDetailScreen(contentId?.value, artworkSize?.value)
     SampleDestination.SEARCH -> SearchScreen
     SampleDestination.SETTINGS -> SettingsScreen
+    SampleDestination.COMPONENT_LIBRARY -> ComponentLibraryScreen
 }
 
 /**
