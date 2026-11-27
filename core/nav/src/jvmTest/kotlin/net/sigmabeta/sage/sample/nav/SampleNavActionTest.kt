@@ -109,6 +109,14 @@ class SampleNavActionTest {
     }
 
     @Test
+    fun `the component library is pushed onto the active tab`() {
+        assertEquals(
+            SampleNavAction.Push(SampleDestination.COMPONENT_LIBRARY),
+            navActionFor(SageEvent.NavigateTo(destination = "component-library", source = "test")),
+        )
+    }
+
+    @Test
     fun `an unknown route has no navigation action`() {
         assertNull(navActionFor(SageEvent.NavigateTo(destination = "nowhere", source = "test")))
     }

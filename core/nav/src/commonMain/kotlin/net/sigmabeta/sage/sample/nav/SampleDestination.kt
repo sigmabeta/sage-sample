@@ -46,6 +46,12 @@ enum class SampleDestination(
         isTopLevel = false,
     ),
     SETTINGS("settings", SampleStringId.NAV_SETTINGS, Icon.Person, isTopLevel = false),
+    COMPONENT_LIBRARY(
+        "component-library",
+        SampleStringId.NAV_COMPONENT_LIBRARY,
+        Icon.Description,
+        isTopLevel = false,
+    ),
     ;
 
     override val argType: ArgType = ArgType.NONE

@@ -25,4 +25,7 @@ sealed class SettingsAction : SageAction() {
 
     /** The Account section's Sign out button; no confirmation. */
     data object SignOutClicked : SettingsAction()
+
+    /** The Developer section's row; opens the Component Library. */
+    data object OpenComponentLibraryClicked : SettingsAction()
 }

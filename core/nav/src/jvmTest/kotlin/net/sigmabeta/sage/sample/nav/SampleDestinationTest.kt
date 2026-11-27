@@ -72,6 +72,14 @@ class SampleDestinationTest {
     }
 
     @Test
+    fun `fromRoute resolves the component library route Settings emits`() {
+        assertEquals(
+            SampleDestination.COMPONENT_LIBRARY,
+            SampleDestination.fromRoute("component-library"),
+        )
+    }
+
+    @Test
     fun `fromRoute does not match destinations that merely start with the prefix`() {
         assertNull(SampleDestination.fromRoute("content-detailish"))
         assertNull(SampleDestination.fromRoute("content-detail-extra"))

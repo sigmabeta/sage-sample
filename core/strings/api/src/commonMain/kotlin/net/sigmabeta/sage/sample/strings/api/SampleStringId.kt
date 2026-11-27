@@ -25,6 +25,7 @@ enum class SampleStringId : SageStringId {
     NAV_GRID_OF_IMAGES,
     NAV_CONTENT_DETAIL,
     NAV_SETTINGS,
+    NAV_COMPONENT_LIBRARY,
     NAV_OPEN_SETTINGS_DESCRIPTION,
     NAV_BACK_DESCRIPTION,
 
@@ -118,6 +119,10 @@ enum class SampleStringId : SageStringId {
     SETTINGS_SECTION_ABOUT,
     SETTINGS_LABEL_APP_VERSION,
     SETTINGS_LABEL_BUILD_DATE,
+
+    // Settings: Developer section.
+    SETTINGS_SECTION_DEVELOPER,
+    SETTINGS_OPEN_COMPONENT_LIBRARY,
 
     // Settings: Account section (sign-in).
     SETTINGS_ACCOUNT_SECTION,

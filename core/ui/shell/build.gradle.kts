@@ -29,6 +29,7 @@ kotlin {
 
                 // The shell is the one module that maps destinations to feature view models.
                 api(projects.features.browse)
+                api(projects.features.componentlibrary)
                 api(projects.features.contentdetail)
                 api(projects.features.home)
                 api(projects.features.listitems)

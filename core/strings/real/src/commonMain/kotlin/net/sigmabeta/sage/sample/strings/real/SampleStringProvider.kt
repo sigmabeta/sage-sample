@@ -28,6 +28,7 @@ object SampleStringProvider : StringProvider {
         SampleStringId.NAV_GRID_OF_IMAGES to "Grid of images",
         SampleStringId.NAV_CONTENT_DETAIL to "Content detail",
         SampleStringId.NAV_SETTINGS to "Settings",
+        SampleStringId.NAV_COMPONENT_LIBRARY to "Component library",
         SampleStringId.NAV_OPEN_SETTINGS_DESCRIPTION to "Open settings",
         SampleStringId.NAV_BACK_DESCRIPTION to "Back",
 
@@ -125,6 +126,8 @@ object SampleStringProvider : StringProvider {
         SampleStringId.SETTINGS_RESET_DEMO_DATA_FAILURE to
             "Couldn\u2019t reset demo data. Try again.",
         SampleStringId.SETTINGS_SECTION_ABOUT to "About",
+        SampleStringId.SETTINGS_SECTION_DEVELOPER to "Developer",
+        SampleStringId.SETTINGS_OPEN_COMPONENT_LIBRARY to "Component library",
         SampleStringId.SETTINGS_LABEL_APP_VERSION to "App version",
         SampleStringId.SETTINGS_LABEL_BUILD_DATE to "Build date",
         SampleStringId.SETTINGS_ACCOUNT_SECTION to "Account",

@@ -18,6 +18,8 @@ import net.sigmabeta.sage.sample.settings.DemoOutcome
 import net.sigmabeta.sage.sample.settings.FontChoice
 import net.sigmabeta.sage.sample.settings.SimulateDelay
 import net.sigmabeta.sage.sample.settings.ThemeMode
+import net.sigmabeta.sage.components.CtaListModel
+import net.sigmabeta.sage.ui.Icon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -41,6 +43,13 @@ class SettingsStateTest {
                 SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_ABOUT.toString()),
                 appVersionRow(items),
                 buildDateRow(items),
+                SectionHeaderListModel(SampleStringId.SETTINGS_SECTION_DEVELOPER.toString()),
+                CtaListModel(
+                    icon = Icon.Description,
+                    name = SampleStringId.SETTINGS_OPEN_COMPONENT_LIBRARY.toString(),
+                    clickAction = SettingsAction.OpenComponentLibraryClicked,
+                    dataId = SampleStringId.SETTINGS_OPEN_COMPONENT_LIBRARY.name.hashCode().toLong(),
+                ),
             ),
             items,
         )

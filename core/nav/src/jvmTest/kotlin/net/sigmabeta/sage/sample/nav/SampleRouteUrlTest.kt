@@ -74,6 +74,13 @@ class SampleRouteUrlTest {
     }
 
     @Test
+    fun `the component library round-trips through its URL`() {
+        val route = SampleRoute(SampleDestination.HOME, SampleDestination.COMPONENT_LIBRARY)
+        assertEquals(route, SampleRouteUrl.decode(SampleRouteUrl.encode(route)))
+        assertEquals(route, SampleRouteUrl.decode("/component-library"))
+    }
+
+    @Test
     fun `tab-less pushed screens land on home`() {
         assertEquals(
             SampleRoute(SampleDestination.HOME, SampleDestination.SETTINGS),
